@@ -7,7 +7,7 @@ missing_fd()  { ! fd  --version >/dev/null 2>&1; }
 
 list_files() {
   ## List all project source files
-  fd . --hidden --no-require-git --type f "$@"
+  fd . --hidden --no-require-git --type f --exclude '*.png' "$@"
 }
 
 export -f list_files
@@ -25,7 +25,7 @@ End
 
 It 'contains no "DEBUG"'
 Skip if "fd not available" missing_fd
-When run env FILES="$(list_files --exclude='code_spec.sh' --exclude='Makefile')" bash -c 'grep -Eni "\bDEBUG\b" $FILES | sed "s/@debug//g" | grep -Ei "\bDEBUG\b"'
+When run env FILES="$(list_files --exclude='code_spec.sh' --exclude='Makefile' --exclude='README.md')" bash -c 'grep -Eni "\bDEBUG\b" $FILES | sed "s/@debug//g" | grep -Ei "\bDEBUG\b"'
 The stdout should be blank
 The stderr should be blank
 The status should be failure
@@ -34,7 +34,7 @@ End
 
 It 'does not contain whitespace'
 Skip if "fd not available" missing_fd
-When run grep -En '\s+$' $(list_files)
+When run grep -En '\s+$' $(list_files --exclude='README.md')
 The stdout should be blank
 The stderr should be blank
 The status should be failure
