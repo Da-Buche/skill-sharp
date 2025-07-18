@@ -1,0 +1,16 @@
+#!/bin/bash
+
+test -n "$CDS_INST_DIR" || { >&2 echo "Error: unable to locate Virtuoso, \$CDS_INST_DIR is undefined." ; exit 1  ; }
+
+SKILL_SHARP_ROOT=$(dirname "$0")/..
+export SKILL_SHARP_ROOT
+
+LOADER_FILE=$SKILL_SHARP_ROOT/skill/loader.scm
+
+## Add custom SKILL commands
+## `sed` is used to print stderr in red (cf. https://serverfault.com/questions/59262/bash-print-stderr-in-red-color - 2025/05/11).
+cat <(echo '(sstatus printinfix nil) (load (simplifyFilename "'"$LOADER_FILE"'")) (setPrompts "> " "%d> ") (toplevel '"'"'ils)') - | \
+  "$CDS_INST_DIR/tools.lnx86/bin/cdsmps" /dev/stdin 2> >(sed -u -e $'s/\*Error\*.*/\e[31m&\e[m/g' >&2)
+  #$CDS_INST_DIR/tools.lnx86/dfII/bin/skill /dev/stdin
+
+

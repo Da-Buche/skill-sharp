@@ -1,0 +1,42 @@
+;; Example of functions with arguments
+
+(defun positional_arguments ( arg0 arg1 )
+  "Return the sum of ARG0 and ARG1."
+  (plus arg0 arg1)
+  )
+
+(defun positional_and_optional_arguments
+       ( arg0
+         arg1
+         @optional
+         optional_without_default_value
+         ( defaults_to_12 12 )
+         )
+  "Return the sum of all arguments."
+  (plus arg0 arg1 optional_without_default_value defaults_to_12)
+  )
+
+(defun positional_and_key_arguments
+       ( arg0
+         arg1
+         @key
+         key_without_default_value
+         ( defaults_to_12 12                       )
+         ( current_shell  (getShellEnvVar "SHELL") )
+         )
+  "Return the sum of all arguments."
+  (plus arg0 arg1 key_without_default_value defaults_to_12)
+  )
+
+(defun positional_key_and_rest_arguments
+       ( arg0
+         arg1
+         @key
+         key_without_default_value
+         ( defaults_to_12 12                       )
+         ( current_shell  (getShellEnvVar "SHELL") )
+         @rest args )
+  "Return the sum of all arguments."
+  (apply 'plus arg0 arg1 key_without_default_value defaults_to_12 args)
+  )
+
