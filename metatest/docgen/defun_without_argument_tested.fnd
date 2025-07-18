@@ -1,0 +1,10 @@
+( "no_args"
+  "no_args()"
+  "This is a simple function without argument.
+It always return 12.
+<hr><pre><font color='darkgreen'>;; `no_args' always return 12.</font>
+(no_args)
+;> 12
+</pre>"
+  )
+

@@ -1,0 +1,5 @@
+( "@alphalessp0"
+  "@alphalessp0(<table><tr><td></td><td style='color:black;'><pre></pre></td><td style='color:black;'><pre>str0 </pre></td><td style='color:dimgrey;'><pre>string </pre></td><td style='color:darkblue;'><pre> </pre></td><td style='color:black;'><pre></pre></td><td style='color:darkgreen;'><pre> </pre></td></tr><tr><td></td><td style='color:black;'><pre></pre></td><td style='color:black;'><pre>str1 </pre></td><td style='color:dimgrey;'><pre>string </pre></td><td style='color:darkblue;'><pre> </pre></td><td style='color:black;'><pre></pre></td><td style='color:darkgreen;'><pre> </pre></td></tr></table>)"
+  "Improved `alphalessp' for strings containing numbers."
+  )
+

@@ -1,0 +1,27 @@
+( "@alphalessp0"
+  "@alphalessp0(<table><tr><td></td><td style='color:black;'><pre></pre></td><td style='color:black;'><pre>str0 </pre></td><td style='color:dimgrey;'><pre>string </pre></td><td style='color:darkblue;'><pre> </pre></td><td style='color:black;'><pre></pre></td><td style='color:darkgreen;'><pre> </pre></td></tr><tr><td></td><td style='color:black;'><pre></pre></td><td style='color:black;'><pre>str1 </pre></td><td style='color:dimgrey;'><pre>string </pre></td><td style='color:darkblue;'><pre> </pre></td><td style='color:black;'><pre></pre></td><td style='color:darkgreen;'><pre> </pre></td></tr></table>)"
+  "Improved `alphalessp' for strings containing numbers.
+<hr><pre><font color='darkgreen'>;; Usage comparison between `alphalessp' and `@alphalessp0'.</font>
+<font color='darkgreen'>;; For simple strings `@alphalessp0' behaves like `alphalessp'</font>
+(@alphalessp0 \"a_is_before_b\" \"b_is_after_a\")
+;> t
+
+(alphalessp \"a_is_before_b\" \"b_is_after_a\")
+;> t
+
+<font color='darkgreen'>;; But `@alphalessp0' is smarter with numbers</font>
+(@alphalessp0 \"file_1_a.txt\" \"file_100_a.txt\")
+;> t
+
+(alphalessp \"file_1_a.txt\" \"file_100_a.txt\")
+;> nil
+
+<font color='darkgreen'>;; It works well with `sort'.</font>
+(sort '( \"file_1_b.txt\" \"file_12.txt\" \"file_100_a.txt\" ) '@alphalessp0)
+;> ( \"file_1_a.txt\" \"file_1_b.txt\" \"file_12.txt\" \"file_100_a.txt\" )
+
+(sort '( \"file_1_b.txt\" ) 'alphalessp)
+;> ( \"file_100_a.txt\" \"file_12.txt\" \"file_1_a.txt\" \"file_1_b.txt\" )
+</pre>"
+  )
+

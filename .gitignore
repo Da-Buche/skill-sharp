@@ -1,5 +1,5 @@
 .git/
 report/results_junit.xml
 .shellspec-quick.log
-*.fnd
+doc/**/*.fnd
 

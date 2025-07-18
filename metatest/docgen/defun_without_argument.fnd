@@ -1,0 +1,6 @@
+( "no_args"
+  "no_args()"
+  "This is a simple function without argument.
+It always return 12."
+  )
+
