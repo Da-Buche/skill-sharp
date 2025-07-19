@@ -10,9 +10,9 @@ shellcheck_missing()  {
 
 shellcheck_outdated() {
   ## Return true if shellcheck is outdated (i.e. lower than 0.10.0), false otherwise
-  { shellcheck --version | grep -Eo '[0-9]+\..*' ;
-    echo '0.10.0' ;
-  } | sort --version-sort --check
+  ! { echo '0.10.0' ;
+      shellcheck --version | grep -Eo '[0-9]+\..*' ;
+    } | sort --version-sort --check
 }
 
 get_bash_files() {
