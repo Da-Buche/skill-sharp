@@ -59,7 +59,9 @@ To enable the full SKILL# API inside Virtuoso, load the following command or pla
 (load (simplifyFilename "$SKILL_SHARP_ROOT/skill/loader.scm"))
 ```
 
-Replace $SKILL_SHARP_ROOT with the path to this repository's root directory.
+> **_NOTE:_**
+>
+> Replace $SKILL_SHARP_ROOT with the path to this repository's root directory.
 
 Once loaded, the API is directly available and can be browsed in native "SKILL Finder" tool:
 <a name="SKILL_Finder">&nbsp;</a>
@@ -160,7 +162,7 @@ It can be lazy (only done when specified, for instance during testing) or strict
 The SHELL variable `$SKILL_SHARP_STRICT_TYPE_CHECKING` Can be set to "TRUE" to enable strict checking.
 Otherwise it is lazy by default.
 
-All the type checking is managed by the `@fun` macro, it is enabled at function definition.
+All the type checking is managed by the `@fun` macro, it is enabled (or not) at macro expansion time.
 
 ```scheme 
 
@@ -189,7 +191,7 @@ All the type checking is managed by the `@fun` macro, it is enabled at function 
   )
 
 ;; Here type-checking depends on $SKILL_SHARP_STRICT_TYPE_CHECKING value
-;; when function is defined!
+;; when `@fun' macro is expanded (before function is defined)!
 
 (@fun join
   ( ( char    ?type symbol|string         )
