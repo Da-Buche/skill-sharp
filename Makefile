@@ -51,17 +51,17 @@ ifeq ($(OS_NAME),Darwin)
       (( SECONDS < 15 )) || exit 1 ;                                                \
       done
   ## Start docker only when necessary. xargs is necessary to trim whitespace and carriage returns.
-	@test -n "`docker container ls -q -f name='centos7-skill' | xargs`" ||            \
+	@test -n "`docker container ls -q -f name='rocky8-skill' | xargs`" ||             \
     docker run -dit --rm                                                            \
       --platform linux/amd64                                                        \
       --network none                                                                \
       --volume ~/projects/skill#:/skill#                                            \
       --volume ~/Docker/centos7/Cadence/installs/IC618:/eda/cadence/installs/IC618  \
       --env    CDS_INST_DIR=/eda/cadence/installs/IC618                             \
-      --name centos7-skill                                                          \
-      centos7-skill
+      --name   rocky8-skill                                                         \
+      rocky8-skill
   ## Check if docker is running
-  # test "$( docker container inspect -f '{{.State.Running}}' centos7-skill )" = "true"
+  # test "$( docker container inspect -f '{{.State.Running}}' rocky8-skill )" = "true"
 endif
 
 ## =======================================================
@@ -90,7 +90,7 @@ else
 	@docker exec                   \
     --env "SHELLSPEC_EXTRA_ARGS" \
     --env "SKILL_SHARP_DEBUG"    \
-    centos7-skill bash -c 'cd /skill# ; make test $(filter-out $@, $(MAKECMDGOALS))'
+    rocky8-skill bash -c 'cd /skill# ; make test $(filter-out $@, $(MAKECMDGOALS))'
 endif
 
 .PHONY: debug
@@ -115,7 +115,7 @@ test_all: ## Run all shellspec tests
 .PHONY: bash
 bash: container
 	@make container
-	docker exec -it centos7-skill bash
+	docker exec -it rocky8-skill bash
 
 
 ## =======================================================
@@ -126,10 +126,10 @@ bash: container
 shell: container ## Run SKILL interpreter in Shell mode.
 ifeq ($(OS_NAME),Linux)
 	@/skill#/bin/shell
-  #@rlwrap docker exec -it centos7-skill /skill#/bin/shell
+  #@rlwrap docker exec -it rocky8-skill /skill#/bin/shell
 else
 	@make container
-	@rlwrap -a docker exec -it --env "SKILL_SHARP_DEBUG" centos7-skill /skill#/bin/shell
+	@rlwrap -a docker exec -it --env "SKILL_SHARP_DEBUG" rocky8-skill /skill#/bin/shell
 endif
 
 .PHONY: shell_debug
@@ -150,7 +150,7 @@ else
 	@docker exec                            \
     --env "SKILL_SHARP_DEBUG"             \
     --env "SKILL_SHARP_LINT_FILE_BY_FILE" \
-    centos7-skill bash -c 'cd /skill# ; make sharp $(filter-out $@, $(MAKECMDGOALS))'
+    rocky8-skill bash -c 'cd /skill# ; make sharp $(filter-out $@, $(MAKECMDGOALS))'
 endif
 
 .PHONY: sharp_debug
