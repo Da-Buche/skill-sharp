@@ -170,9 +170,9 @@
       (setf table[12]    "a")
       (setf table['b]    27 )
       (setf table["key"] 'c )
-      table[?]
+      (@sort table[?] ?shape 'printself)
       )
-    ?out '( b "key" 12 )
+    ?out '( "key" 12 b )
     )
 
    (@assertion
@@ -182,9 +182,9 @@
        (setf table[12]    "a")
        (setf table['b]    27 )
        (setf table["key"] 'c )
-       (@table_elements table)
+       (@sort (@table_elements table) ?shape 'printself)
        )
-    ?out '( 27 c "a" )
+    ?out '( "a" 27 c )
     )
 
    (@assertion
@@ -194,9 +194,9 @@
        (for i 12 27
          (setf table[i] i**2)
          )
-       (@table_elements table)
+       (@sort (@table_elements table) ?comp 'lessp)
        )
-     ?out '( 225 529 196 484 169 441 144 400 361 729 324 676 289 625 256 576 )
+     ?out '( 144 169 196 225 256 289 324 361 400 441 484 529 576 625 676 729 )
      )
   )
 
