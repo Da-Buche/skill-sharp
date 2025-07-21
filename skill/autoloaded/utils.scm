@@ -235,9 +235,12 @@ If END is not provided, END defaults to BEG minus 1 and BEG defaults to 0."
          )
     ;; Check input
     (assert (not (zerop step))     "@enumerate - STEP cannot be 0")
-    (assert (funcall comp beg end) "@enumerate - with %s STEP, BEG has to be %s than END"
+    (assert (funcall comp beg end) "@enumerate - with %s STEP, BEG has to be %s than END: %n %s %n"
       (if (plusp step) 'positive 'negative)
-      (if (plusp step) 'less     'greater)
+      (if (plusp step) 'less     'greater )
+      beg
+      (if (plusp step) ">"       "<"      )
+      end
       )
     (while (funcall comp beg end)
       (tconc res beg)

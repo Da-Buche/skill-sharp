@@ -1,6 +1,6 @@
 ;; ===============================================================================================================
 ;; Testing useful functions
-;; 
+;;
 ;; A. Buchet - July 2025
 ;; ===============================================================================================================
 
@@ -493,6 +493,66 @@ Kevin   layouter\n\
       min_length
       )
     ?out 3
+    )
+
+  )
+
+(@test
+  ?fun '@enumerate
+
+  (@assertion
+    ?doc "With only one input, enumerates from 0 to n-1."
+    (@enumerate 10)
+    ?out '( 0 1 2 3 4 5 6 7 8 9 )
+    )
+
+  (@assertion
+    ?doc "With two input, enumerates from n to m (excluded)."
+    (@enumerate 12 27)
+    ?out '( 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 )
+    )
+
+  (@assertion
+    ?doc "Enumerates works with negative step."
+    (@enumerate 42.0 40 -0.5)
+    ?out '( 42.0 41.5 41.0 40.5 )
+    )
+
+  (@assertion
+    ?doc "Enumerates works with floats."
+    (defun float_lists_equal ( l0 l1 )
+      "Return t if all numbers contained in L0 are `nearlyEqual' to respective values in L1, nil otherwise."
+      (prog ()
+        (foreach val l0
+          (unless (nearlyEqual val (pop l1)) (return))
+          )
+        (if l1 (return)
+          (return t)
+          )
+        ));prog ;def
+    (float_lists_equal
+      (@enumerate 12 27 1.6)
+      '( 12 13.6 15.2 16.8 18.4 20.0 21.6 23.2 24.8 26.4 )
+      )
+    ?out t
+    )
+
+  (@assertion
+    ?doc "Step cannot be 0."
+    (@enumerate 0 10 0)
+    ?error "@enumerate - STEP cannot be 0"
+    )
+
+  (@assertion
+    ?doc "With only one negative input, enumerates raises an error."
+    (@enumerate -10)
+    ?error "@enumerate - with positive STEP, BEG has to be less than END: 0 > -10"
+    )
+
+  (@assertion
+    ?doc "With only one negative input, enumerates raises an error."
+    (@enumerate -27 12 -1)
+    ?error "@enumerate - with negative STEP, BEG has to be greater than END: -27 < 12"
     )
 
   )
