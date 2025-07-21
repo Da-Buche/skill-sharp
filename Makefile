@@ -51,15 +51,16 @@ ifeq ($(OS_NAME),Darwin)
       (( SECONDS < 15 )) || exit 1 ;                                                \
       done
   ## Start docker only when necessary. xargs is necessary to trim whitespace and carriage returns.
-	@test -n "`docker container ls -q -f name='rocky8-skill' | xargs`" ||             \
-    docker run -dit --rm                                                            \
-      --platform linux/amd64                                                        \
-      --network none                                                                \
-      --volume ~/projects/skill#:/skill#                                            \
-      --volume ~/Docker/centos7/Cadence/installs/IC618:/eda/cadence/installs/IC618  \
-      --env    CDS_INST_DIR=/eda/cadence/installs/IC618                             \
-      --name   rocky8-skill                                                         \
+	@test -n "`docker container ls -q -f name='rocky8-skill' | xargs`" ||                       \
+    docker run -dit --rm                                                                      \
+      --platform linux/amd64                                                                  \
+      --network none                                                                          \
+      --volume ~/projects/skill#:/skill#                                                      \
+      --name   rocky8-skill                                                                   \
       rocky8-skill
+      # --volume ~/Docker/centos7/Cadence/installs/IC618_SKILL_only:/eda/cadence/installs/IC618 \
+      # --env    "CDS_INST_DIR=/eda/cadence/installs/IC618"                                     \
+      # --volume ~/Docker/centos7/Cadence/installs/IC618:/eda/cadence/installs/IC618
   ## Check if docker is running
   # test "$( docker container inspect -f '{{.State.Running}}' rocky8-skill )" = "true"
 endif
@@ -85,7 +86,7 @@ ifeq ($(OS_NAME),Linux)
     PATH="$$HOME/.local/bin:$$PATH"             \
     EXAMPLE="$(filter-out $@, $(MAKECMDGOALS))" \
     bash -c 'shellspec --shell /bin/bash --color --quick --fail-fast -fd $${EXAMPLE:+--example }$$EXAMPLE $$SHELLSPEC_EXTRA_ARGS'
-else
+else	
 	@make container
 	@docker exec                   \
     --env "SHELLSPEC_EXTRA_ARGS" \
