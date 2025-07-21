@@ -1,0 +1,22 @@
+name: Makefile CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+  
+    container:
+      image: dabuche0/skill_sharp:latest
+      credentials:
+        username: dabuche0
+        password: ${{ secrets.docker_hub_password }}
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Run tests
+      run: make test_all
