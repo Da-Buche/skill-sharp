@@ -1,0 +1,36 @@
+( "@alphalessp"
+  "(@alphalessp
+  (str0 ?type string)
+  (str1 ?type string)
+  )"
+  "Improved `alphalessp' for strings containing numbers."
+  )
+( "@arglist"
+  "(@arglist
+  (fun ?type function)
+  )"
+  "Return FUN arguments list. Errorful character here \#..."
+  )
+( "@assert"
+  "(@assert
+  test
+  message
+  )"
+  "Write assert using f-string format.
+This is `assert' wrapper using `@str' macro."
+  )
+( "@assertion"
+  "(@assertion
+  \@rest
+  _
+  )"
+  "Make sure `@assertion' is never used outside `@test'."
+  )
+( "@basename"
+  "(@basename
+  (path ?type string)
+  )"
+  "Return file name of PATH.
+This is Unix `basename` equivalent."
+  )
+

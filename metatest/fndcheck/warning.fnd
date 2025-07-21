@@ -1,0 +1,23 @@
+( "@alphalessp"
+  "(@alphalessp
+  (str0 ?type string)
+  (str1 ?type string)
+  )"
+  "Improved `alphalessp' for strings containing numbers."
+  )
+*WARNING* (Parser): character found after backslash is not meaningful - '\@'
+( "@arglist"
+  "(@arglist
+  (fun ?type function)
+  )"
+  "Return FUN arguments list."
+  )
+( "@assert"
+  "(@assert
+  test
+  message
+  )"
+  "Write assert using f-string format.
+This is `assert' wrapper using `@str' macro."
+  )
+

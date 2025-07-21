@@ -325,23 +325,22 @@ A valid .fnd expression should be t or a list containing three strings."
     ?doc   "Make sure .fnd FILES are valid."
     ?out    t|nil
     ?global t
-    (when files
-      (forall file files
-        (@with ( ( port (instring (@exact_replace "\\@" (@file_contents file) "\\\\@")) )
-                 )
-          (prog ( sexp )
-            (while (car (setq sexp (errset (lineread port) t)))
-              (unless (valid_sexp? (car sexp)) (return))
-              );while
-            (unless sexp
-              (warn "Error when reading .fnd file")
-              (return)
-              )
-            (and (car sexp) (not (valid_sexp? (car sexp))) (return))
-            (return t)
-            );prog
-          ));with ;forall
-      ));when ;fun)
+    (assert files "@fndcheck - no files were provided...")
+    (forall file files
+      (@with ( ( port (instring (@exact_replace "\\@" (@file_contents file) "\\\\@")) )
+               )
+        (prog ( sexp )
+          (while (car (setq sexp (errset (lineread port) t)))
+            (unless (valid_sexp? (car sexp)) (return))
+            );while
+          (unless sexp
+            (warn "Error when reading .fnd file")
+            (return)
+            )
+          (and (car sexp) (not (valid_sexp? (car sexp))) (return))
+          (return t)
+          ));prog ;with
+      ));forall ;fun
 
   )
 
