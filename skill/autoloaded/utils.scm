@@ -14,12 +14,13 @@
   ?doc "Return file name of PATH.
 This is Unix `basename` equivalent."
   ?out string
-  (if (pcreMatchp "/([^/]+)(/+)?$" path)
-      (@letf ( ( (rexMagic) t )
-                 )
-        (pcreSubstitute "\\1")
-        )
-    path));if ;def
+  (if (pcreMatchp "^/+$" path) "/"
+    (if (pcreMatchp "/?([^/]+)(/+)?$" path)
+        (@letf ( ( (rexMagic) t )
+                   )
+          (pcreSubstitute "\\1")
+          )
+      path)));if ;def
 
 (@fun @dirname
   ( (path ?type string)
@@ -44,33 +45,34 @@ This is Unix `dirname` equivalent."
 ;; =======================================================
 
 (@fun @unique
-  ( ( l ?type list )
+  ( ( list ?type list )
     )
-  ?doc "Return elements of L without duplicates."
+  ?doc "Return elements of LIST without duplicates in a non-predictable order."
   ?out list
   (let ( ( table (makeTable t nil) )
          )
-    (foreach e l
+    (foreach e list
       (setf table[e] t)
       )
     table[?]
     ));let ;def
 
 (@fun @sort
-  ( ( l ?type list )
+  ( ( list ?type list )
     @key
     ( shape ?type callable ?def '@identity   ?doc "Shaper function, used on both arguments before comparison. (`@getter' output for instance)" )
-    ( comp  ?type callable ?def '@alphalessp ?doc "Comparison function, used to do the sorting."                                                 )
+    ( comp  ?type callable ?def '@alphalessp ?doc "Comparison function, used to do the sorting."                                               )
     )
-  ?doc "Sort L. All elements are shaped using SHAPE function then compared using COMP one."
+  ?doc "Return sorted LIST using COMP as comparison function applied on elements shaped using SHAPE.
+(This function is destructive! This is only an enhanced `sort' wrapper.)"
   ?out list
   ;; Make sure functions are properly callable
   (when (symbolp shape) (setq shape (getd shape)))
   (when (symbolp comp ) (setq comp  (getd comp )))
   ;; Return sorted list
   (if (eq (getd '@identity) shape)
-      (sort l comp)
-    (sort l (lambda (e0 e1) (comp (shape e0) (shape e1))))
+      (sort list comp)
+    (sort list (lambda (e0 e1) (comp (shape e0) (shape e1))))
     ))
 
 
@@ -123,8 +125,8 @@ This is Unix `dirname` equivalent."
 ;; =======================================================
 
 (@fun @alphalessp
-  ( ( str0 ?type string )
-    ( str1 ?type string )
+  ( ( str0 ?type string|symbol )
+    ( str1 ?type string|symbol )
     )
   ?doc "Return t if STR0 is lower than STR1 regarding alphanumeric comparison, nil otherwise.
 

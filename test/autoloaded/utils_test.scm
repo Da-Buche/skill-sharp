@@ -1,49 +1,193 @@
-; basename "toto"
-; ILS-2> (@basename "toto")
-; ILS-2> (@basename "~")
-; ILS-2> (@basename "/toto")
-; ILS-2> (@basename "/abc//toto")
-; ILS-2> (@basename "/abc//toto12_27/")
-; ILS-2> (@basename "/abc//toto12_27///")
-; ▶ basename ~
-; ▶ basename '~'
-; ▶ basename /'~'
-; ▶ basename /'~'/
+;; ===============================================================================================================
+;; Testing useful functions
+;; 
+;; A. Buchet - July 2025
+;; ===============================================================================================================
 
+;; =======================================================
+;; Unix utilities
+;; =======================================================
 
+(@test
+  ?fun '@basename
+  ?doc "`@basename' works like Unix `basename`."
 
-; ▶ dirname '~'
-; ▶ dirname ~
-; ▶ dirname /'~'/
-; ▶ dirname a
-; [root@16cdbc6d30a4 /]# dirname a
-; ILS-2> (@dirname "a")
-; ILS-2> (@dirname "/a")
-; ▶ dirname //
-; ▶ dirname ///
-; ▶ dirname /
-; ▶ dirname /a
-; ▶ dirname /a
-; ▶ dirname /a/b
-; ILS-2> @dirname "//"
-; ILS-2> @dirname "."
-; ILS-2> @dirname "a"
-; ILS-2> @dirname "/a/b"
-; ILS-2> @dirname "/a/b/"
-; ILS-2> @dirname "/a/"
-; ▶ dirname /a/
-; ▶ dirname /
-; ▶ dirname /a/b
-; ▶ dirname a/a/b
-; ILS-2> @dirname "a/b/"
-; ILS-2> @dirname "a/a/b"
-; ILS-2> @dirname "a/a/b"
-; ▶ dirname ''
-; ILS-2> @dirname "a/a/b"
-; ILS-2> @dirname "/a/"
+  (@assertion
+    (@basename "./dir/file")
+    ?out "file"
+    )
 
+  (@assertion
+    (@basename "/dir/file/")
+    ?out "file"
+    )
 
+  (@assertion
+    (@basename "file")
+    ?out "file"
+    )
 
+  )
+
+(@test
+  ?fun '@dirname
+  ?doc "`@dirname' works like Unix `dirname`."
+
+  (@assertion
+    (@dirname "./dir/file")
+    ?out "./dir"
+    )
+
+  (@assertion
+    (@dirname "/dir/file/")
+    ?out "/dir"
+    )
+
+  (@assertion
+    (@dirname "file")
+    ?out "."
+    )
+
+  )
+
+(let ( ( paths '( "file"
+                  "file/"
+                  "/file/"
+                  "/dir//file"
+                  "/dir/subdir/file"
+                  "/dir//subdir///file////"
+                  "~"
+                  "~/"
+                  "'~'"
+                  "/'~'"
+                  "/'~'/"
+                  "/"
+                  "///"
+                  ) )
+       )
+
+  (defun remove_trailing_newline (str)
+    "Remove trailing newline in STR if any"
+    (pcreReplace (pcreCompile "\n$") str "" 0)
+    )
+
+  (@test
+    ?fun   'nofun
+    ?title "@basename and @dirname"
+    ?doc   "Compare `@basename' and `@dirname' to their Unix equivalents."
+
+    (@assertion
+      (mapcar '@basename paths)
+      ?out (foreach mapcar path paths (remove_trailing_newline (car (@bash (@str "basename \"{path}\"")))))
+      )
+
+    (@assertion
+      (mapcar '@dirname paths)
+      ?out (foreach mapcar path paths (remove_trailing_newline (car (@bash (@str "dirname \"{path}\"")))))
+      )
+    )
+
+  )
+
+;; =======================================================
+;; Lists
+;; =======================================================
+
+(@test
+  ?fun '@unique
+  ?doc "`@unique' works with all kind of atoms."
+
+  (@assertion
+    (sort (@unique '( 1 2 3 12 27 42 9 8 7 6 5 4 3 2 1 )) 'lessp)
+    ?out '( 1 2 3 4 5 6 7 8 9 12 27 42 )
+    )
+
+  (@assertion
+    ;; `printself' is required as 'a and "a" are identical regarding `alphaNumCmp'
+    (@sort (@unique '( a "a" abc "abc" a b c "a" a ))
+      ?shape 'printself
+      ?comp  '@alphalessp
+      )
+    ?out '( "a" "abc" a abc b c )
+    )
+
+  (@assertion
+    (@sort (@unique '( 12 12.27 27 a "a" abc "abc" a b c "a" a 12 27 ))
+      ?shape 'printself
+      ?comp  '@alphalessp
+      )
+    ?out '( "a" "abc" 12 12.27 27 a abc b c )
+    )
+
+  )
+
+(@test
+  ?fun '@sort
+  ?doc "`@sort' solves a common pattern of shaping elements before comparing them."
+
+  (@assertion
+    ?doc "This is `sortcar' equivalent."
+    (@sort '( ( b 12 ) ( c 42 ) ( a 27 ) ) ?shape 'car ?comp 'alphalessp)
+    ?out '( ( a 27 ) ( b 12 ) ( c 42 ) )
+    )
+
+  (@assertion
+    ?doc "But `sortcadr' does not exist!"
+    (@sort '( ( b 12 ) ( c 42 ) ( a 27 ) ) ?shape 'cadr ?comp 'lessp)
+    ?out '( ( b 12 ) ( a 27 ) ( c 42 ) )
+    )
+
+  (@assertion
+    ?doc "By default, `@sort' compares using `@alphalessp'."
+    (@sort '( 12 a b 12.27 c "a" 27 "b" 27 "c" ) ?shape 'printself)
+    ?out '( "a" "b" "c" 12 12.27 27 27 a b c )
+    )
+
+  )
+
+;; =======================================================
+;; Tables
+;; =======================================================
+
+(@test
+  ?fun '@table_elements
+
+  (@assertion
+    ?doc "table[?] returns all the defined keys."
+    (let ( ( table (makeTable t nil) )
+           )
+      (setf table[12]    "a")
+      (setf table['b]    27 )
+      (setf table["key"] 'c )
+      table[?]
+      )
+    ?out '( b "key" 12 )
+    )
+
+   (@assertion
+     ?doc "`@table_elements' returns all the contained values."
+     (let ( ( table (makeTable t nil) )
+            )
+       (setf table[12]    "a")
+       (setf table['b]    27 )
+       (setf table["key"] 'c )
+       (@table_elements table)
+       )
+    ?out '( 27 c "a" )
+    )
+
+   (@assertion
+     ?doc "It works with any table"
+     (let ( ( table (makeTable t nil) )
+            )
+       (for i 12 27
+         (setf table[i] i**2)
+         )
+       (@table_elements table)
+       )
+     ?out '( 225 529 196 484 169 441 144 400 361 729 324 676 289 625 256 576 )
+     )
+  )
 ;; TODO - Write utils tests
 (@one_newline "")
 (@one_newline "This is a very long string over several lines.\nAnother line here\n\n\n...\n\n")
