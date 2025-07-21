@@ -72,7 +72,7 @@ endif
 .PHONY: format
 format: ## Automatically format source code files.
 ## Remove whitespace
-	grep -REl --exclude-dir='.git' '\s+$$' | xargs sed -e 's/\s\+$$'//g -i
+	grep -REl --exclude-dir='.git' --exclude='*.png' --exclude='*.md' '\s+$$' | xargs sed -e 's/\s\+$$'//g -i
 
 ## =======================================================
 ## Run tests
@@ -86,7 +86,7 @@ ifeq ($(OS_NAME),Linux)
     PATH="$$HOME/.local/bin:$$PATH"             \
     EXAMPLE="$(filter-out $@, $(MAKECMDGOALS))" \
     bash -c 'shellspec --shell /bin/bash --color --quick --fail-fast -fd $${EXAMPLE:+--example }$$EXAMPLE $$SHELLSPEC_EXTRA_ARGS'
-else	
+else
 	@make container
 	@docker exec                   \
     --env "SHELLSPEC_EXTRA_ARGS" \
