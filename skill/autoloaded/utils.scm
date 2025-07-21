@@ -88,37 +88,6 @@ This is Unix `dirname` equivalent."
   (foreach mapcar key table[?] table[key])
   )
 
-(@fun @get
-  ( ( obj   ?type any          ?doc "Object containing at least one property or even more nested ones." )
-    @rest
-    ( props ?type (symbol ...) ?doc "List of nested properties to be fetched."                          )
-    )
-  ?doc "Fetches nested properties PROPS from OBJ."
-  ?out any
-  (foreach prop props
-    (setq obj (get obj prop))
-    )
-  obj)
-
-(@fun setf_\@get
-  ( ( value ?type any          ?doc "Value to be set."                                                  )
-    ( obj   ?type any          ?doc "Object containing at least one property or even more nested ones." )
-    @rest
-    ( props ?type (symbol ...) ?doc "List of nested properties, the last one is to be set."             )
-    )
-  ?doc "Set last property of properties PROPS to VALUE in OBJ. Return set value."
-  ?out any
-  (assert props "@set - Please provide at least one property to set.")
-  (let ( ( prop (pop props) )
-         )
-    ;; Fetch all property except last one
-    (while props
-      (setq obj (get obj prop))
-      (setq prop (pop props))
-      )
-    (setf (get obj prop) value)
-    ));let ;fun
-
 
 ;; =======================================================
 ;; Strings
@@ -136,15 +105,16 @@ This comparison works nicely with software versions."
   (negativep (alphaNumCmp str0 str1)))
 
 (@fun @exact_replace
-  ( ( pattern     ?type string )
-    ( source      ?type string )
-    ( replacement ?type string )
+  ( ( pattern     ?type string         )
+    ( source      ?type string         )
+    ( replacement ?type string         )
+    ( index       ?type integer ?def 0 )
     )
   ?doc "Replace all occurences of PATTERN by REPLACEMENT in SOURCE."
   (@letf ( ( (rexMagic) nil )
              )
     (rexCompile pattern)
-    (rexReplace source replacement 0)
+    (rexReplace source replacement index)
     ));letf ;fun
 
 (@fun @repeat_str
@@ -152,13 +122,14 @@ This comparison works nicely with software versions."
     ( n    ?type integer )
     )
   ?doc "Repeat and concatenate STR N times"
-  (@exact_replace " " (lsprintf (lsprintf "%%%ds" n) "") str)
-  )
+  (if (equal " " str) (lsprintf (lsprintf "%%%ds" n) "")
+    (@exact_replace " " (lsprintf (lsprintf "%%%ds" n) "") str)
+    ))
 
 (@fun @padd
   ( ( str  ?type string           )
     ( num  ?type integer          )
-    ( char ?type char    ?def " " )
+    ( char ?type string  ?def " " )
     )
   ?doc "Padd STR with blankspaces to the left so it contains at least NUM characters.
 If NUM is negative, STR is right-padded instead."
@@ -198,9 +169,23 @@ If NUM is negative, STR is right-padded instead."
 (@fun @strip
   ( ( str ?type string )
     )
-  ?doc "Remove leading and trailing characters (whitespace by default)"
+  ?doc "Remove leading and trailing characters (whitespace by default)."
   (@lstrip (@rstrip str))
   )
+
+;; Alternative solution, it might be a bit faster (depending on regex engine)
+;; but not sure if it is safer.
+; (@fun @strip
+;   ( ( str ?type string )
+;     )
+;   ?doc "Remove leading and trailing characters (whitespace by default)."
+;   (@letf ( ( (rexMagic) t )
+;            )
+;     ;; (pcreGenCompileOptBits ?setDotAll t) => 4
+;     (if (pcreMatchp "^\\s*(.*?)\\s*$" str 4)
+;         (pcreSubstitute "\\1")
+;       str)
+;     ));letf ;fun
 
 (@fun @one_newline
   ( ( str ?type string )
@@ -238,7 +223,7 @@ If NUM is negative, STR is right-padded instead."
   ?doc "Enumerate from BEG to END using STEP.
 
 If END is not provided, END defaults to BEG minus 1 and BEG defaults to 0."
-  ?out (number ...)
+  ?out ( number ... )
   (let ( ( comp (if (plusp step) 'lessp 'greaterp) )
          ( res  (tconc () nil)                     )
          )
@@ -374,4 +359,43 @@ Return nil otherwise."
 ;   ?out list
 ;   (when obj (list obj)))
 
+
+;; =======================================================
+;; Universal getter
+;; =======================================================
+
+;; TODO - @get should probably be a method for ( object t )
+
+(@fun @get
+  ( ( obj   ?type any          ?doc "Object containing at least one property or even more nested ones." )
+    @rest
+    ( props ?type (symbol ...) ?doc "List of nested properties to be fetched."                          )
+    )
+  ?doc "Fetches nested properties PROPS from OBJ."
+  ?out any
+  (foreach prop props
+    (setq obj (get obj prop))
+    )
+  obj)
+
+(@fun setf_\@get
+  ( ( value ?type any          ?doc "Value to be set."                                                  )
+    ( obj   ?type any          ?doc "Object containing at least one property or even more nested ones." )
+    @rest
+    ( props ?type (symbol ...) ?doc "List of nested properties, the last one is to be set."             )
+    )
+  ?doc "Set last property of properties PROPS to VALUE in OBJ. Return set value."
+  ?out any
+  (assert props "@set - Please provide at least one property to set.")
+  (let ( ( prop (pop props) )
+         )
+    ;; Fetch all property except last one
+    (while props
+      (setq obj (get obj prop))
+      (setq prop (pop props))
+      )
+    (setf (get obj prop) value)
+    ));let ;fun
+
 ;*/
+

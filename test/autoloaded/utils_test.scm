@@ -4,6 +4,17 @@
 ;; A. Buchet - July 2025
 ;; ===============================================================================================================
 
+;; The following test guarantees that `skill` and `cdsmps` or `virtuoso` tests results are different
+
+(@test
+  ?fun 'ipcBeginProcess
+  ?doc "Make sure `cdsmps` is working"
+  ?skip (nequal "cdsmps" (@basename (or (getShellEnvVar "SKILL_INTERPRETER") "")))
+  (@assertion
+    (let ( str ) (ipcWait (ipcBeginProcess "echo 12" "" (lambda (_pid data) (setq str data)))) str)
+    ?out "12\n"
+    ))
+
 ;; =======================================================
 ;; Unix utilities
 ;; =======================================================
@@ -188,44 +199,11 @@
      ?out '( 225 529 196 484 169 441 144 400 361 729 324 676 289 625 256 576 )
      )
   )
-;; TODO - Write utils tests
-(@one_newline "")
-(@one_newline "This is a very long string over several lines.\nAnother line here\n\n\n...\n\n")
 
 
-(@test
-  ?fun '@ordinal
-  ?doc "Test output for simple numbers."
-
-  (@assertion
-    (@ordinal 0)
-    ?out '"0th"
-    )
-
-  (@assertion
-    (mapcar '@ordinal (@enumerate 10))
-    ?out '( "0th" "1st" "2nd" "3rd" "4th" "5th" "6th" "7th" "8th" "9th" )
-    )
-
-  (@assertion
-    (mapcar '@ordinal (@enumerate 10 20))
-    ?out '( "10th" "11th" "12th" "13th" "14th" "15th" "16th" "17th" "18th" "19th" )
-    )
-
-  (@assertion
-    (mapcar '@ordinal (@enumerate 40))
-    ?out '(  "0th"  "1st"  "2nd"  "3rd"  "4th"  "5th"  "6th"  "7th"  "8th"  "9th"
-             "10th" "11th" "12th" "13th" "14th" "15th" "16th" "17th" "18th" "19th"
-             "20th" "21st" "22nd" "23rd" "24th" "25th" "26th" "27th" "28th" "29th"
-             "30th" "31st" "32nd" "33rd" "34th" "35th" "36th" "37th" "38th" "39th"
-             ))
-
-  (@assertion
-    (mapcar '@ordinal '( 100 101 9999 ))
-    ?out '( "100th" "101st" "9999th" )
-    )
-
-  )
+;; =======================================================
+;; Strings
+;; =======================================================
 
 (@test
   ?fun '@alphalessp
@@ -262,6 +240,270 @@
   (@assertion
     (sort '( "file_1_b.txt" "file_1_a.txt" "file_100_a.txt" "file_12.txt" ) 'alphalessp)
     ?out  '( "file_100_a.txt" "file_12.txt" "file_1_a.txt" "file_1_b.txt" )
+    )
+
+  )
+
+(@test
+  ?fun '@exact_replace
+
+  (@assertion
+    ?doc "Exact replace works like `pcreReplace'."
+    (@exact_replace "name" "This user is called name. name is a nice Name." "John")
+    ?out "This user is called John. John is a nice Name."
+    )
+
+  (@assertion
+    ?doc "Index argument is optional."
+    (@exact_replace "name" "This user is called name. name is a nice Name." "John" 2)
+    ?out "This user is called name. John is a nice Name."
+    )
+
+  (@assertion
+    ?doc "Exact replace does not consider special characters like `rexReplace' or `pcreReplace' would."
+    (@exact_replace ".*" "Those characters are matching regex input but only this '.*' will be replaced.
+Those .* .* will be replaced as well." "_")
+    ?out "Those characters are matching regex input but only this '_' will be replaced.
+Those _ _ will be replaced as well."
+    )
+  )
+
+(@test
+  ?fun '@repeat_str
+  ?doc "`@repeat_str' can be useful to generate exact indentation."
+
+  (@assertion
+    (@repeat_str " " 8)
+    ?out "        "
+    )
+
+  (@assertion
+    (@repeat_str "_" 5)
+    ?out "_____"
+    )
+
+  (@assertion
+    ?doc "It works with longer strings."
+    (@repeat_str "abc" 3)
+    ?out "abcabcabc"
+    )
+
+  (@assertion
+    ?doc "It also works with negative numbers."
+    (@repeat_str "@" -15)
+    ?out "@@@@@@@@@@@@@@@"
+    )
+  )
+
+(@test
+  ?fun '@padd
+
+  (@assertion
+    ?doc "Padd to the left by default."
+    (@padd "name" 15)
+    ?out "           name"
+    )
+
+  (@assertion
+    ?doc "Padd to the right with a negative input."
+    (@padd "ThisIsALongerName" -25)
+    ?out "ThisIsALongerName        "
+    )
+
+  (@assertion
+    ?doc "Padd character can be specified."
+    (@padd "ThisIsALongerName" -25 "__")
+    ?out "ThisIsALongerName________________"
+    )
+
+  (@assertion
+    ?doc "`@padd' is useful to align elements in a report (knowing the maximum length)."
+    (let ( ( pairs   '( ( "name"    "role"     )
+                        ( "John"    "manager"  )
+                        ( "William" "designer" )
+                        ( "Kevin"   "layouter" )
+                        ) )
+           ( max_len 0 )
+           )
+      "Calculate maximum name length."
+      (foreach pair pairs
+        (setq max_len (max max_len (length (car pair))))
+        )
+      "Print aligned names and roles."
+      (foreach pair pairs
+        (destructuringBind (name role) pair
+          (info "%s %s\n" (@padd name -max_len) role)
+          ))
+      "Return t"
+      t)
+    ?out  t
+    ?info "\
+name    role\n\
+John    manager\n\
+William designer\n\
+Kevin   layouter\n\
+"
+    )
+
+  )
+
+(@test
+  ?fun '@lstrip
+  ?doc "`@lstrip' removes left whitespace from input string."
+
+  (@assertion
+    (@lstrip "  This string has whitespace before and after.  ")
+    ?out "This string has whitespace before and after.  "
+    )
+
+  (@assertion
+    (@lstrip "\t\tThis string has tabs before and after.\t\t")
+    ?out "This string has tabs before and after.\t\t"
+    )
+
+  (@assertion
+    (@lstrip " \t Same with combination of\twhitespace and tabs.\t \t")
+    ?out "Same with combination of\twhitespace and tabs.\t \t"
+    )
+
+  )
+
+(@test
+  ?fun '@rstrip
+  ?doc "`@rstrip' removes right whitespace from input string."
+
+  (@assertion
+    (@rstrip "  This string has whitespace before and after.  ")
+    ?out "  This string has whitespace before and after."
+    )
+
+  (@assertion
+    (@rstrip "\t\tThis string has tabs before and after.\t\t")
+    ?out "\t\tThis string has tabs before and after."
+    )
+
+  (@assertion
+    (@rstrip " \t Same with combination of\twhitespace and tabs.\t \t")
+    ?out " \t Same with combination of\twhitespace and tabs."
+    )
+
+  )
+
+(@test
+  ?fun '@strip
+  ?doc "`@strip' removes left and right whitespace from input string."
+
+  (@assertion
+    (@strip "  This string has whitespace before and after.  ")
+    ?out "This string has whitespace before and after."
+    )
+
+  (@assertion
+    (@strip "\t\tThis string has tabs before and after.\t\t")
+    ?out "This string has tabs before and after."
+    )
+
+  (@assertion
+    (@strip " \t Same with combination of\twhitespace and tabs.\t \t")
+    ?out "Same with combination of\twhitespace and tabs."
+    )
+
+  (@assertion
+    (@strip " \t Combination of\twhitespace and tabs.\nIn a multiline string.  \n\t \t")
+    ?out "Combination of\twhitespace and tabs.\nIn a multiline string."
+    )
+
+  )
+
+(@test
+  ?fun '@one_newline
+  ?doc "`@one_newline' makes all strings end with exactly one newline character."
+
+  (@assertion
+    (@one_newline "Example message.")
+    ?out "Example message.\n"
+    )
+
+  (@assertion
+    (@one_newline "This is a very long string over several lines.\nAnother line here\n\n\n...\n\n")
+    ?out "This is a very long string over several lines.\nAnother line here\n\n\n...\n"
+    )
+
+  (@assertion
+    (@one_newline "This is a very long string over several lines.\nAnother line here\n\n\n...")
+    ?out "This is a very long string over several lines.\nAnother line here\n\n\n...\n"
+    )
+
+  (@assertion
+    (@one_newline "")
+    ?out "\n"
+    )
+
+  (@assertion
+    (@one_newline "\n")
+    ?out "\n"
+    )
+
+  (@assertion
+    (@one_newline "\n\n\n")
+    ?out "\n"
+    )
+
+  )
+
+
+
+
+;; =======================================================
+;; Numbers
+;; =======================================================
+
+
+;; =======================================================
+;; Miscellaneous
+;; =======================================================
+
+
+;; =======================================================
+;; Predicates
+;; =======================================================
+
+
+;; =======================================================
+;; Universal getter
+;; =======================================================
+
+
+(@test
+  ?fun '@ordinal
+  ?doc "Test output for simple numbers."
+
+  (@assertion
+    (@ordinal 0)
+    ?out '"0th"
+    )
+
+  (@assertion
+    (mapcar '@ordinal (@enumerate 10))
+    ?out '( "0th" "1st" "2nd" "3rd" "4th" "5th" "6th" "7th" "8th" "9th" )
+    )
+
+  (@assertion
+    (mapcar '@ordinal (@enumerate 10 20))
+    ?out '( "10th" "11th" "12th" "13th" "14th" "15th" "16th" "17th" "18th" "19th" )
+    )
+
+  (@assertion
+    (mapcar '@ordinal (@enumerate 40))
+    ?out '(  "0th"  "1st"  "2nd"  "3rd"  "4th"  "5th"  "6th"  "7th"  "8th"  "9th"
+             "10th" "11th" "12th" "13th" "14th" "15th" "16th" "17th" "18th" "19th"
+             "20th" "21st" "22nd" "23rd" "24th" "25th" "26th" "27th" "28th" "29th"
+             "30th" "31st" "32nd" "33rd" "34th" "35th" "36th" "37th" "38th" "39th"
+             ))
+
+  (@assertion
+    (mapcar '@ordinal '( 100 101 9999 ))
+    ?out '( "100th" "101st" "9999th" )
     )
 
   )
