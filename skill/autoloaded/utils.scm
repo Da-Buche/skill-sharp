@@ -214,6 +214,12 @@ If NUM is negative, STR is right-padded instead."
 ;; Numbers
 ;; =======================================================
 
+(@fun @inf ()
+  ?doc "Return infinity number (inf)."
+  ;; 1e309 is the smallest exonant that works but margin was added for safety
+  1e100000
+  )
+
 (@fun @enumerate
   ( ( beg  ?type number                               )
     ;; Set default end unless provided
@@ -269,11 +275,6 @@ If END is not provided, END defaults to BEG minus 1 and BEG defaults to 0."
       );if
     ));let ;fun
 
-(@fun @inf ()
-  ?doc "Return infinity number (inf)."
-  ;; 1e309 is the smallest exonant that works but margin was added for safety
-  1e100000
-  )
 
 ;; =======================================================
 ;; Miscellaneous

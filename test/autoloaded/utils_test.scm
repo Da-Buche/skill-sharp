@@ -458,21 +458,44 @@ Kevin   layouter\n\
 ;; Numbers
 ;; =======================================================
 
+(@test
+  ?fun '@inf
+  ?doc "All numbers are smaller than inf."
 
-;; =======================================================
-;; Miscellaneous
-;; =======================================================
+  (@assertion
+    (lessp 10000000 (@inf))
+    ?out t
+    )
 
+  (@assertion
+    ?doc "All numbers are smaller than inf."
+    (greaterp 10000000 (@inf))
+    ?out nil
+    )
 
-;; =======================================================
-;; Predicates
-;; =======================================================
+  (@assertion
+    ?doc "Incremented inf is still inf."
+    (let ( ( inf (@inf) )
+           )
+      (equal inf+1 inf)
+      )
+    ?out t
+    )
 
+  (@assertion
+    ?doc "`@inf' is useful to initialize variables."
+    (let ( ( min_length (@inf)                                       )
+           ( words      '( "example" "abc" "test" "very_long_word" ) )
+           )
+      (foreach word words
+        (setq min_length (min min_length (length word)))
+        )
+      min_length
+      )
+    ?out 3
+    )
 
-;; =======================================================
-;; Universal getter
-;; =======================================================
-
+  )
 
 (@test
   ?fun '@ordinal
@@ -507,4 +530,20 @@ Kevin   layouter\n\
     )
 
   )
+
+
+;; =======================================================
+;; Miscellaneous
+;; =======================================================
+
+
+;; =======================================================
+;; Predicates
+;; =======================================================
+
+
+;; =======================================================
+;; Universal getter
+;; =======================================================
+
 
