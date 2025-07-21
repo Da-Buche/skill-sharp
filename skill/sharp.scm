@@ -3,7 +3,8 @@
 ; alias error "echo '\!:1' >/dev/stderr && exit 1"
 ; setenv SKILL_SHARP_ROOT `realpath $0`/../..
 ; setenv SKILL_SHARP_ARGV "$argv"
-; $CDS_INST_DIR/tools.lnx86/dfII/bin/skill `realpath $0`
+; test 1 = "$?SKILL_INTERPRETER" || setenv SKILL_INTERPRETER "$CDS_INST_DIR/tools.lnx86/dfII/bin/skill"
+; "$SKILL_INTERPRETER" `realpath $0`
 ; exit $status ;
 
 ;; ===============================================================================================================

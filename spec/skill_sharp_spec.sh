@@ -42,6 +42,15 @@ It 'passes unit-tests (including in-code ones) using SKILL interpreter'
   The status should be success
   End
 
+  It 'passes unit-tests using cdsmps'
+  When run env SKILL_INTERPRETER="$CDS_INST_DIR/tools.lnx86/bin/cdsmps" \
+               SKILL_SHARP_RUN_TEST=TRUE                                \
+               ./bin/sharp test ./test
+  The stdout should end with 'PASS'
+  The stderr should be blank
+  The status should be success
+  End
+
 End
 
 It 'passes unit-tests using SKILL interpreter (sstatus debugMode t)'
@@ -49,10 +58,6 @@ End
 
 
 It 'passes unit-tests using SKILL interpreter (rexMagic nil)'
-End
-
-
-It 'passes unit-tests using cdsmps'
 End
 
 
