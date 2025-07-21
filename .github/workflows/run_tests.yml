@@ -8,7 +8,8 @@ on:
 
 jobs:
   build:
-  
+    runs-on: ubuntu-latest
+    
     container:
       image: dabuche0/skill_sharp:latest
       credentials:
