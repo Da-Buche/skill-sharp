@@ -31,7 +31,7 @@ For development and testing, SKILL# relies on Open-Source projects:
 - [scc](https://github.com/boyter/scc)
 
 
-## Usage 
+## Usage
 
 ### Standalone
 The `bin/sharp` utility provides the following commands:
@@ -132,10 +132,10 @@ SKILL# provides a unit-testing framework including two statements `@test` and `@
   (info "%s says 'Hello World! to poport'\n" name)
   (warn "%s says 'Hello World! to woport'\n" name)
   12)
-  
+
 (@test
   ?fun 'print_hello_world_and_return_12
-  
+
   (@assertion
     ?doc "Works with John"
     (print_hello_world_and_return_12 "John")
@@ -143,7 +143,7 @@ SKILL# provides a unit-testing framework including two statements `@test` and `@
     ?info "John says 'Hello World!' to poport"
     ?warn "John says 'Hello World!' to woport"
     )
-    
+
   (@assertion
     ?doc "Fails with a symbol"
     (print_hello_world_and_return_12 'John_as_a_symbol)
@@ -164,11 +164,11 @@ Otherwise it is lazy by default.
 
 All the type checking is managed by the `@fun` macro, it is enabled (or not) at macro expansion time.
 
-```scheme 
+```scheme
 
 ;; Here type-checking is always disabled
 
-(@fun convert_to_string 
+(@fun convert_to_string
   ( ( name ?type symbol )
     )
   ?doc    "Convert NAME to a string and return it."
@@ -287,7 +287,7 @@ It is very common to set and revert a switch or a value.
          )
   (simplifyFilename "$SHELL")
   )
-  
+
 ;; `rexMagic` value is still nil.
 (rexMagic)
 
@@ -307,5 +307,3 @@ It is very common to set and revert a switch or a value.
 #### With
 
 #TODO
-
-
