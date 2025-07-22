@@ -283,7 +283,7 @@ A valid .fnd expression should be t or a list containing three strings."
           (return)
           )
         ( (cdr sexp)
-          (warn "List contain more than one element: %N" sexp)
+          (warn "List contains more than one element: %N" sexp)
           (return)
           )
         ( t
@@ -309,7 +309,7 @@ A valid .fnd expression should be t or a list containing three strings."
           (return)
           )
         ( (cdddr sexp)
-          (warn "List contain more than three elements: %N" sexp)
+          (warn "List contains more than three elements: %N" sexp)
           (return)
           )
         ( t
