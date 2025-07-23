@@ -9,7 +9,7 @@
 (@test
   ?fun 'ipcBeginProcess
   ?doc "Make sure `cdsmps` is working"
-  ?skip (nequal "cdsmps" (@basename (or (getShellEnvVar "SKILL_INTERPRETER") "")))
+  ?skip (not (member (@basename (or (car (getShellArgs)) (getShellEnvVar "SKILL_INTERPRETER") "")) '( "cdsmps" "virtuoso" )))
   (@assertion
     (let ( str ) (ipcWait (ipcBeginProcess "echo 12" "" (lambda (_pid data) (setq str data)))) str)
     ?out "12\n"
