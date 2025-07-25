@@ -165,7 +165,6 @@ $SKILL_SHARP_ROOT/bin/globals {(buildString files)}"))
 
     );test
 
-
   (@fun abstract
     ( ( name ?type symbol )
       )
@@ -223,10 +222,20 @@ $SKILL_SHARP_ROOT/bin/globals {(buildString files)}"))
       ));with ;fun
 
   (@fun @docgen
-    ( @key ( files ?type ( string ... )                                                            )
-           ( init  ?type string         ?def (or (getShellEnvVar "SKILL_SHARP_INIT_COMMAND"  ) "") )
-           ( before ?type string        ?def (or (getShellEnvVar "SKILL_SHARP_BEFORE_COMMAND") "") )
-
+    ( @key
+      ( files        ?type ( string ... )                                                                 )
+      ( init         ?type string         ?def (or (getShellEnvVar "SKILL_SHARP_INIT_COMMAND"  ) "")      )
+      ( before       ?type string         ?def (or (getShellEnvVar "SKILL_SHARP_BEFORE_COMMAND") "")      )
+      ( track_source
+        ?type t|nil
+        ?def  (equal "TRUE" (getShellEnvVar "SKILL_SHARP_TRACK_SOURCE"))
+        ?doc  "If non-nil, function source file is added as third string in .fnd list."
+        )
+      ( relative_var
+        ?type string
+        ?def  "$SKILL_SHARP_ROOT"
+        ?doc  "If ?track_source is non-nil, try to use provided variable to make source path relative."
+        )
       @rest _
       )
     ?doc   "Load all SKILL or SKILL++ FILES.
@@ -246,13 +255,19 @@ Print associated documentation (as .fnd file content) to stdout."
       (setq functions (setof function functions (and (getd function) (nequal "_" (substring function 1 1)))))
       (setq functions (@sort functions ?comp '@alphalessp))
       (foreach function functions
-        (@fprintf (@poport) "\
+        (let ( ( source ""                  )
+               ( file   function->_loadFile )
+               )
+          (when (and track_source (stringp file))
+            (setq source (strcat "\"" (@exact_replace (@realpath relative_var) (@realpath file) (strcat relative_var "/")) "\"\n  "))
+            );when
+          (@fprintf (@poport) "\
 ( \"{(title    function)}\"\n\
   \"{(syntax   function)}\"\n\
   \"{(abstract function)}\"\n\
-  )\n"
-          ));@fprintf ;foreach function
-
+  {source})\n"
+            );@fprintf
+          ));let ;foreach function
       ));dbind ;fun
 
   );closure
@@ -260,6 +275,7 @@ Print associated documentation (as .fnd file content) to stdout."
 ;; =======================================================
 ;; Check .fnd documentation
 ;; =======================================================
+
 (let ()
 
   (@fun valid_sexp?

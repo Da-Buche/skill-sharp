@@ -1,5 +1,9 @@
+## This .gitignore file is also used by `fd` to exclude generated files from specs when checking source code.
+
 .git/
+
 report/results_junit.xml
 .shellspec-quick.log
 doc/**/*.fnd
+.DS_Store
 
