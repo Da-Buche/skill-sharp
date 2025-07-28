@@ -2,10 +2,8 @@
 ;; Enhanced SKILL API Finder
 ;;
 ;; Added features :
-;; - Possibility to search function documentation
+;; - Possibility to search function name, arguments, description, or category
 ;; - Fixed broken 'More Info...' links
-;; - Several categories can be filtered/selected
-;; - Categories are in alphabetic order
 ;;
 ;; A. Buchet - July 2025
 ;; ===============================================================================================================
@@ -103,7 +101,8 @@
       )
     ?doc "Build category, file and functions objects associated to .fnd file at PATH."
     ;; Category name is the directory name of the file
-    (let ( ( category (_fnd_category_by_name (@basename (@dirname path))) )
+    ;; (underscores are replaced by spaces)
+    (let ( ( category (_fnd_category_by_name (buildString (parseString (@basename (@dirname path))  "_" t) " ")) )
            sexp
            functions
            )
@@ -164,38 +163,144 @@
 (let ( (i 0)
        )
 
+  (@fun split_search
+    ( ( str ?type string )
+      )
+    ?doc "Split STR into a mapping table."
+    ?out ( ( symbol symbol string ) ... )
+    (let ( res )
+      ;; Parse string to find <name>=<pcre> pairs
+      (foreach pcre_str '( "([a-zA-Z]+)(!?=)'([^']*?)'" "([a-zA-Z]+)(!?=)\"([^\"]*?)\"" "([a-zA-Z]+)(!?=)([^\\s]+)" )
+        (let ( ( pcre (pcreCompile pcre_str) )
+               )
+          (while (pcreMatchp pcre str)
+            (setq str (pcreReplace pcre str "" 1))
+            (push (list (concat (lowerCase (pcreSubstitute "\\1"))) (concat (pcreSubstitute "\\2")) (pcreSubstitute "\\3")) res)
+            );while
+          ));let ;foreach
+      ;; Consider remaining non-blank strings as general matches
+      (foreach match (parseString str " ")
+        (push (list 'general '\= match ) res)
+        );foreach
+      ;; Return symbol / pcre associaton table or default to one matching everything
+      (or res '( ( general \= "" ) ))
+      ));let ;fun
+
+  (@test
+    ?fun 'split_search
+    ?doc "Infile tests to guarantee `split_search' behavior."
+
+    (@assertion
+      (split_search "")
+      ?out '( ( general \= "" ) )
+      )
+
+    (@assertion
+      (split_search "  ")
+      ?out '( ( general \= "" ) )
+      )
+
+    (@assertion
+      (split_search "a b")
+      ?out '( ( general \= "b" ) ( general \= "a" ) )
+      )
+
+    (@assertion
+      (split_search "^hi.*$")
+      ?out '( ( general \= "^hi.*$" ) )
+      )
+
+    (@assertion
+      (split_search "^hi form$")
+      ?out '( ( general \= "form$" ) ( general \= "^hi" ) )
+      )
+
+    (@assertion
+      (split_search "c=core")
+      ?out '( ( c \= "core" ) )
+      )
+
+    (@assertion
+      (split_search "category='Core SKILL|DFII SKILL' name='^hi' description=\"apply button\"")
+      ?out '( (description \= "apply button") ( name \= "^hi" ) ( category \= "Core SKILL|DFII SKILL" ) )
+      )
+
+    (@assertion
+      (split_search "name='^hi' name='form$' cat='DFII SKILL' layout form")
+      ?out '( ( general \= "form" )( general \= "layout" ) ( cat \= "DFII SKILL" ) ( name \= "form$" ) ( name \= "^hi") )
+      )
+
+    (@assertion
+      (split_search "name='^hi' name='form$' cat!='Core SKILL' layout form")
+      ?out '( ( general \= "form" )( general \= "layout" ) ( cat \!\= "Core SKILL" ) ( name \= "form$" ) ( name \= "^hi") )
+      )
+
+    )
+
   (@fun search_callback
     ( ( _field ?type field )
       ( form   ?type form  )
       @rest _ )
     ?doc "Find all functions matching search value. Update results accordingly."
-    (letseq ( ( str   form->search_field->value                            )
-              ( match (pcreCompile str (pcreGenCompileOptBits ?caseLess (not (pcreMatchp "[A-Z]" str 0)))) )
-              report_choices )
-      ;; Fetch functions matching input
-      (foreach category (_fnd_categories)
-        (foreach file category->files
-          (foreach function file->functions
-            (when (or (pcreMatchp match function->name       )
-                      (pcreMatchp match function->syntax     )
-                      (pcreMatchp match function->description)
-                      )
-              ;; Build associated report field choice
-              (push
-                (list
-                  function->name
-                  (buildString (parseString category->name "_" t) " ")
-                  (@basename file->path)
-                  function->syntax
-                  function->description
-                  function->source
-                  )
-                report_choices
-                )
-              ));when match ;foreach function
-          ));foreach file ;foreach category
+    (let ( ( matches        (split_search form->search_field->value) )
+           ( report_choices ()                                       )
+           ( msg            ""                                       )
+           )
+      (@letf ( ( (rexMagic) t )
+                 )
+        ;; Simplify matches
+        (setq matches
+          (foreach mapcar match matches
+            (destructuringBind ( symbol relation pcre_str ) match
+              (list symbol relation
+                ;; Match is caseless if it only contains lowercase
+                (pcreCompile pcre_str (pcreGenCompileOptBits ?caseLess (not (pcreMatchp "[A-Z]" pcre_str 0)) ))
+                ));list ;dbind
+            ));foreach ;setq
+        ;; Fetch functions matching input
+        (foreach category (_fnd_categories)
+          (foreach file category->files
+            (foreach function file->functions
+              (when (forall match matches
+                      (destructuringBind ( symbol relation pcre ) match
+                        (funcall (@caseq relation ( \= '@identity ) ( \!\= 'not ) )
+                          (caseq symbol
+                            ( ( c cat  category      ) (pcreMatchp pcre category->name        ) )
+                            ( ( n name               ) (pcreMatchp pcre function->name        ) )
+                            ( ( a arg args arguments ) (pcreMatchp pcre function->syntax      ) )
+                            ( ( s syntax             ) (pcreMatchp pcre function->syntax      ) )
+                            ( ( o output             ) (pcreMatchp pcre function->syntax      ) )
+                            ( ( d desc description   ) (pcreMatchp pcre function->description ) )
+                            ( ( g general            ) (or (pcreMatchp pcre function->name       )
+                                                           (pcreMatchp pcre function->syntax     )
+                                                           (pcreMatchp pcre function->description)
+                                                           ))
+                            ( t (setq msg (@str "<font color='firebrick'><b>Not a valid target: {symbol}<br>\n\
+  It should be 'name', 'category', 'syntax', or 'description'<br>\n\
+(or respectively 'n', 'c', 's', or 'd').</b></font>")))
+                            ));caseq ;funcall
+                          ));dbind ;forall match
+                ;; Build associated report field choice
+                (push
+                  (list
+                    function->name
+                    category->name
+                    (@basename file->path)
+                    function->syntax
+                    function->description
+                    function->source
+                    )
+                  report_choices
+                  ));push ;when
+              )));foreach function ;foreach file ;foreach category
+        );letf
       ;; Fill report field using fetched functions
       (setf form->results_field->choices report_choices)
+      ;; Update status
+      (setf form->status_field->value
+        (if (@nonblankstring? msg) msg
+          (@str "{(length report_choices)} matches found")
+          ))
       ));let ;fun
 
   (@fun select_callback
@@ -271,9 +376,34 @@
               (hiLaunchBrowser (@str "file://{file}#{name}"))
               )
             ;; Fallback to SKILL IDE Finder Double-Click callback
-            (t (and (ilgRunSKILLIDE) (_ilgShowMoreInfo (strcat name)))
-              )
-            )
+            (t (and (ilgRunSKILLIDE) (_ilgShowMoreInfo (strcat name))) )
+            );cond
+          ));dbind ;when
+      ));let ;fun
+
+  (@fun _fnd_set_category_callback
+    ( ( form    ?type form  )
+      ( exclude ?type t|nil )
+      )
+    ?doc "Exclude selected category from search."
+    ?global t
+    (let ( ( index (car form->results_field->value) )
+           )
+      (when index
+        (destructuringBind ( _name category _file _syntax _description _source )
+                           (nth index form->results_field->choices)
+          (when (@nonblankstring? category)
+            (@letf ( ( (rexMagic) t )
+                     )
+              (setf form->search_field->value
+                (strcat
+                  (pcreReplace
+                    (pcreCompile (@str "(c|cat|category)!?=({category}\\B|'{category}'|\"{category}\")"))
+                    form->search_field->value "" 0)
+                  " "
+                  (if exclude (@str "cat!='{category}'") (@str "cat='{category}'"))
+                  ));strcat ;setf
+              ));letf ;when
           ));dbind ;when
       ));let ;fun
 
@@ -282,7 +412,19 @@
     (hiCreateLayoutForm (concat 'fnd_form i++) "SKILL# API Finder"
       (hiCreateVerticalBoxLayout 'main_layout ?items (list
           ;; Input
-          (hiCreateComboField ?name 'search_field ?prompt "<b>Find</b>" ?items () ?callback search_callback)
+          (hiCreateComboField
+            ?name    'search_field
+            ?prompt  "<b>Find</b>"
+            ?callback search_callback
+            ?items   '( "^hi field$"
+                        "name=alphalessp"
+                        "category!='Core SKILL'"
+                        "category='Core SKILL|DFII SKILL'"
+                        "arguments=cellview"
+                        "description=\"current window display\""
+                        "n=abe c='Custom Layout'"
+                        )
+            )
           ;; Results
           (hiCreateHorizontalBoxLayout 'results_layout ?items (list
               (hiCreateLabel ?name 'results_label ?labelText "<font size='+1' color='firebrick'><b>Results</b></font>")
@@ -297,7 +439,7 @@
             ?doubleClickCB    double_click_callback
             ?altRowHilight    t
             ?headers
-            '( ( Name        150 left string t )
+            '( ( Name        200 left string t )
                ( Category    100 left string t )
                ( File        100 left string t )
                ( Syntax        0 left string t )
@@ -314,8 +456,10 @@
             ?name 'description_field
             ?hasHorizontalScrollbar nil
             )
+          (hiCreateLabel ?name 'status_field ?labelText "Ready")
           ));list ;main_layout
       ?buttonLayout 'Empty
+      ?initialSize  '( 330 465 )
       ));hiCreateFormLayout ;fun
 
   (@fun fnd_gui ()
@@ -326,6 +470,17 @@
     (unless (_fnd_categories) (_fnd_browse_files))
     (let ( ( form (create_form) )
            )
+      (hiInstantiateForm form)
+      ;; Add context menu to results field
+      (setf form->results_field->hiContextMenu
+        (hiCreateSimpleMenu
+         (concat form->hiFormSym '_context_menu)
+         ""
+         '( "Exclude Category" "Focus Category" )
+         (list
+           (@str "(_fnd_set_category_callback {form->hiFormSym} t  )")
+           (@str "(_fnd_set_category_callback {form->hiFormSym} nil)")
+           )))
       (search_callback form->search_field form)
       (hiDisplayForm form)
       ));let ;fun
