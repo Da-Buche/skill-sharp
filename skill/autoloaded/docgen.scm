@@ -31,12 +31,52 @@ $SKILL_SHARP_ROOT/bin/globals {(buildString files)}"))
 
 (let ()
 
+  (@fun escape
+    ( ( str ?type string )
+      )
+    ?doc "Return STR where special characters are escaped."
+    ?out string
+    ;; Double backslashes then escape in-string double-quotes
+    (@exact_replace "\"" (buildString (parseString str "\\" t) "\\\\") "\\\"" 0)
+    )
+
+  (@fun clean_at_sign
+    ( ( str ?type string )
+      )
+    ?doc "Remove backslash before 'at sign' when found at the beginning of names in STR."
+    (pcreReplace (pcreCompile "\\B\\\\@") str "@" 0)
+    )
+
+  (@test
+    ?fun 'clean_at_sign
+
+    (@assertion
+      ?doc "Simple test"
+      (clean_at_sign "_fun_name_example")
+      ?out "_fun_name_example"
+      )
+
+    (@assertion
+      ?doc "\\@ should not be replaced inside names."
+      (clean_at_sign "Example _\\@str.")
+      ?out "Example _\\@str."
+      )
+
+    (@assertion
+      ?doc "\\@ should not be replaced at beginning of names."
+      (clean_at_sign "Example \\@alphalessp.")
+      ?out "Example @alphalessp."
+      )
+
+    );test
+
   (@fun title
     ( ( name ?type symbol )
       )
     ?doc "Return proper title of function named NAME."
     ?out string
-    (@escape_chars (pcreReplace (pcreCompile "^\\\\@") (@to_string name) "@" 0))
+    ;; Replace '\@' by '@' but only at the beginning of name
+    (escape (clean_at_sign (@to_string name)))
     )
 
   (@test
@@ -51,7 +91,7 @@ $SKILL_SHARP_ROOT/bin/globals {(buildString files)}"))
     (@assertion
       ?doc "Make sure special characters are well escaped."
       (title '_\@str)
-      ?out "_\\@str"
+      ?out "_\\\\@str"
       )
 
     (@assertion
@@ -103,10 +143,10 @@ $SKILL_SHARP_ROOT/bin/globals {(buildString files)}"))
                          ( close (if (eq '__undefined__ def) "" " ]") )
                          )
                     ;; Update name, type doc and def when necessary
-                    (setq name (@escape_chars (lsprintf "%s%s%s" name_prefix name name_suffix))      )
-                    (setq type (@escape_chars (if (eq '__undefined__ type) "" (lsprintf "%N" type))) )
-                    (setq def  (@escape_chars (if (eq '__undefined__ def ) "" (@pretty_print def ))) )
-                    (setq doc  (@escape_chars (if (@nonblankstring? doc) (lsprintf " ; %s" doc) "")) )
+                    (setq name (escape (lsprintf "%s%s%s" name_prefix name name_suffix)        ))
+                    (setq type (escape (if (eq '__undefined__ type) "" (@pretty_print type t)) ))
+                    (setq def  (escape (if (eq '__undefined__ def ) "" (@pretty_print def   )) ))
+                    (setq doc  (escape (if (@nonblankstring? doc) (lsprintf " ; %s" doc) ""  ) ))
                     ;; First empty cell for indentation
                     (fprintf port "<tr><td></td>")
                     ;; Print brackets when argument has default value,
@@ -131,39 +171,9 @@ $SKILL_SHARP_ROOT/bin/globals {(buildString files)}"))
         ));let ;when
       (fprintf port ")")
       ;; Print output when defined
-      (when (memq '@out (get name '?)) (fprintf port " => %s" (@pretty_print (get name '@out))))
+      (when (memq '@out (get name '?)) (fprintf port " => %s" (@pretty_print (get name '@out) t)))
       (getOutstring port)
       ));with ;fun
-
-  (@fun clean_at_sign
-    ( ( str ?type string )
-      )
-    ?doc "Remove backslash before 'at sign' when found at the beginning of names in STR."
-    (pcreReplace (pcreCompile "\\B\\\\@") str "@" 0)
-    )
-
-  (@test
-    ?fun 'title
-
-    (@assertion
-      ?doc "Simple test"
-      (clean_at_sign "_fun_name_example")
-      ?out "_fun_name_example"
-      )
-
-    (@assertion
-      ?doc "\\@ should not be replaced inside names."
-      (clean_at_sign "Example _\\@str.")
-      ?out "Example _\\@str."
-      )
-
-    (@assertion
-      ?doc "\\@ should not be replaced at beginning of names."
-      (clean_at_sign "Example \\@alphalessp.")
-      ?out "Example @alphalessp."
-      )
-
-    );test
 
   (@fun abstract
     ( ( name ?type symbol )
@@ -175,8 +185,8 @@ $SKILL_SHARP_ROOT/bin/globals {(buildString files)}"))
       ;; Write function docstring when available
       (@if (fdoc name)
            ?var doc
-           (fprintf port "%s" (@escape_chars doc))
-         (fprintf port "%s" (@escape_chars (@str "Missing documentation for function `{(title name)}'.")))
+           (fprintf port "%s" (escape doc))
+         (fprintf port "%s" (escape (@str "Missing documentation for function `{(title name)}'.")))
          )
       ;; Write function tests when available
       (@when (name->@test)
@@ -204,16 +214,16 @@ $SKILL_SHARP_ROOT/bin/globals {(buildString files)}"))
                   (push 'progn input)
                 (setq input (car input))
                 ))
-            (fprintf port "%s\n"    (@escape_chars (clean_at_sign (@pretty_print input  ))))
+            (fprintf port "%s\n"    (escape (clean_at_sign (@pretty_print input  ))))
             (foreach (str prefix color) (list info warn error)
                                         '( "INFO" "WARNING" "ERROR" )
                                         '( "darkblue" "darkorange" "darkred" )
               (when str
                 (foreach line (parseString str "\n")
-                  (fprintf port "<font color='%s'>;%s>%s</font>\n" color prefix (@escape_chars (clean_at_sign line)))
+                  (fprintf port "<font color='%s'>;%s>%s</font>\n" color prefix (escape (clean_at_sign line)))
                   ));when ;foreach
               );foreach
-            (fprintf port ";> %s\n" (@escape_chars (clean_at_sign (@pretty_print output ))))
+            (fprintf port ";> %s\n" (escape (clean_at_sign (@pretty_print output ))))
             (when (cdr assertions) (newline port))
             ));let ;foreach
         (fprintf port "</pre>")
@@ -324,8 +334,13 @@ A valid .fnd expression should be t or a list containing three strings."
           (warn "Third element is not a string: %N" sexp)
           (return)
           )
-        ( (cdddr sexp)
-          (warn "List contains more than three elements: %N" sexp)
+        ;; In custom .fnd files, function source file is used as fourth element
+        ; ( (cdddr sexp)
+        ;   (warn "List contains more than three elements: %N" sexp)
+        ;   (return)
+        ;   )
+        ( (cddddr sexp)
+          (warn "List contains more than four elements: %N" sexp)
           (return)
           )
         ( t
@@ -343,7 +358,10 @@ A valid .fnd expression should be t or a list containing three strings."
     ?global t
     (assert files "@fndcheck - no files were provided...")
     (forall file files
-      (@with ( ( port (instring (@exact_replace "\\@" (@file_contents file) "\\\\@")) )
+      (@with ( ( port (infile file))
+               ;; This was used to match native Finder behavior which probably uses a different interpreter.
+               ;; As it seems OK with meaningless escaped characters.
+               ;( port  (instring (@exact_replace "\\@" (@file_contents file) "\\\\@")) )
                )
         (prog ( sexp )
           (while (car (setq sexp (errset (lineread port) t)))

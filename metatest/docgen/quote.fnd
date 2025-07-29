@@ -1,0 +1,13 @@
+( "\\!"
+  "\\!()"
+  "\\! is a weird function name!"
+  )
+( "\\\""
+  "\\\"()"
+  "\\\" is a weird function name!"
+  )
+( "\\'"
+  "\\'()"
+  "\\' is a weird function name!"
+  )
+
