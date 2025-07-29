@@ -92,8 +92,88 @@
       (not (stringp (cadddr (SK_ARGS))))
     (not (stringp (caddr (SK_ARGS))))
     )
-  (SK_WARNING MISSING_DOCSTRING "Method %N has no docstring\n" (car (SK_ARGS))))
+  (SK_WARNING MISSING_DOCSTRING "method %N has no docstring\n" (car (SK_ARGS))))
 
+
+;; -------------------------------------------------------
+;; Report debugging functions
+;; -------------------------------------------------------
+
+;; From 'Cadence SKILL Development Reference' - Chapter 5 - Debug Functions
+
+(_\@lint_add_rule
+  ( break
+    breakpt
+    breakptMethod
+    clear
+    cont
+    continue
+    count
+    debugQuit
+    debugStatus
+    dump
+    gcsummary
+    getAllLoadedFiles
+    getCallingFunction
+    getFunctions
+    getGFbyClass
+    ilAddTopLevelErrorHandler
+    ilDebugCountLevels
+    ilGetGFbyClass
+    ilGetIdeSessionWindow
+    ilGetTCovFiles
+    ilMergeTCovData
+    ilRemoveMethod
+    ilRemoveTopLevelErrorHandler
+    ilSlotBoundp
+    ilToolBox
+    inNext
+    inStepOut
+    installDebugger
+    listAlias
+    listFunctions
+    listVariables
+    memoryAllocated
+    next
+    pp
+    printFunctions
+    printObject
+    printstruct
+    printVariables
+    removeMethod
+    resume
+    skillDebugger
+    skillDevStatus
+    stacktrace
+    step
+    stepend
+    stepout
+    toplevel
+    tracef
+    tracelevlimit
+    tracelevunlimit
+    tracep
+    tracev
+    unbreakpt
+    unbreakptMethod
+    uncount
+    uninstallDebugger
+    untrace
+    untracep
+    untracev
+    unwatch
+    watch
+    where
+    whereIs
+    ;; Custom
+    @show
+    @print_args
+    @print_table
+    @runtime
+    )
+  t
+  (SK_WARNING DEBUG_FUNCTION "%s is a debugging function and should not be used in production code!" (SK_FUNCTION))
+  )
 
 ;; -------------------------------------------------------
 ;; Symbol as argument

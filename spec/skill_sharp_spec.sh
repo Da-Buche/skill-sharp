@@ -51,19 +51,17 @@ It 'passes unit-tests (including in-code ones) using SKILL interpreter'
   The status should be success
   End
 
+  It 'passes unit-tests using SKILL interpreter (sstatus debugMode t)'
+  End
+
+  It 'passes unit-tests using SKILL interpreter (rexMagic nil)'
+  End
+
+  It 'passes unit-tests using Virtuoso -nograph'
+  Skip if "virtuoso not executable" test ! -x "$CDS_INST_DIR/tools.lnx86/dfII/bin/64bit/virtuoso"
+  End
+
 End
-
-It 'passes unit-tests using SKILL interpreter (sstatus debugMode t)'
-End
-
-
-It 'passes unit-tests using SKILL interpreter (rexMagic nil)'
-End
-
-
-It 'passes unit-tests using Virtuoso -nograph'
-End
-
 
 It 'has correct syntax'
 End
