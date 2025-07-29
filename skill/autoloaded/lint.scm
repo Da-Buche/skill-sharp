@@ -99,7 +99,7 @@
 ;; Report debugging functions
 ;; -------------------------------------------------------
 
-;; From 'Cadence SKILL Development Reference' - Chapter 5 - Debug Functions
+;; From 'Cadence SKILL Development Reference' - Chapter 5 - Debugging Functions
 
 (_\@lint_add_rule
   ( break
