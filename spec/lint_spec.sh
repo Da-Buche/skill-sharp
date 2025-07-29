@@ -38,19 +38,36 @@ Describe 'lint'
     The status should be success
   End
 
-  It 'reports missing docstrings'
-  End
-
   It 'reports missing docstrings in methods'
     When run ./bin/sharp lint ./metatest/lint/methods_without_docstrings.scm
-    The stdout should not include 'Method with_docstring has no docstring'
-    The stdout should not include 'Method with_docstring_before has no docstring'
-    The stdout should not include 'Method with_docstring_after has no docstring'
-    The stdout should not include 'Method with_docstring_around has no docstring'
-    The stdout should include 'Method no_docstring has no docstring'
-    The stdout should include 'Method no_docstring_before has no docstring'
-    The stdout should include 'Method no_docstring_after has no docstring'
-    The stdout should include 'Method no_docstring_around has no docstring'
+    The stdout should not include 'method with_docstring has no docstring'
+    The stdout should not include 'method with_docstring_before has no docstring'
+    The stdout should not include 'method with_docstring_after has no docstring'
+    The stdout should not include 'method with_docstring_around has no docstring'
+    The stdout should include 'method no_docstring has no docstring'
+    The stdout should include 'method no_docstring_before has no docstring'
+    The stdout should include 'method no_docstring_after has no docstring'
+    The stdout should include 'method no_docstring_around has no docstring'
+    The stderr should be blank
+    The status should be failure
+  End
+
+  It 'reports missing docstrings in functions'
+    When run ./bin/sharp lint ./metatest/lint/functions_without_docstrings.scm
+    The stdout should not include 'defun_with_docstring'
+    The stdout should not include 'defglobalfun_with_docstring'
+    The stdout should include 'function defun_without_docstring has no docstring'
+    The stdout should include 'function defglobalfun_without_docstring has no docstring'
+    The stderr should be blank
+    The status should be failure
+  End
+
+  It 'reports missing docstrings in procedures'
+    When run ./bin/sharp lint ./metatest/lint/procedures_without_docstrings.il
+    The stdout should not include 'procedure_with_docstring'
+    The stdout should not include 'globalProc_with_docstring'
+    The stdout should include 'procedure procedure_without_docstring has no docstring'
+    The stdout should include 'procedure globalProc_without_docstring has no docstring'
     The stderr should be blank
     The status should be failure
   End
@@ -121,7 +138,6 @@ Describe 'lint'
     The status should be success
   End
 
-
   It 'only reports wrong arguments in `lambda'"'"' and `defun'"'"' calls'
   End
 
@@ -132,13 +148,13 @@ Describe 'lint'
   End
 
   It 'reports usage of debugging functions'
+  When run ./bin/sharp lint ./metatest/lint/debugging_functions.scm
+    The stdout should include '@show is a debugging function and should not be used in production'
+    The stdout should include 'pp is a debugging function and should not be used in production'
+    The stderr should be blank
+    The status should be failure
   End
 
-  It 'reports common typos (prong, @left, ...)'
-  End
-
-  It 'reports used debugging function including @show'
-  End
 
 End
 End

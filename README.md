@@ -307,3 +307,15 @@ It is very common to set and revert a switch or a value.
 #### With
 
 #TODO
+
+
+### Improved 'SKILL# API Finder'
+
+When loading SKILL#, you can now access an improved version of the 'SKILL API Finder'.
+It works using the same variable `$CDS_FINDER_PATH` and files (.fnd & .tgf) as the native finder.
+
+The improved finder enables searching in the function name, arguments and description.
+With the same search argument, it often gives more results than the default 'SKILL API Finder'.
+Those results however can be narrowed down using advanced search.
+It also offers the flexibility to only search in the function names (or arguments, or descriptions).
+

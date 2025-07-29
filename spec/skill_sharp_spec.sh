@@ -51,19 +51,17 @@ It 'passes unit-tests (including in-code ones) using SKILL interpreter'
   The status should be success
   End
 
+  It 'passes unit-tests using SKILL interpreter (sstatus debugMode t)'
+  End
+
+  It 'passes unit-tests using SKILL interpreter (rexMagic nil)'
+  End
+
+  It 'passes unit-tests using Virtuoso -nograph'
+  Skip if "virtuoso not executable" test ! -x "$CDS_INST_DIR/tools.lnx86/dfII/bin/64bit/virtuoso"
+  End
+
 End
-
-It 'passes unit-tests using SKILL interpreter (sstatus debugMode t)'
-End
-
-
-It 'passes unit-tests using SKILL interpreter (rexMagic nil)'
-End
-
-
-It 'passes unit-tests using Virtuoso -nograph'
-End
-
 
 It 'has correct syntax'
 End
@@ -99,7 +97,7 @@ End
 
 It 'generates documentation'
 When run env SKILL_SHARP_TRACK_SOURCE=TRUE \
-           bash -c 'mkdir -p ./doc/finder/SKILL/sharp/ && ./bin/sharp docgen ./skill/loader.scm ./test > "./doc/finder/SKILL/SKILL#/sharp.fnd"'
+           bash -c 'mkdir -p ./doc/finder/SKILL/SKILL#/ && ./bin/sharp docgen ./skill/loader.scm ./test > "./doc/finder/SKILL/SKILL#/sharp.fnd"'
 The file './doc/finder/SKILL/SKILL#/sharp.fnd' should be exist
 The stdout should be blank
 The stderr should be blank
@@ -107,16 +105,16 @@ The status should be success
 End
 
 It 'generated valid documentation'
-Skip if ".fnd not readable" test ! -r ./doc/finder/SKILL/sharp/sharp.fnd
-When run ./bin/sharp fndcheck ./doc/finder/SKILL/sharp/sharp.fnd
+Skip if ".fnd not readable" test ! -r ./doc/finder/SKILL/SKILL#/sharp.fnd
+When run ./bin/sharp fndcheck ./doc/finder/SKILL/SKILL#/sharp.fnd
 The stdout should be blank
 The stderr should be blank
 The status should be success
 End
 
 It 'generated full documentation'
-Skip if ".fnd not readable" test ! -r ./doc/finder/SKILL/sharp/sharp.fnd
-When run grep -n 'Missing documentation for function' './doc/finder/SKILL/sharp/sharp.fnd'
+Skip if ".fnd not readable" test ! -r ./doc/finder/SKILL/SKILL#/sharp.fnd
+When run grep -n 'Missing documentation for function' './doc/finder/SKILL/SKILL#/sharp.fnd'
 The stdout should be blank
 The stderr should be blank
 The status should be failure

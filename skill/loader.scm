@@ -8,6 +8,7 @@
 (let ( ( keepNLInString (status keepNLInString) )
        ( saveInlineDoc  (status saveInlineDoc ) )
        ( magic          (rexMagic             ) )
+       ( no_error       t                       )
        )
   (progn
     (sstatus keepNLInString t)
@@ -21,9 +22,10 @@
           ;; Load init
           (unless (errset (load (simplifyFilename (strcat (get_filename piport) "/../init.scm"))))
             (fprintf (dynamic errport) "Unable to read SKILL# init!\n")
-            (exit 1)
+            (setq no_error nil)
+            ;(exit 1)
             ))
-      (_\@debug "Loaded SKILL# in %.4ns\n" clock_time)
+      (when no_error (_\@debug "Loaded SKILL# in %.4ns\n" clock_time))
       );dbind(sstatus keepNLInString t)
     ;; Revert statuses
     (progn
