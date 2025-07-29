@@ -58,18 +58,20 @@ When HEADERS is non nil, print a separator line aster the first list."
     "Return SECONDS in ms."
     (lsprintf "%.2f" 1000000*seconds))
 
-  (defglobalfun _\@runtime (sexps lists)
-    "`@runtime' macro helper."
-    (@print_table
-      (cons
-        '("S-Expression" "User CPU Time (us)" "System CPU Time (us)" "Clock Time (us)" "Page Faults")
-         (foreach mapcar (sexp l) sexps lists
-           (destructuringBind (user_cpu system_cpu clock page_faults) l
-             (list sexp (to_us user_cpu) (to_us system_cpu) (to_us clock) page_faults)
-             ));dbind ;foreach mapcar
-         )
-      ?headers t
-      ));def
+  (@no_lint
+    (defglobalfun _\@runtime (sexps lists)
+      "`@runtime' macro helper."
+      (@print_table
+        (cons
+          '("S-Expression" "User CPU Time (us)" "System CPU Time (us)" "Clock Time (us)" "Page Faults")
+           (foreach mapcar (sexp l) sexps lists
+             (destructuringBind (user_cpu system_cpu clock page_faults) l
+               (list sexp (to_us user_cpu) (to_us system_cpu) (to_us clock) page_faults)
+               ));dbind ;foreach mapcar
+           )
+        ?headers t
+        ));def
+    )
 
   );closure
 
