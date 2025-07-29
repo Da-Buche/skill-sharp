@@ -17,7 +17,7 @@
 ;; -------------------------------------------------------
 
 (@class
-  ?name    'fnd_category
+  ?name    '@fnd_category
   ?doc     "Categories are containers to gather .fnd files and associated functions."
   ?builder nil
   ( name  @arg @err ?type string           ?doc "Category name, this is used as table key."                    )
@@ -27,23 +27,23 @@
 (let ( ( table (makeTable t nil) )
        )
 
-  (defmethod initializeInstance @after ( ( obj fnd_category ) @rest _ )
+  (defmethod initializeInstance @after ( ( obj @fnd_category ) @rest _ )
     "Properly store OBJ."
     (setf table[obj->name] obj)
     )
 
-  (@fun _fnd_category_by_name
+  (@fun _\@fnd_category_by_name
     ( ( name ?type string )
       )
     ?doc "Return category named NAME."
-    ?out fnd_category
+    ?out @fnd_category
     ?global t
-    (or table[name] (makeInstance 'fnd_category ?name name))
+    (or table[name] (makeInstance '@fnd_category ?name name))
     )
 
-  (@fun _fnd_categories ()
-    ?doc "Return all defined fnd_category objects."
-    ?out ( fnd_category ... )
+  (@fun _\@fnd_categories ()
+    ?doc "Return all defined @fnd_category objects."
+    ?out ( @fnd_category ... )
     ?global t
     (@table_elements table)
     )
@@ -102,7 +102,7 @@
     ?doc "Build category, file and functions objects associated to .fnd file at PATH."
     ;; Category name is the directory name of the file
     ;; (underscores are replaced by spaces)
-    (let ( ( category (_fnd_category_by_name (buildString (parseString (@basename (@dirname path))  "_" t) " ")) )
+    (let ( ( category (_\@fnd_category_by_name (buildString (parseString (@basename (@dirname path))  "_" t) " ")) )
            sexp
            functions
            )
@@ -134,7 +134,7 @@
                     (setq syntax (pcreReplace (pcreCompile "(=>.+)$"   ) syntax "<b>\\1</b>" 1))
                     )
                   ;; Filter out ... from 'caar, caaar, caadr, cadr, caddr, cdar, cddr, ...'
-                  (unless (and (equal name "...") (equal "Core_SKILL" category->name))
+                  (unless (and (equal name "...") (equal "Core SKILL" category->name))
                     (push
                       (makeInstance 'fnd_function ?name name ?syntax syntax ?description description ?source source)
                       functions
@@ -145,7 +145,7 @@
       (pushf (makeInstance 'fnd_file ?path path ?functions functions) category->files)
       ));let ;fun
 
-  (@fun _fnd_browse_files ()
+  (@fun _\@fnd_browse_files ()
     ?doc "Browse .fnd files to build associated categories, files and functions objects."
     ?out t
     ?global t
@@ -258,7 +258,7 @@
                 ));list ;dbind
             ));foreach ;setq
         ;; Fetch functions matching input
-        (foreach category (_fnd_categories)
+        (foreach category (_\@fnd_categories)
           (foreach file category->files
             (foreach function file->functions
               (when (forall match matches
@@ -324,11 +324,12 @@
             (@str "{syntax}<br/><hr/>{description}")
             )))))
 
-  (@fun double_click_callback
+  (@fun _\@fnd_open_documentation_callback
     ( ( _field ?type field )
       ( form   ?type form  )
       @rest _ )
     ?doc "Open selected function associated documentation."
+    ?global t
     (let ( ( index (car form->results_field->value) )
            ( file  ""                               )
            )
@@ -381,7 +382,7 @@
           ));dbind ;when
       ));let ;fun
 
-  (@fun _fnd_set_category_callback
+  (@fun _\@fnd_set_category_callback
     ( ( form    ?type form  )
       ( exclude ?type t|nil )
       )
@@ -407,47 +408,123 @@
           ));dbind ;when
       ));let ;fun
 
+  (@fun set_tooltip
+    ( ( field   ?type field  )
+      ( tooltip ?type string )
+      )
+    ?doc "Set FIELD TOOLTIP. Return FIELD."
+    ?out field
+    (setf field->hiToolTip (lsprintf "
+<html>
+<head>
+  <style>
+    body   { font-size        : 12px     ; }
+    table  { background-color : black    ; }
+    tr.e   { background-color : #e8e8e8  ; }
+    tr.o   { background-color : #ffffff  ; }
+    th     { background-color : #b1b1b2  ; }
+    td     { padding          : 5px      ; }
+    li     { font-weight      : bold     ;
+             margin-left      : -30px    ;
+             white-space      : nowrap   ;
+             }
+ </style>
+</head>
+<body>
+<td>%s</td>
+</body>
+</html>" tooltip))
+    field
+    )
+
   (@fun create_form ()
     ?doc "Create the form"
-    (hiCreateLayoutForm (concat 'fnd_form i++) "SKILL# API Finder"
+    (hiCreateLayoutForm (concat '@fnd_form i++) "SKILL# API Finder"
       (hiCreateVerticalBoxLayout 'main_layout ?items (list
+          ;; -------------------------------------------------------
           ;; Input
-          (hiCreateComboField
-            ?name    'search_field
-            ?prompt  "<b>Find</b>"
-            ?callback search_callback
-            ?items   '( "^hi field$"
-                        "name=alphalessp"
-                        "category!='Core SKILL'"
-                        "category='Core SKILL|DFII SKILL'"
-                        "arguments=cellview"
-                        "description=\"current window display\""
-                        "n=abe c='Custom Layout'"
-                        )
+          ;; -------------------------------------------------------
+          (set_tooltip
+            (hiCreateComboField
+              ?name    'search_field
+              ?prompt  "<b>Find</b>"
+              ?callback search_callback
+              ?items   '( "^hi field$"
+                          "name=alphalessp"
+                          "category!='Core SKILL'"
+                          "category='Core SKILL|DFII SKILL'"
+                          "arguments=cellview"
+                          "description=\"current window display\""
+                          "n=abe c='Custom Layout'"
+                          )
+              )
+            "<b>This field contains the text to be searched in functions name, syntax (or arguments), description, or category.</b>
+
+<ul>
+  <li> It can be defined as a Perl Compatible Regular Expression [PCRE].            </li>
+  <li> It is possible to select which value should match using '=' or '!='.         </li>
+  <li> Each search pattern is caseless unless it has at least one uppercase letter. </li>
+  <li> Several filters can be used at the same time.                                </li>
+</ul>
+
+<br/>
+
+<table>
+  <tr class='e'>  <th> Search value                             </th> <th> Description                                                          </th> </tr>
+  <tr class='o'>  <td> <pre> ^abe                        </pre> </td> <td> Any value contains a word starting with 'abe'.                       </td> </tr>
+  <tr class='e'>  <td> <pre>field$                       </pre> </td> <td> Any value contains a word ending with 'field'.                       </td> </tr>
+  <tr class='o'>  <td> <pre>name='alphalessp'            </pre> </td> <td> Name contains 'alphalessp'.                                          </td> </tr>
+  <tr class='e'>  <td> <pre>category='Core SKILL'        </pre> </td> <td> Category contains 'Core SKILL'.                                      </td> </tr>
+  <tr class='o'>  <td> <pre>arguments!=[0-9]             </pre> </td> <td> Arguments does not contain numbers.                                  </td> </tr>
+  <tr class='e'>  <td> <pre>category=layout name=cellview</pre> </td> <td> Category contains 'layout' & name contains 'cellview'.               </td> </tr>
+  <tr class='o'>  <td> <pre>name=^abe syntax!='cell|win' </pre> </td> <td> Name starts with 'abe' and arguments do not contain 'cell' or 'win'. </td> </tr>
+  <tr class='e'>  <td> <pre>category='DFII' name!=^hi    </pre> </td> <td> Category contains 'DFII' & name does not start with 'hi'.            </td> </tr>
+</table>
+
+<br/>
+<br/>
+
+<b>
+To view more examples, click on the down arrow
+<font size=-1><span style='background-color: firebrick; color: white;'>&nbsp;&#x25BC;&nbsp;</span></font> .<br/>
+It contains predefined filters.
+</b>"
             )
+          ;; -------------------------------------------------------
           ;; Results
+          ;; -------------------------------------------------------
           (hiCreateHorizontalBoxLayout 'results_layout ?items (list
               (hiCreateLabel ?name 'results_label ?labelText "<font size='+1' color='firebrick'><b>Results</b></font>")
               (list (hiCreateSeparatorField ?name 'results_separator) 'stretch 1)
               ));results_layout
-          (hiCreateReportField
-            ?name            'results_field
-            ?sort            '( 0 nil )
-            ?selectMode      'browse ;'single
-            ?enableDeselectCB t
-            ?callback         select_callback
-            ?doubleClickCB    double_click_callback
-            ?altRowHilight    t
-            ?headers
-            '( ( Name        200 left string t )
-               ( Category    100 left string t )
-               ( File        100 left string t )
-               ( Syntax        0 left string t )
-               ( Description   0 left string t )
-               ( Source        0 left string t )
-               )
-            );hiCreateReportField
+          (set_tooltip
+            (hiCreateReportField
+              ?name            'results_field
+              ?sort            '( 0 nil )
+              ?selectMode      'browse ;'single
+              ?enableDeselectCB t
+              ?callback         select_callback
+              ?doubleClickCB    _\@fnd_open_documentation_callback
+              ?altRowHilight    t
+              ?headers
+              '( ( Name        200 left string t )
+                 ( Category    100 left string t )
+                 ( File        100 left string t )
+                 ( Syntax        0 left string t )
+                 ( Description   0 left string t )
+                 ( Source        0 left string t )
+                 )
+              );hiCreateReportField
+            "<b>This field shows all the functions matching 'Find' input.</b>
+<ul>
+  <li> Click on a function to show its description.                 </li>
+  <li> Double&#8209;click to view function detailled documentation. </li>
+  <li> Right-click to open context menu.                            </li>
+</ul>"
+            )
+          ;; ---------------------------------------------------------------------------------------------------------------
           ;; Description
+          ;; ---------------------------------------------------------------------------------------------------------------
           (hiCreateHorizontalBoxLayout 'description_layout ?items (list
               (hiCreateLabel ?name 'description_label ?labelText "<font size='+1' color='firebrick'><b>Description</b></font>")
               (list (hiCreateSeparatorField ?name 'description_separator) 'stretch 1)
@@ -456,18 +533,21 @@
             ?name 'description_field
             ?hasHorizontalScrollbar nil
             )
+          ;; -------------------------------------------------------
+          ;; Status
+          ;; -------------------------------------------------------
           (hiCreateLabel ?name 'status_field ?labelText "Ready")
           ));list ;main_layout
       ?buttonLayout 'Empty
       ?initialSize  '( 330 465 )
       ));hiCreateFormLayout ;fun
 
-  (@fun fnd_gui ()
+  (@fun @fnd_gui ()
     ?doc "Display enhanced 'SKILL API Finder' interface."
     ?out t|nil
     ?global t
     ;; Parse fnd files to build associated objects
-    (unless (_fnd_categories) (_fnd_browse_files))
+    (unless (_\@fnd_categories) (_\@fnd_browse_files))
     (let ( ( form (create_form) )
            )
       (hiInstantiateForm form)
@@ -476,16 +556,104 @@
         (hiCreateSimpleMenu
          (concat form->hiFormSym '_context_menu)
          ""
-         '( "Exclude Category" "Focus Category" )
-         (list
-           (@str "(_fnd_set_category_callback {form->hiFormSym} t  )")
-           (@str "(_fnd_set_category_callback {form->hiFormSym} nil)")
+         '( "Open Documentation" "Exclude Category" "Focus Category" )
+          (list
+           (@str "(_\\@fnd_open_documentation_callback {form->hiFormSym}->results_field {form->hiFormSym} t)")
+           (@str "(_\\@fnd_set_category_callback {form->hiFormSym} t  )")
+           (@str "(_\\@fnd_set_category_callback {form->hiFormSym} nil)")
            )))
       (search_callback form->search_field form)
-      (hiDisplayForm form)
+      (hiDisplayForm form -1:-1)
       ));let ;fun
 
   );closure
+
+;; =======================================================
+;; Replace Native Finder
+;; =======================================================
+
+(let ()
+
+  (@fun label_equal?
+    ( ( str0 ?type string )
+      ( str1 ?type string )
+      )
+    ?doc "Return t if STR0 and STR1 are identical menu (or menu item) labels."
+    ?out t|nil
+    (equal
+      (lowerCase (@exact_replace "&" str0 ""))
+      (lowerCase (@exact_replace "&" str1 ""))
+      ))
+
+  (@fun find_menu_by_label
+    ( ( str    ?type string ?doc "Label displayed by one of the banner menus in WINDOW." )
+      ( window ?type window ?doc "Window containing the banner menu."                    )
+      )
+    ?doc "Return the first CIW menu whose label matches STR."
+    ?out hiMenu
+    (or (prog ()
+          (foreach menu_sym (hiGetBannerMenus window)
+            (let ( ( menu (symeval menu_sym) )
+                   )
+              (when (label_equal? str menu->_menuTitle) (return menu))
+              );let
+            ));foreach ;prog
+        (@error "Unable to find menu labelled \"{str}\" amongst {window} banner menus: {(hiGetBannerMenus window)}")
+        ));or ;fun
+
+  (@fun find_item_by_label
+    ( ( str  ?type string ?doc "Label displayed by one of the items in MENU." )
+      ( menu ?type hiMenu ?doc "Menu containing the item."                    )
+      )
+    ?doc "Return the first CIW menu whose label matches STR."
+    ?out hiMenuItem
+    (or (prog ()
+          (foreach item_sym (hiGetMenuItems menu)
+            (let ( ( item (get menu item_sym) )
+                   )
+              (and
+                (stringp item->hiItemText)
+                (label_equal? str item->hiItemText)
+                (return item)
+                ));and ;let
+            ));foreach ;prog
+        (@error "Unable to find item labelled \"{str}\" amongst menu items: {(hiGetMenuItems menu)}")
+        ))
+
+  (@fun replace_item
+    ( ( menu     ?type hiMenu     )
+      ( item     ?type hiMenuItem )
+      ( new_item ?type hiMenuItem )
+      )
+    ?doc "Replace ITEM by NEW_ITEM in MENU."
+    (letseq ( (item_sym item->hiMenuItemSym)
+              (position (or (prog ( ( i -1 ) ) (foreach sym (hiGetMenuItems menu) i++ (and (eq sym item_sym) (return i))))
+                            (@error "Unable to find item {item} in menu {menu}.")) )
+              )
+      (hiDeleteMenuItem menu item_sym         )
+      (hiInsertMenuItem menu new_item position)
+      ));let ;fun
+
+  (@fun _\@fnd_replace_native_finder_in_ciw ()
+    ?doc "Replace 'SKILL API Finder' by 'SKILL# API Finder' in CIW->Tools menu."
+    ?global t
+    (letseq ( ( menu (find_menu_by_label "Tools"            (hiGetCIWindow)) )
+              ( item (find_item_by_label "SKILL API Finder" menu           ) )
+              )
+      (replace_item menu item
+        (hiCreateMenuItem
+          ?name item->hiMenuItemSym
+          ?itemText item->hiItemText
+          ?itemIcon (hiLoadIconData (@realpath "$SKILL_SHARP_ROOT/pictures/icons/sharp.png"))
+          ?callback "(if (equal \"TRUE\" (getShellEnvVar \"SKILL_SHARP_KEEP_NATIVE_FINDER\")) (startFinder) (@fnd_gui))"
+          ))
+      ));let ;fun
+
+  );closure
+
+;; Replacing SKILL API Finder by force.
+;; This is a bit intrusive but this finder supports all the native features and adds more.
+(when (isCallable 'hiEnqueueCmd) (hiEnqueueCmd "(_\\@fnd_replace_native_finder_in_ciw)"))
 
 ;*/
 
