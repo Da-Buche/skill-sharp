@@ -293,7 +293,25 @@ If END is not provided, END defaults to BEG minus 1 and BEG defaults to 0."
 
 
 ;; =======================================================
-;; Miscellaneous
+;; Bounding Boxes
+;; =======================================================
+
+(@fun @box_width
+  ( ( box ?type box )
+    )
+  ?doc "Return BOX width"
+  ?out number
+  (difference (rightEdge box) (leftEdge box))
+  )
+
+(@fun @box_height
+  ( ( box ?type box )
+    )
+  ?doc "Return BOX height"
+  ?out number
+  (difference (topEdge box) (bottomEdge box))
+  )
+
 ;; =======================================================
 
 (@fun @skill_files
