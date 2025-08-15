@@ -312,6 +312,9 @@ If END is not provided, END defaults to BEG minus 1 and BEG defaults to 0."
   (difference (topEdge box) (bottomEdge box))
   )
 
+
+;; =======================================================
+;; Files
 ;; =======================================================
 
 (@fun @skill_files
@@ -432,5 +435,32 @@ Return nil otherwise."
     (setf (get obj prop) value)
     ));let ;fun
 
+;; =======================================================
+;; Dbobjects
+;; =======================================================
+
+(@fun @lcv
+  ( ( obj ?type dbobject )
+    )
+  ?doc "Return OBJ library, cell and view names as a list."
+  ?out ( string string string )
+  (list obj->libName obj->cellName obj->viewName)
+  )
+
+;; =======================================================
+;; Windows
+;; =======================================================
+
+(@fun @window_number
+  ( ( window ?type window )
+    )
+  ?doc "Return WINDOW number."
+  ?out integer
+  (@letf ( ( (rexMagic) t )
+           )
+    (if (pcreMatchp ":([0-9]+)" (lsprintf "%N" window))
+        (atoi (pcreSubstitute "\\1"))
+      (error "Unable to get window number from: %N" window)
+      )))
 ;*/
 
