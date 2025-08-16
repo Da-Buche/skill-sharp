@@ -7,14 +7,7 @@
 ## A. Buchet - August 2025
 ## ===============================================================================================================
 
-## This script was intended to be used with `ipcSkillProcess' which reads from fd3 and writes to fd4
-## To make it work wiht python, those file descriptors were simply replaced by stdout and stdin
-## stderr is used to write messages directly to the parent process
-
-set fd2 [open /dev/stderr w+]
-set fd3 [open /dev/stdout w+] ; #[open /dev/fd/3 w+]
-set fd4 [open /dev/stdin  r ] ; #[open /dev/fd/4 r ]
-fconfigure $fd4 -buffering none -blocking 0
+fconfigure stdin -buffering none -blocking 0
 
 ## Create a socket to listen on any available port
 set server [socket -server accept_client 0]
@@ -22,8 +15,8 @@ fconfigure $server -buffering none -blocking 1
 set port [lindex [fconfigure $server -sockname] 2]
 set host [exec hostname -f]
 
-puts -nonewline $fd2 "Listening on $host:$port\n"
-flush $fd2
+puts stderr "Listening on $host:$port"
+flush stderr
 
 ## Define the procedure to accept client connections
 proc accept_client {sock addr port} {
@@ -32,13 +25,12 @@ proc accept_client {sock addr port} {
 
 ## Define the procedure to handle incoming requests
 proc handle_request {sock} {
-  global fd3 fd4
   ## Read message from socket, print it to stdout
   set msg [read $sock]
-  puts $fd3 "$msg"
-  flush $fd3
+  puts stdout "$msg"
+  flush stdout
   ## Wait for evaluation answer
-  fileevent $fd4 readable [list handle_answer $fd4 $sock]
+  fileevent stdin readable [list handle_answer stdin $sock]
   fileevent $sock readable ""
 }
 
@@ -46,6 +38,7 @@ proc handle_answer {fd sock} {
   ## Send the response to the client
   set response [read $fd]
   puts $sock "$response"
+  flush $sock
   close $sock
 }
 

@@ -8,7 +8,7 @@
   ( @key
     ( restart ?def nil ?doc "If non-nil, server is automatically restarted when it ends." )
     @rest _ )
-  ?doc "Start SKILL++ server, it opens a port and evaluates all incoming data as SKILL++ and return it through the same port."
+  ?doc "Start SKILL++ server, it opens an available port and evaluates all incoming data as SKILL++ and return it through the same port."
   (ipcBeginProcess
     (@realpath "$SKILL_SHARP_ROOT/bin/tcp_server")
     ""
