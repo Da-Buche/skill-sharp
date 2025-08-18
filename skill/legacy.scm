@@ -62,7 +62,7 @@ Warnings catched during evaluation can be fetched using `getMuffleWarnings'."
 ;; =======================================================
 
 (unless (isCallable 'setf_status)
-  (defsetf status sstatus)
+  (progn "NO_LINT" (defsetf status sstatus))
   (setf (@fdoc 'setf_status) "`setf' helper for `status'.
 
 This allow the use of calls like (setf (status saveInlineDoc) t).
