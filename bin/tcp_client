@@ -5,12 +5,17 @@
 ## A. Buchet - August 2025
 ## ===============================================================================================================
 
+## =======================================================
+## Parse inputs
+## =======================================================
+
 ## Default values
 CSV_FILE="${TCP_SERVER_FILE:-$HOME/.tcp_servers.csv}"
 LANGUAGE="${TCP_SERVER_LANGUAGE:-UNKNOWN}"
 PROJECT="${TCP_SERVER_PROJECT:-NO_PROJECT}"
 CONFIG="${TCP_SERVER_CONFIG:-NO_CONFIG}"
 USE_LATEST=undefined
+CLEAN=false
 
 show_help() {
     cat <<EOF
@@ -21,10 +26,12 @@ Deduce HOST:PORT & PASSWORD.
 Then forward input from stdin to HOST:PORT encrypted with PASSWORD.
 
 Options:
+
  -f, --file            FILE     : CSV file to store used ports.     (default: \$TCP_SERVER_FILE     or "~/.tcp_servers.csv" )
  -l, --language        LANGUAGE : Language used to interpret stdin. (default: \$TCP_SERVER_LANGUAGE or "UNKNOWN"            )
  -n, --name, --project PROJECT  : Current project name.             (default: \$TCP_SERVER_PROJECT  or "NO_PROJECT"         )
  -s, --setup, --config CONFIG   : Current project config.           (default: \$TCP_SERVER_CONFIG   or "NO_CONFIG"          )
+ --clean                        : Remove all lines describing non-responding servers from FILE.
  --latest                       : Use most recent server host:port password.
  -h, --help                     : Show this help message and exits.
 EOF
@@ -36,6 +43,7 @@ error() { warn "$1"; exit 1 ; }
 ## Parse arguments
 while [[ $# -gt 0 ]]; do
   case "$1" in
+    --clean)                            CLEAN=true             ; shift 1 ;;
     --latest)                           USE_LATEST=true        ; shift 1 ;;
     -f|--file)           CSV_FILE="$2"                         ; shift 2 ;;
     -l|--language)       LANGUAGE="$2"                         ; shift 2 ;;
@@ -59,7 +67,7 @@ fi
 [[ -f "$CSV_FILE" ]] || error "Error: CSV file '$CSV_FILE' not found."
 
 ## Extract header line and validate it
-HEADER=$(head -n 1 "$CSV_FILE")
+HEADER=$(head -n1 "$CSV_FILE")
 EXPECTED_HEADER="timestamp, host, port, password, language, project, config"
 if [[ "$HEADER" != "$EXPECTED_HEADER" ]]; then
   warn "Error: CSV file header does not match expected format:"
@@ -68,8 +76,36 @@ if [[ "$HEADER" != "$EXPECTED_HEADER" ]]; then
   exit 1
 fi
 
-## Function to extract matching row
+## =======================================================
+## Clean server file
+## =======================================================
+
+clean_file() {
+  ## Print only lines describing responding servers from CSV_FILE.
+  head -n1 "$CSV_FILE"
+  tail -n+2 "$CSV_FILE" | while IFS=, read -r TIMESTAMP HOST PORT PASSWORD LANGUAGE PROJECT CONFIG; do
+    ## Make sure output from a dummy request is valid
+    response=$(echo '"Is server alive?"' | gpg --symmetric --cipher-algo AES256 --passphrase "$PASSWORD" --batch --yes 2>/dev/null | nc -w5 "$HOST" "$PORT" 2>/dev/null)
+    # Check if response contains 'alive'
+    if echo "$response" | grep -q "alive"; then
+      echo "$TIMESTAMP,$HOST,$PORT,$PASSWORD,$LANGUAGE,$PROJECT,$CONFIG"
+    fi
+  done
+}
+
+if $CLEAN; then
+  TMP_FILE="$(mktemp csv.XXXXX)"
+  clean_file > "$TMP_FILE"
+  mv -f "$TMP_FILE" "$CSV_FILE"
+  exit 0;
+fi
+
+## =======================================================
+## Fetch matching server line
+## =======================================================
+
 extract_server_info() {
+  ## Extract row matching inputs
   if $USE_LATEST; then
     tail -n+2 "$CSV_FILE" | sort -r | grep -E "^[^,]+.,[^,]+.,[^,]+,[^,]+,$LANGUAGE" | head -n1
   else
@@ -92,7 +128,12 @@ PASSWORD=$(echo "$PASSWORD" | xargs)
 ## Validate required fields
 [[ -n "$HOST" && -n "$PORT" && -n "$PASSWORD" ]] || error "Error: Incomplete server information (host/port/password)."
 
+## =======================================================
+## Message server
+## =======================================================
+
 ## Encrypt stdin with GPG and forward to server via netcat
 gpg --symmetric --cipher-algo AES256 --passphrase "$PASSWORD" --batch --yes | nc "$HOST" "$PORT"
 
 exit 0
+

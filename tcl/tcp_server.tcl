@@ -13,7 +13,7 @@
 
 proc print_help {} {
   ## Print help message and exit
-  puts "Usage: script.tcl \[OPTIONS\]"
+  puts "Usage: [file tail [info script]] \[OPTIONS\]"
   puts ""
   puts "Start TCP server:"
   puts "Listen on PORT, write every received message to stdout."
@@ -67,6 +67,11 @@ for {set i 0} {$i < [llength $argv]} {incr i} {
     default                 { puts "Unknown argument: $arg" ;  print_help ; }
   }
 }
+
+## =======================================================
+## Clean down servers
+## =======================================================
+exec bash -c "\$(realpath \$(dirname [info script])/../bin/tcp_client) --clean"
 
 ## =======================================================
 ## Start the server:
