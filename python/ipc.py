@@ -66,11 +66,12 @@ class PID:
 
 
   def wait(self):
-    """Wait for child subprocess to terminate."""
+    """Wait for child process to terminate."""
     self.thread.join()
 
 
   def write(self, data: str):
+    """Write to child process stdin."""
     stdin = self.process.stdin
     if stdin:
       stdin.write(data.encode())

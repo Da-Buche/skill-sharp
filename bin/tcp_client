@@ -1,0 +1,98 @@
+#!/bin/bash
+## ===============================================================================================================
+## Write stdin to HOST:PORT using encryption password described in FILE
+##
+## A. Buchet - August 2025
+## ===============================================================================================================
+
+## Default values
+CSV_FILE="${TCP_SERVER_FILE:-$HOME/.tcp_servers.csv}"
+LANGUAGE="${TCP_SERVER_LANGUAGE:-UNKNOWN}"
+PROJECT="${TCP_SERVER_PROJECT:-NO_PROJECT}"
+CONFIG="${TCP_SERVER_CONFIG:-NO_CONFIG}"
+USE_LATEST=undefined
+
+show_help() {
+    cat <<EOF
+Usage: ${0##*/} [OPTIONS]
+
+Fetch LATEST server or the one described by PROJECT, CONFIG & LANGUAGE in CSV FILE.
+Deduce HOST:PORT & PASSWORD.
+Then forward input from stdin to HOST:PORT encrypted with PASSWORD.
+
+Options:
+ -f, --file            FILE     : CSV file to store used ports.     (default: \$TCP_SERVER_FILE     or "~/.tcp_servers.csv" )
+ -l, --language        LANGUAGE : Language used to interpret stdin. (default: \$TCP_SERVER_LANGUAGE or "UNKNOWN"            )
+ -n, --name, --project PROJECT  : Current project name.             (default: \$TCP_SERVER_PROJECT  or "NO_PROJECT"         )
+ -s, --setup, --config CONFIG   : Current project config.           (default: \$TCP_SERVER_CONFIG   or "NO_CONFIG"          )
+ --latest                       : Use most recent server host:port password.
+ -h, --help                     : Show this help message and exits.
+EOF
+}
+
+warn()  { echo "$1" >&2     ; }
+error() { warn "$1"; exit 1 ; }
+
+## Parse arguments
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --latest)                           USE_LATEST=true        ; shift 1 ;;
+    -f|--file)           CSV_FILE="$2"                         ; shift 2 ;;
+    -l|--language)       LANGUAGE="$2"                         ; shift 2 ;;
+    -n|--name|--project) PROJECT="$2" ; USE_LATEST=false       ; shift 2 ;;
+    -s|--setup|--config) CONFIG="$2"  ; USE_LATEST=false       ; shift 2 ;;
+    -h|--help)           show_help                             ; exit  0 ;;
+    *)                   warn "Unknown option: $1" ; show_help ; exit  1 ;;
+  esac
+done
+
+## Default to --latest unless both PROJECT and CONFIG are set (from env or CLI)
+if [[ "$USE_LATEST" == "undefined" ]]; then
+  if [[ "$PROJECT" != "NO_PROJECT" && "$CONFIG" != "NO_CONFIG" ]]; then
+    USE_LATEST=false
+  else
+    USE_LATEST=true
+  fi
+fi
+
+## Check if CSV file exists
+[[ -f "$CSV_FILE" ]] || error "Error: CSV file '$CSV_FILE' not found."
+
+## Extract header line and validate it
+HEADER=$(head -n 1 "$CSV_FILE")
+EXPECTED_HEADER="timestamp, host, port, password, language, project, config"
+if [[ "$HEADER" != "$EXPECTED_HEADER" ]]; then
+  warn "Error: CSV file header does not match expected format:"
+  warn "Expected: $EXPECTED_HEADER"
+  warn "Found:    $HEADER"
+  exit 1
+fi
+
+## Function to extract matching row
+extract_server_info() {
+  if $USE_LATEST; then
+    tail -n+2 "$CSV_FILE" | sort -r | grep -E "^[^,]+.,[^,]+.,[^,]+,[^,]+,$LANGUAGE" | head -n1
+  else
+    tail -n+2 "$CSV_FILE" | sort -r | grep -E "^[^,]+.,[^,]+.,[^,]+,[^,]+,$LANGUAGE,$PROJECT,$CONFIG" | head -n1
+  fi
+}
+
+ROW=$(extract_server_info)
+
+[[ -n "$ROW" ]] || error "Error: No matching server entry found."
+
+## Parse row fields
+IFS=',' read -r TIMESTAMP HOST PORT PASSWORD LANGUAGE PROJECT CONFIG <<< "$ROW"
+
+## Trim leading/trailing whitespace
+HOST=$(echo "$HOST" | xargs)
+PORT=$(echo "$PORT" | xargs)
+PASSWORD=$(echo "$PASSWORD" | xargs)
+
+## Validate required fields
+[[ -n "$HOST" && -n "$PORT" && -n "$PASSWORD" ]] || error "Error: Incomplete server information (host/port/password)."
+
+## Encrypt stdin with GPG and forward to server via netcat
+gpg --symmetric --cipher-algo AES256 --passphrase "$PASSWORD" --batch --yes | nc "$HOST" "$PORT"
+
+exit 0

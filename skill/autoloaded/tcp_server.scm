@@ -6,11 +6,16 @@
 
 (@fun @skill_server
   ( @key
-    ( restart ?def nil ?doc "If non-nil, server is automatically restarted when it ends." )
+    ( verbose ?def nil ?doc "If non-nil, print a message whenever the server receives a connection." )
+    ( restart ?def nil ?doc "If non-nil, server is automatically restarted when it ends."            )
     @rest _ )
   ?doc "Start SKILL++ server, it opens an available port and evaluates all incoming data as SKILL++ and return it through the same port."
   (ipcBeginProcess
-    (@realpath "$SKILL_SHARP_ROOT/bin/tcp_server")
+    (let ( ( script      (@realpath "$SKILL_SHARP_ROOT/bin/tcp_server") )
+           ( verbose_arg (if verbose "-v" "")                           )
+           )
+      (@str "{script} -l SKILL++ {verbose_arg}")
+      );let
     ""
     ;; Evaluate any incoming data from pid
     (lambda ( pid data )
@@ -26,7 +31,7 @@ ERROR: {errset.errset}")
           )
         ))
     ;; Print errors
-    (lambda ( pid data ) (@info "Message from {pid}: {data}"))
+    (lambda ( pid data ) (@info "{pid} message: {data}"))
     ;; Restart server when necessary
     (if restart (lambda ( pid status ) (@skill_server ?restart t) @nil))
     ))
