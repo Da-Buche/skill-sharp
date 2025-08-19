@@ -105,17 +105,19 @@
 (inSkill
   ;; Waive Lint checks reporting unknown global variables.
   (progn "NO_LINT"
-    (defun @piport        ()         "Return piport"  piport             )
-    (defun setf_\@piport  (port "p") "Set piport"     (setq piport  port))
 
-    (defun @poport        ()         "Return poport"  poport             )
-    (defun setf_\@poport  (port "p") "Set poport"     (setq poport  port))
+    (defun @piport  () "Return piport"  piport )
+    (defun @poport  () "Return poport"  poport )
+    (defun @woport  () "Return woport"  woport )
+    (defun @errport () "Return errport" errport)
+    (defun @stdout  () "Return stdout"  stdout )
+    (defun @stderr  () "Return stderr"  stderr )
 
-    (defun @woport        ()         "Return woport"  woport             )
-    (defun setf_\@woport  (port "p") "Set woport"     (setq woport  port))
+    (defun setf_\@piport  (port "p") "Set piport"  (setq piport  port))
+    (defun setf_\@poport  (port "p") "Set poport"  (setq poport  port))
+    (defun setf_\@woport  (port "p") "Set woport"  (setq woport  port))
+    (defun setf_\@errport (port "p") "Set errport" (setq errport port))
 
-    (defun @errport       ()         "Return errport" errport            )
-    (defun setf_\@errport (port "p") "Set errport"    (setq errport port))
     ))
 
 
