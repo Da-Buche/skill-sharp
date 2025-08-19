@@ -33,7 +33,7 @@ ERROR: {errset.errset}")
     ;; Print errors
     (lambda ( pid data ) (@info "{pid} message: {data}"))
     ;; Restart server when necessary
-    (if restart (lambda ( _pid _status ) (@skill_server ?restart t) @nil))
+    (if restart (lambda ( _pid _status ) (@skill_server ?restart t) '@nil))
     ))
 
 ;*/
