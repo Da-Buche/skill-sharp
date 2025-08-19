@@ -382,13 +382,6 @@ Return nil otherwise."
   (when (classp object class) (or object t))
   )
 
-(@fun @nonblankstring?
-  ( ( obj ?type any )
-    )
-  ?doc    "Return t if STR is a non-blank string, nil otherwise."
-  (and (stringp obj) (not (blankstrp (@strip obj))))
-  )
-
 ; (@fun @when_list
 ;   ( ( obj ?type any )
 ;     )

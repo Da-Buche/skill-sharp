@@ -4,6 +4,13 @@
 ;; A. Buchet - June 2025
 ;; ===============================================================================================================
 
+(@fun @nonblankstring?
+  ( ( obj ?type any )
+    )
+  ?doc    "Return t if STR is a non-blank string, nil otherwise."
+  (and (stringp obj) (not (blankstrp (@strip obj))))
+  )
+
 ;; =======================================================
 ;; Test class
 ;; =======================================================
