@@ -83,14 +83,14 @@ fi
 clean_file() {
   ## Print only lines describing responding servers from CSV_FILE.
   head -n1 "$CSV_FILE"
-  tail -n+2 "$CSV_FILE" | while IFS=, read -r TIMESTAMP HOST PORT PASSWORD LANGUAGE PROJECT CONFIG; do
+  while IFS=, read -r TIMESTAMP HOST PORT PASSWORD LANGUAGE PROJECT CONFIG; do
     ## Make sure output from a dummy request is valid
     response=$(echo '"Is server alive?"' | gpg --symmetric --cipher-algo AES256 --passphrase "$PASSWORD" --batch --yes 2>/dev/null | nc -w5 "$HOST" "$PORT" 2>/dev/null)
     # Check if response contains 'alive'
     if echo "$response" | grep -q "alive"; then
       echo "$TIMESTAMP,$HOST,$PORT,$PASSWORD,$LANGUAGE,$PROJECT,$CONFIG"
     fi
-  done
+  done < <(tail -n+2 "$CSV_FILE")
 }
 
 if $CLEAN; then
