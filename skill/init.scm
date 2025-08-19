@@ -137,6 +137,7 @@
       (load (simplifyFilename (strcat (get_filename piport) "/../macros/f-strings.scm" )))
       (load (simplifyFilename (strcat (get_filename piport) "/../legacy.scm"           )))
       (load (simplifyFilename (strcat (get_filename piport) "/../pretty_print.scm"     )))
+      (load (simplifyFilename (strcat (get_filename piport) "/../utils.scm"            )))
       (load (simplifyFilename (strcat (get_filename piport) "/../testing.scm"          )))
       );progn
     (rexMagic magic)
@@ -304,6 +305,7 @@ If NO_RELOAD is non-nil, FILE is not re-loaded if already marked."
   (@load (strcat skill_root "/macros/f-strings.scm") ?mark_only t)
   (@load (strcat skill_root "/legacy.scm"          ) ?mark_only t)
   (@load (strcat skill_root "/pretty_print.scm"    ) ?mark_only t)
+  (@load (strcat skill_root "/utils.scm"           ) ?mark_only t)
   (@load (strcat skill_root "/testing.scm"         ) ?mark_only t)
 
   ;; Load Lint rules while redirecting info messages to `outstring'
