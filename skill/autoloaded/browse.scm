@@ -1,6 +1,6 @@
 ;; ===============================================================================================================
 ;; Functions to recursively browse cellviews
-;; 
+;;
 ;; A. Buchet - August 2025
 ;; ===============================================================================================================
 
@@ -38,7 +38,7 @@
                   (when view (browse (open (list lib cell view))))
                   ))
               ;; TODO - Support config views
-              
+
               ;; Any other view type, browse it directly
               ( t (browse sub_cellview) )
             ));case ;let
