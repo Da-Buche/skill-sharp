@@ -118,6 +118,13 @@
     (defun setf_\@woport  (port "p") "Set woport"  (setq woport  port))
     (defun setf_\@errport (port "p") "Set errport" (setq errport port))
 
+    ;; Lint waivers
+    ;; TODO - Fix Lint rule to check setf_helpers
+    (define setf_\\\@piport  setf_\@piport )
+    (define setf_\\\@poport  setf_\@poport )
+    (define setf_\\\@woport  setf_\@woport )
+    (define setf_\\\@errport setf_\@errport)
+
     ))
 
 
