@@ -215,16 +215,20 @@ See also `@wrap' and `@with' for context management."
 ;; Cellviews
 ;; -------------------------------------
 
-(defmethod @in ( ( _obj dbobject ) @rest _ )
-  "Context manager when opening a dbobject, nothing to do..."
-  nil)
+;; Avoid warnings when running with SKILL Interpreter or cdsmps
+(when (findClass 'dbobject)
 
-(defmethod @out ( ( obj dbobject ) @rest _ )
-  "Context manager when releasing a dbobject."
-  (@case obj->objType
-    ( "cellView" (dbClose obj))
-    ))
+  (defmethod @in ( ( _obj dbobject ) @rest _ )
+    "Context manager when opening a dbobject, nothing to do..."
+    nil)
 
+  (defmethod @out ( ( obj dbobject ) @rest _ )
+    "Context manager when releasing a dbobject."
+    (@case obj->objType
+      ( "cellView" (dbClose obj))
+      ))
+
+)
 
 ;; -------------------------------------
 ;; Property bags
