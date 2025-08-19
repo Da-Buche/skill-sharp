@@ -52,7 +52,7 @@ if {[info exists ::env(TCP_SERVER_PROJECT) ]} {set project  "$::env(TCP_SERVER_P
 if {[info exists ::env(TCP_SERVER_CONFIG)  ]} {set setup    "$::env(TCP_SERVER_CONFIG)"  } else {set config   "NO_CONFIG"          }
 if {[info exists ::env(TCP_SERVER_VERBOSE) ]} {set verbose  "$::env(TCP_SERVER_VERBOSE)" } else {set verbose  0                    }
 
-# Parse command line arguments
+## Parse command line arguments
 for {set i 0} {$i < [llength $argv]} {incr i} {
   set arg [lindex $argv $i]
   switch -- $arg {
@@ -104,7 +104,7 @@ proc handle_request {sock addr port} {
   fconfigure $sock -translation binary -encoding binary
   set msg [read $sock]
 
-  # Write the encrypted message to a temporary file
+  ## Write the encrypted message to a temporary file
   set tmp_msg [exec mktemp /tmp/gpg.XXXXX]
   set fh [open $tmp_msg "w"]
   fconfigure $fh -translation binary -encoding binary
