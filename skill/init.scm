@@ -105,17 +105,25 @@
 (inSkill
   ;; Waive Lint checks reporting unknown global variables.
   (progn "NO_LINT"
-    (defun @piport        ()         "Return piport"  piport             )
-    (defun setf_\@piport  (port "p") "Set piport"     (setq piport  port))
 
-    (defun @poport        ()         "Return poport"  poport             )
-    (defun setf_\@poport  (port "p") "Set poport"     (setq poport  port))
+    (defun @piport  () "Return piport"  piport )
+    (defun @poport  () "Return poport"  poport )
+    (defun @woport  () "Return woport"  woport )
+    (defun @errport () "Return errport" errport)
+    (defun @stdout  () "Return stdout"  stdout )
+    (defun @stderr  () "Return stderr"  stderr )
 
-    (defun @woport        ()         "Return woport"  woport             )
-    (defun setf_\@woport  (port "p") "Set woport"     (setq woport  port))
+    (defun setf_\@piport  (port "p") "Set piport"  (setq piport  port))
+    (defun setf_\@poport  (port "p") "Set poport"  (setq poport  port))
+    (defun setf_\@woport  (port "p") "Set woport"  (setq woport  port))
+    (defun setf_\@errport (port "p") "Set errport" (setq errport port))
 
-    (defun @errport       ()         "Return errport" errport            )
-    (defun setf_\@errport (port "p") "Set errport"    (setq errport port))
+    ;; Lint waivers
+    ;; TODO - Fix Lint rule to check setf_helpers
+    (defun setf_\\\@piport  (port "p") "Set piport"  (setq piport  port))
+    (defun setf_\\\@poport  (port "p") "Set poport"  (setq poport  port))
+    (defun setf_\\\@woport  (port "p") "Set woport"  (setq woport  port))
+    (defun setf_\\\@errport (port "p") "Set errport" (setq errport port))
     ))
 
 
@@ -135,6 +143,7 @@
       (load (simplifyFilename (strcat (get_filename piport) "/../macros/f-strings.scm" )))
       (load (simplifyFilename (strcat (get_filename piport) "/../legacy.scm"           )))
       (load (simplifyFilename (strcat (get_filename piport) "/../pretty_print.scm"     )))
+      (load (simplifyFilename (strcat (get_filename piport) "/../utils.scm"            )))
       (load (simplifyFilename (strcat (get_filename piport) "/../testing.scm"          )))
       );progn
     (rexMagic magic)
@@ -302,6 +311,7 @@ If NO_RELOAD is non-nil, FILE is not re-loaded if already marked."
   (@load (strcat skill_root "/macros/f-strings.scm") ?mark_only t)
   (@load (strcat skill_root "/legacy.scm"          ) ?mark_only t)
   (@load (strcat skill_root "/pretty_print.scm"    ) ?mark_only t)
+  (@load (strcat skill_root "/utils.scm"           ) ?mark_only t)
   (@load (strcat skill_root "/testing.scm"         ) ?mark_only t)
 
   ;; Load Lint rules while redirecting info messages to `outstring'

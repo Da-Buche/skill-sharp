@@ -4,19 +4,6 @@
 ; ;; A. Buchet - April 2025
 ; ;; ===============================================================================================================
 
-; (defun @mktemp ( @optional (template "") @rest _ "tg" )
-;   "Unix `mktemp` wrapper.
-
-; `makeTempFileName' is limited because it does not support 'XXX...' pattern at the end of TEMPLATE.
-; It also only generates a file name instead of an actual file. (At least the name is explicit)
-; This might cause issues if another identical temporary name is generated at the same time.
-
-; This is probably equivalent to `mktemp` \"unsafe\" --dry-run mode."
-;   (destructuringBind (stdout stderr status)
-;                      (@bash (lsprintf "mktemp %s | xargs printf" template))
-;     (if (zerop status) stdout (error "@mktemp - %s" stderr))
-;     ));dbind ;def
-
 ; ; (@class
 ; ;   ?name    '@tmp_file
 ; ;   ?doc     "Define a temporary file. It is meant to be used in `@with' context manager."

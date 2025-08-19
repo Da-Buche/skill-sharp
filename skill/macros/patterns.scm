@@ -162,6 +162,8 @@ See also `@wrap' and `@with' for context management."
                   )
              (unwindProtect
                (progn (@in ,(car def)) ,@(_\@with (cdr defs) body))
+               ;; TODO - Should we asser that `@out' output is non-nil?
+               ;; This might help detect cases where a cellview cannot be closed for instance
                (@out ,(car def))
                )))
          );let
@@ -213,8 +215,20 @@ See also `@wrap' and `@with' for context management."
 ;; Cellviews
 ;; -------------------------------------
 
-;; TODO - Cellviews context manager
+;; Avoid warnings when running with SKILL Interpreter or cdsmps
+(when (findClass 'dbobject)
 
+  (defmethod @in ( ( _obj dbobject ) @rest _ )
+    "Context manager when opening a dbobject, nothing to do..."
+    nil)
+
+  (defmethod @out ( ( obj dbobject ) @rest _ )
+    "Context manager when releasing a dbobject."
+    (@case obj->objType
+      ( "cellView" (dbClose obj))
+      ))
+
+)
 
 ;; -------------------------------------
 ;; Property bags

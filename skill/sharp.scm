@@ -121,7 +121,7 @@
   (add_command "docgen"
     (lambda ( @rest args )
       (@debug "Running Docgen on {args}")
-      (@setf (@woport) (inSkill stderr))
+      (@setf (@woport) (@stderr))
       (@exit (if (@docgen ?files (@skill_files args)) 0 1))
       ))
 

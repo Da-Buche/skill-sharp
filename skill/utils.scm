@@ -39,6 +39,19 @@ This is Unix `dirname` equivalent."
         "."));if ;let
     ));if ;def
 
+(defun @mktemp ( @optional (template "") @rest _ "tg" )
+  "Unix `mktemp` wrapper.
+
+`makeTempFileName' is limited because it does not support 'XXX...' pattern at the end of TEMPLATE.
+It also only generates a file name instead of an actual file. (At least the name is explicit)
+This might cause issues if another identical temporary name is generated at the same time.
+
+This is probably equivalent to `mktemp` \"unsafe\" --dry-run mode."
+  (destructuringBind (stdout stderr status)
+                     (@bash (lsprintf "mktemp %s | xargs printf" template))
+    (if (zerop status) stdout (error "@mktemp - %s" stderr))
+    ));dbind ;def
+
 
 ;; =======================================================
 ;; Lists
@@ -280,7 +293,28 @@ If END is not provided, END defaults to BEG minus 1 and BEG defaults to 0."
 
 
 ;; =======================================================
-;; Miscellaneous
+;; Bounding Boxes
+;; =======================================================
+
+(@fun @box_width
+  ( ( box ?type box )
+    )
+  ?doc "Return BOX width"
+  ?out number
+  (difference (rightEdge box) (leftEdge box))
+  )
+
+(@fun @box_height
+  ( ( box ?type box )
+    )
+  ?doc "Return BOX height"
+  ?out number
+  (difference (topEdge box) (bottomEdge box))
+  )
+
+
+;; =======================================================
+;; Files
 ;; =======================================================
 
 (@fun @skill_files
@@ -400,6 +434,159 @@ Return nil otherwise."
       )
     (setf (get obj prop) value)
     ));let ;fun
+
+;; =======================================================
+;; Dbobjects
+;; =======================================================
+
+(@fun @lcv
+  ( ( obj ?type dbobject )
+    )
+  ?doc "Return OBJ library, cell and view names as a list."
+  ?out ( string string string )
+  (list obj->libName obj->cellName obj->viewName)
+  )
+
+;; =======================================================
+;; Windows
+;; =======================================================
+
+(@fun @window_number
+  ( ( window ?type window )
+    )
+  ?doc "Return WINDOW number."
+  ?out integer
+  (@letf ( ( (rexMagic) t )
+           )
+    (if (pcreMatchp ":([0-9]+)" (lsprintf "%N" window))
+        (atoi (pcreSubstitute "\\1"))
+      (error "Unable to get window number from: %N" window)
+      )))
+
+;; =======================================================
+;; Menus
+;; =======================================================
+
+(let ()
+
+  (@fun label_equal?
+    ( ( str0 ?type string )
+      ( str1 ?type string )
+      )
+    ?doc "Return t if STR0 and STR1 are identical menu (or menu item) labels."
+    ?out t|nil
+    (equal
+      (lowerCase (@exact_replace "&" str0 ""))
+      (lowerCase (@exact_replace "&" str1 ""))
+      ))
+
+  (@fun @menu_by_label
+    ( @key
+      ( window ?type window ?doc "Window containing the banner menu."                    )
+      ( label  ?type string ?doc "Label displayed by one of the banner menus in WINDOW." )
+      @rest _
+      )
+    ?doc "Return the first CIW menu whose label matches LABEL."
+    ?out hiMenu
+    ?global t
+    ?strict t
+    (or (prog ()
+          (foreach menu_sym (hiGetBannerMenus window)
+            (let ( ( menu (symeval menu_sym) )
+                   )
+              (when (label_equal? label menu->_menuTitle) (return menu))
+              );let
+            ));foreach ;prog
+        (@error "Unable to find menu labelled \"{label}\" amongst {window} banner menus: {(hiGetBannerMenus window)}")
+        ));or ;fun
+
+  (@fun @menu_item_by_label
+    ( @key
+      ( window     ?type window|nil ?def nil                                                                                                   )
+      ( menu_label ?type string     ?def ""                                                                                                    )
+      ( menu       ?type hiMenu     ?def (@menu_by_label ?window window ?label menu_label) ?doc "Menu containing the item."                    )
+      ( label      ?type string                                                            ?doc "Label displayed by one of the items in MENU." )
+      @rest _
+      )
+    ?doc "Return the first CIW menu whose label matches LABEL."
+    ?out hiMenuItem
+    ?global t
+    ?strict t
+    (or (prog ()
+          (foreach item_sym (hiGetMenuItems menu)
+            (let ( ( item (get menu item_sym) )
+                   )
+              (and
+                (stringp item->hiItemText)
+                (label_equal? label item->hiItemText)
+                (return item)
+                ));and ;let
+            ));foreach ;prog
+        (@error "Unable to find item labelled \"{label}\" amongst menu items: {(hiGetMenuItems menu)}")
+        ))
+
+  (@fun @menu_replace_item
+    ( @key
+      ( window            ?type window|nil ?def nil                                                )
+      ( menu_label        ?type string     ?def ""                                                 )
+      ( menu              ?type hiMenu     ?def (@menu_by_label ?window window ?label menu_label)  )
+      ( item_label        ?type string     ?def ""                                                 )
+      ( item              ?type hiMenuItem ?def (@menu_item_by_label ?menu menu ?label item_label) )
+      ( new_item_name     ?type symbol     ?def item->hiMenuItemSym                                )
+      ( new_item_label    ?type string     ?def item->hiItemText                                   )
+      ( new_item_icon     ?type list       ?def item->_itemIcon                                    )
+      ( new_item_callback ?type string     ?def item->_itemCallback                                )
+      ( new_item          ?type hiMenuItem ?def (hiCreateMenuItem
+                                                  ?name     new_item_name
+                                                  ?itemText new_item_label
+                                                  ?itemIcon new_item_icon
+                                                  ?callback new_item_callback
+                                                  ) )
+      @rest _
+      )
+    ?doc "Replace ITEM by NEW_ITEM in MENU."
+    ?out t|nil
+    ?global t
+    ?strict t
+    (letseq ( (item_sym item->hiMenuItemSym)
+              (position (or (prog ( ( i -1 ) ) (foreach sym (hiGetMenuItems menu) i++ (and (eq sym item_sym) (return i))))
+                            (@error "Unable to find item {item} in menu {menu}.")) )
+              )
+      (hiDeleteMenuItem menu item_sym         )
+      (hiInsertMenuItem menu new_item position)
+      ));let ;fun
+
+    (@fun @menu_insert_item_before
+    ( @key
+      ( window            ?type window|nil ?def nil                                                )
+      ( menu_label        ?type string     ?def ""                                                 )
+      ( menu              ?type hiMenu     ?def (@menu_by_label ?window window ?label menu_label)  )
+      ( item_label        ?type string     ?def ""                                                 )
+      ( item              ?type hiMenuItem ?def (@menu_item_by_label ?menu menu ?label item_label) )
+      ( new_item_name     ?type symbol                                                             )
+      ( new_item_label    ?type string                                                             )
+      ( new_item_icon     ?type list                                                               )
+      ( new_item_callback ?type string                                                             )
+      ( new_item          ?type hiMenuItem ?def (hiCreateMenuItem
+                                                  ?name     new_item_name
+                                                  ?itemText new_item_label
+                                                  ?itemIcon new_item_icon
+                                                  ?callback new_item_callback
+                                                  ) )
+      @rest _
+      )
+    ?doc "Replace ITEM by NEW_ITEM in MENU."
+    ?out t|nil
+    ?global t
+    ?strict t
+    (letseq ( (item_sym item->hiMenuItemSym)
+              (position (or (prog ( ( i -1 ) ) (foreach sym (hiGetMenuItems menu) i++ (and (eq sym item_sym) (return i))))
+                            (@error "Unable to find item {item} in menu {menu}.")) )
+              )
+      (hiInsertMenuItem menu new_item position)
+      ));let ;fun
+
+  );closure
 
 ;*/
 

@@ -572,84 +572,16 @@ It contains predefined filters.
 ;; Replace Native Finder
 ;; =======================================================
 
-(let ()
-
-  (@fun label_equal?
-    ( ( str0 ?type string )
-      ( str1 ?type string )
-      )
-    ?doc "Return t if STR0 and STR1 are identical menu (or menu item) labels."
-    ?out t|nil
-    (equal
-      (lowerCase (@exact_replace "&" str0 ""))
-      (lowerCase (@exact_replace "&" str1 ""))
-      ))
-
-  (@fun find_menu_by_label
-    ( ( str    ?type string ?doc "Label displayed by one of the banner menus in WINDOW." )
-      ( window ?type window ?doc "Window containing the banner menu."                    )
-      )
-    ?doc "Return the first CIW menu whose label matches STR."
-    ?out hiMenu
-    (or (prog ()
-          (foreach menu_sym (hiGetBannerMenus window)
-            (let ( ( menu (symeval menu_sym) )
-                   )
-              (when (label_equal? str menu->_menuTitle) (return menu))
-              );let
-            ));foreach ;prog
-        (@error "Unable to find menu labelled \"{str}\" amongst {window} banner menus: {(hiGetBannerMenus window)}")
-        ));or ;fun
-
-  (@fun find_item_by_label
-    ( ( str  ?type string ?doc "Label displayed by one of the items in MENU." )
-      ( menu ?type hiMenu ?doc "Menu containing the item."                    )
-      )
-    ?doc "Return the first CIW menu whose label matches STR."
-    ?out hiMenuItem
-    (or (prog ()
-          (foreach item_sym (hiGetMenuItems menu)
-            (let ( ( item (get menu item_sym) )
-                   )
-              (and
-                (stringp item->hiItemText)
-                (label_equal? str item->hiItemText)
-                (return item)
-                ));and ;let
-            ));foreach ;prog
-        (@error "Unable to find item labelled \"{str}\" amongst menu items: {(hiGetMenuItems menu)}")
-        ))
-
-  (@fun replace_item
-    ( ( menu     ?type hiMenu     )
-      ( item     ?type hiMenuItem )
-      ( new_item ?type hiMenuItem )
-      )
-    ?doc "Replace ITEM by NEW_ITEM in MENU."
-    (letseq ( (item_sym item->hiMenuItemSym)
-              (position (or (prog ( ( i -1 ) ) (foreach sym (hiGetMenuItems menu) i++ (and (eq sym item_sym) (return i))))
-                            (@error "Unable to find item {item} in menu {menu}.")) )
-              )
-      (hiDeleteMenuItem menu item_sym         )
-      (hiInsertMenuItem menu new_item position)
-      ));let ;fun
-
-  (@fun _\@fnd_replace_native_finder_in_ciw ()
-    ?doc "Replace 'SKILL API Finder' by 'SKILL# API Finder' in CIW->Tools menu."
-    ?global t
-    (letseq ( ( menu (find_menu_by_label "Tools"            (hiGetCIWindow)) )
-              ( item (find_item_by_label "SKILL API Finder" menu           ) )
-              )
-      (replace_item menu item
-        (hiCreateMenuItem
-          ?name item->hiMenuItemSym
-          ?itemText item->hiItemText
-          ?itemIcon (hiLoadIconData (@realpath "$SKILL_SHARP_ROOT/pictures/icons/sharp.png"))
-          ?callback "(if (equal \"TRUE\" (getShellEnvVar \"SKILL_SHARP_KEEP_NATIVE_FINDER\")) (startFinder) (@fnd_gui))"
-          ))
-      ));let ;fun
-
-  );closure
+(@fun _\@fnd_replace_native_finder_in_ciw ()
+  ?doc "Replace 'SKILL API Finder' by 'SKILL# API Finder' in CIW->Tools menu."
+  ?global t
+  (@menu_replace_item
+    ?window            (hiGetCIWindow)
+    ?menu_label        "Tools"
+    ?item_label        "SKILL API Finder"
+    ?new_item_icon     (hiLoadIconData (@realpath "$SKILL_SHARP_ROOT/pictures/icons/sharp.png"))
+    ?new_item_callback "(if (equal \"TRUE\" (getShellEnvVar \"SKILL_SHARP_KEEP_NATIVE_FINDER\")) (startFinder) (@fnd_gui))"
+    ))
 
 ;; Replacing SKILL API Finder by force.
 ;; This is a bit intrusive but this finder supports all the native features and adds more.

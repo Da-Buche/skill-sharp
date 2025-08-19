@@ -182,6 +182,13 @@ Return nil otherwise."
   (@type_add 'integer  (lambda ( obj ) (classp obj 'fixnum))         )
   (@type_add 'float    (lambda ( obj ) (classp obj 'flonum))         )
 
+  (when (isCallable 'windowp) (@type_add 'window 'windowp))
+
+  (when (isCallable 'dbIsId )
+    (@type_add 'db_view
+      (lambda ( obj ) (and (dbIsId obj) (equal "cellView" obj->objType)))
+      ))
+
   );closure
 
 (defun _\@fun_type_assert_rec ( obj type_or_class msg )

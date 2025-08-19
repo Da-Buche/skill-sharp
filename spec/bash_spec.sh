@@ -18,7 +18,7 @@ shellcheck_outdated() {
 get_bash_files() {
   ## List all shell files in repo
   #shellcheck disable=SC2156
-  find . -type f -not -iwholename '*/.git/*' -exec bash -c 'file -b "{}" | grep -q "Bourne-Again shell" && echo {}' \;
+  find . -type f -not -iwholename '*/.git/*' -not -name '*.py' -exec bash -c 'file -b "{}" | grep -q "Bourne-Again shell" && echo {}' \;
 }
 
 export -f get_bash_files
