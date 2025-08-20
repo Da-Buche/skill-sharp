@@ -7,4 +7,5 @@ report/results_junit.xml
 .shellspec-quick.log
 doc/**/*.fnd
 .DS_Store
+private
 
