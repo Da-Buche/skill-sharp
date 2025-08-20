@@ -66,16 +66,6 @@ fi
 ## Check if CSV file exists
 [[ -f "$CSV_FILE" ]] || error "Error: CSV file '$CSV_FILE' not found."
 
-## Extract header line and validate it
-HEADER=$(head -n1 "$CSV_FILE")
-EXPECTED_HEADER="timestamp, host, port, password, language, project, config"
-if [[ "$HEADER" != "$EXPECTED_HEADER" ]]; then
-  warn "Error: CSV file header does not match expected format:"
-  warn "Expected: $EXPECTED_HEADER"
-  warn "Found:    $HEADER"
-  exit 1
-fi
-
 ## =======================================================
 ## Clean server file
 ## =======================================================
@@ -103,6 +93,16 @@ fi
 ## =======================================================
 ## Fetch matching server line
 ## =======================================================
+
+## Extract header line and validate it
+HEADER=$(head -n1 "$CSV_FILE")
+EXPECTED_HEADER="timestamp, host, port, password, language, project, config"
+if [[ "$HEADER" != "$EXPECTED_HEADER" ]]; then
+  warn "Error: CSV file header does not match expected format:"
+  warn "Expected: $EXPECTED_HEADER"
+  warn "Found:    $HEADER"
+  exit 1
+fi
 
 extract_server_info() {
   ## Extract row matching inputs
