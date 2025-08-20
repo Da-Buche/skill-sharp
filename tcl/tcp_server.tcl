@@ -71,6 +71,9 @@ for {set i 0} {$i < [llength $argv]} {incr i} {
 ## =======================================================
 ## Clean down servers
 ## =======================================================
+
+## Make sure csv files exists and has the right access
+exec bash -c "touch $file ; chmod 600 $file"
 exec bash -c "\$(realpath \$(dirname [info script])/../bin/tcp_client) --clean"
 
 ## =======================================================
@@ -140,17 +143,13 @@ proc handle_answer {fd sock} {
 
 set timestamp [clock format [clock seconds] -format "%Y-%m-%d_%H-%M-%S"]
 
-## Make sure csv files exists and has the right access
-set tmp_file [exec mktemp /tmp/csv.XXXXX]
-exec bash -c "touch $file ; chmod 600 $file"
-
 ## Write server data to csv file
+set tmp_file [exec mktemp /tmp/csv.XXXXX]
 exec bash -c "{\
   echo  'timestamp, host, port, password, language, project, config' ;\
   echo '$timestamp,$host,$port,$password,$language,$project,$config' ;\
   grep -v '^timestamp' $file || :                                    ;\
   } >> $tmp_file && mv -f $tmp_file $file"
-
 exec bash -c "chmod 600 $file"
 
 ## =======================================================
