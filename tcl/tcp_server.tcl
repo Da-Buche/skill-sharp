@@ -86,6 +86,25 @@ fconfigure stdin -buffering none -blocking 0
 
 ## Create a socket to listen on any available port
 set server [socket -server accept_client $port]
+
+## Make sure socket is well closed when program is exited
+proc cleanup {} {
+  global server
+  if {[info exists server]} {
+    close $server
+    puts stderr "Server closed."
+    flush stderr
+  }
+}
+
+# Override exit to add cleanup
+rename exit _exit
+proc exit {args} {
+  cleanup
+  eval _exit $args
+}
+
+## Configure socket and retrieve port
 fconfigure $server -buffering none -blocking 1
 set port [lindex [fconfigure $server -sockname] 2]
 set host [exec hostname -f]
