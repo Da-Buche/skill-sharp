@@ -32,6 +32,33 @@
   (lambda (obj) (apply '@get obj props))
   )
 
+(let ()
+
+  (@fun @foldl1
+    ( ( function ?type callable )
+      ( list     ?type list     )
+      )
+    ?doc "Apply combination FUNCTION to all LIST elements from the left.
+See reference : https://en.wikipedia.org/wiki/Fold_(higher-order_function)"
+    ?global t
+    ;; Make sure tail-call optimization is enabled
+    (@letf ( ( (status optimizeTailCall) t )
+             )
+      (rec function (car list) (cdr list))
+      ))
+
+  (@fun rec
+    ( ( function ?type callable )
+      ( init                    )
+      ( list     ?type list     )
+      )
+    ?doc "Recursive helper for `@foldl1'"
+    (@nif list init
+      (rec function (funcall function init (car list)) (cdr list))
+      ))
+
+  );closure
+
 ;; -------------------------------------------------------
 ;; `hiEnqueueCmd' wrapper
 ;; -------------------------------------------------------
