@@ -293,5 +293,18 @@ Raise an error otherwise."
   "TODO - `@fun' implementation is still a draft..."
   (_\@fun name args doc global strict out body))
 
+(@macro @proc ( name_and_args
+                @key
+                doc
+                global
+                ( strict (equal "TRUE" (getShellEnvVar "SKILL_SHARP_STRICT_TYPE_CHECKING")) )
+                ( out    '__undefined__                                                     )
+                @rest body )
+  "This macro allows C-style writing.
+`@proc' is only `@fun' wrapper (like `procedure' for `defun' or `globalProc' for `defglobalfun').
+Please refer to `@fun' documentation."
+  (_\@fun (car name_and_args) (cdr name_and_args) doc global strict out body)
+  )
+
 ;*/
 
