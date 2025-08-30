@@ -448,6 +448,23 @@ Return nil otherwise."
   )
 
 ;; =======================================================
+;; Tech Files
+;; =======================================================
+
+(@fun @tech_libs ()
+  ?doc "Return all available tech libraries."
+  ?out ( ddlib ... )
+  (setof ddlib (ddGetLibList) (equal ddlib->name (techGetTechFile ddlib)->libName))
+  )
+
+(@fun @tech_files ()
+  ?doc "Return all the available tech files."
+  ?out ( tech_file ... )
+  (mapcar techGetTechFile (@tech_libs))
+  )
+
+
+;; =======================================================
 ;; Windows
 ;; =======================================================
 
