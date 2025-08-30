@@ -130,18 +130,23 @@
   (defglobalfun _\@fun ( name args doc global strict out body )
     "`@fun' helper, generates S-expression to define a valid SKILL function."
     (assert doc "@fun - when defining '%N' ?doc is required and should be a string: %N" name doc)
-    `(prog1
-       (,(if global 'defglobalfun 'defun) ,name ,(build_args_list name args)
-         ,(build_doc doc args)
-         ,@(when strict (build_args_check name args))
-         ,@(if (and strict (neq out '__undefined__))
-               `( (_\@fun_type_assert ,(cons 'progn body) ',out ,(lsprintf "%s - output" name)) )
-             body)
-          );def
-       (setf (@arglist ',name) ',args)
-       (setf (@fdoc    ',name) ',doc )
-       (setf (@out     ',name) ',out )
-       ));progn ;fun
+    (let ( ( lambda_sexp
+             `( lambda ,(build_args_list name args)
+                ,(build_doc doc args)
+                ,@(when strict (build_args_check name args))
+                    ,@(if (and strict (neq out '__undefined__))
+                          `( (_\@fun_type_assert ,(cons 'progn body) ',out ,(lsprintf "%s - output" name)) )
+                        body)
+                     ) )
+           )
+      `( prog1
+         (define ,name ,lambda_sexp)
+         ,@(when global `( ( when (theEnvironment) ( putd ',name ,name) ) ))
+         (setf (@arglist ',name) ',args)
+         (setf (@fdoc    ',name) ',doc )
+         (setf (@out     ',name) ',out )
+         );prog1
+       ));let ;fun
 
   );closure
 
