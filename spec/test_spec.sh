@@ -72,8 +72,8 @@ Total assertions: 3
 
 FAIL'
 The stderr should include 'Unexpected info message:
-Got     :|This is an unexpected info message.
-|'
+Got     :█This is an unexpected info message.
+█'
 The status should be failure
 End
 
@@ -92,8 +92,8 @@ Total assertions: 3
 
 FAIL'
 The stderr should include 'Different info message:
-Expected: |This is a missing info message.|
-Got     : ||'
+Expected: █This is a missing info message.█
+Got     : ██'
 The status should be failure
 End
 
@@ -112,8 +112,8 @@ Total assertions: 3
 
 FAIL'
 The stderr should include 'Different info message:
-Expected: |This is a different info message.|
-Got     : |Different message than expected.|'
+Expected: █This is a different info message.█
+Got     : █Different message than expected.█'
 The status should be failure
 End
 
@@ -132,8 +132,8 @@ Total assertions: 3
 
 FAIL'
 The stderr should include 'Unexpected warn message:
-Got     :|*WARNING* This is an unexpected warn message.
-|'
+Got     :█*WARNING* This is an unexpected warn message.
+█'
 The status should be failure
 End
 
@@ -152,8 +152,8 @@ Total assertions: 3
 
 FAIL'
 The stderr should include 'Different warn message:
-Expected: |This is a missing warn message.|
-Got     : ||'
+Expected: █This is a missing warn message.█
+Got     : ██'
 The status should be failure
 End
 
@@ -172,8 +172,8 @@ Total assertions: 3
 
 FAIL'
 The stderr should include 'Different warn message:
-Expected: |This is a different warn message.|
-Got     : |*WARNING* Different message than expected.|'
+Expected: █This is a different warn message.█
+Got     : █*WARNING* Different message than expected.█'
 The status should be failure
 End
 
@@ -192,9 +192,9 @@ Total assertions: 3
 
 FAIL'
 The stderr should include 'Unexpected error:
-Got     :|*Error* This is an unexpected error message.
+Got     :█*Error* This is an unexpected error message.
 
-|'
+█'
 The status should be failure
 End
 
@@ -213,8 +213,8 @@ Total assertions: 3
 
 FAIL'
 The stderr should include 'Different error message:
-Expected: |This is a missing error message.|
-Got     : ||'
+Expected: █This is a missing error message.█
+Got     : ██'
 The status should be failure
 End
 
@@ -233,9 +233,9 @@ Total assertions: 3
 
 FAIL'
 The stderr should include 'Different error message:
-Expected: |This is a different error message.|
-Got     : |*Error* Different message than expected.
-|'
+Expected: █This is a different error message.█
+Got     : █*Error* Different message than expected.
+█'
 The status should be failure
 End
 
@@ -254,8 +254,8 @@ Total assertions: 4
 
 FAIL'
 The stderr should include 'Unexpected error:
-Got     :|*Error* eval: undefined function - no_args
-|'
+Got     :█*Error* eval: undefined function - no_args
+█'
 The status should be failure
 End
 
@@ -277,17 +277,17 @@ Total assertions: 10
 FAIL'
 The stderr should include '
 Unexpected warn message:
-Got     :|*WARNING* warn message
-|
+Got     :█*WARNING* warn message
+█
 
 Unexpected info message:
-Got     :|info message
-|
+Got     :█info message
+█
 
 Unexpected error:
-Got     :|*Error* error message
+Got     :█*Error* error message
 
-|'
+█'
 The status should be failure
 End
 

@@ -422,25 +422,25 @@ Total assertions: {assertion_new}\n\
           (cond
             ( (not assertion->error_expected)
               (fail (@str "Unexpected error:\n\
-Got     :|{assertion->error_result}|"))
+Got     :█{assertion->error_result}█"))
               )
             ( (not (match_messages assertion->error_expected assertion->error_result))
               (fail (@str "Different error message:\n\
-Expected: |{assertion->error_expected}|\n\
-Got     : |{assertion->error_result  }|"))
+Expected: █{assertion->error_expected}█\n\
+Got     : █{assertion->error_result  }█"))
               )
             );cond
       ;; Compare result with expectations
       (cond
         ( assertion->error_expected
           (fail (@str "Different error message:\n\
-Expected: |{assertion->error_expected}|\n\
-Got     : |{assertion->error_result  }|"))
+Expected: █{assertion->error_expected}█\n\
+Got     : █{assertion->error_result  }█"))
           )
         ( (nequal (car assertion->body_result) assertion->body_expected)
           (fail (@str "Different output:\n\
-Expected: |{assertion->body_expected}|\n\
-Got     : |{(car assertion->body_result)}|"))
+Expected: █{assertion->body_expected}█\n\
+Got     : █{(car assertion->body_result)}█"))
           )
         );cond
       );nif
@@ -451,13 +451,13 @@ Got     : |{(car assertion->body_result)}|"))
       ( (not assertion->info_expected)
         (unless (equal "" assertion->info_result)
           (fail (@str "Unexpected info message:\n\
-Got     :|{assertion->info_result}|"))
+Got     :█{assertion->info_result}█"))
           )
         )
       ( (not (match_messages assertion->info_expected assertion->info_result))
         (fail (@str "Different info message:\n\
-Expected: |{assertion->info_expected}|\n\
-Got     : |{assertion->info_result}|"))
+Expected: █{assertion->info_expected}█\n\
+Got     : █{assertion->info_result}█"))
         )
       );cond
 
@@ -467,13 +467,13 @@ Got     : |{assertion->info_result}|"))
       ( (not assertion->warn_expected)
         (unless (equal "" assertion->warn_result)
           (fail (@str "Unexpected warn message:\n\
-Got     :|{assertion->warn_result}|"))
+Got     :█{assertion->warn_result}█"))
           )
         )
       ( (not (match_messages assertion->warn_expected assertion->warn_result))
         (fail (@str "Different warn message:\n\
-Expected: |{assertion->warn_expected}|\n\
-Got     : |{assertion->warn_result}|"))
+Expected: █{assertion->warn_expected}█\n\
+Got     : █{assertion->warn_result}█"))
         )
       );cond
 
