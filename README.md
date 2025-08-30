@@ -1,4 +1,4 @@
-<pre>
+<pre style='font-family: "Courier New", Courier, monospace;'>
 
  ◥■■■■■■■◣ ◥■■◣ ◥■■◣  ◥■■◣ ◥■■◣      ◥■■◣          ◥■■◣   ◥■■◣
 ╲ ◥■■◣░░░░╲ ◥■■◣◢■■◤ ╲ ◥■■◣ ◥■■◣    ╲ ◥■■◣        ╲ ◥■■◣ ╲ ◥■■◣
