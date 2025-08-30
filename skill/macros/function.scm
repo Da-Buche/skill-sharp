@@ -127,7 +127,7 @@
         );foreach mapcan
       ));let ;fun
 
-  (defglobalfun _\@fun ( name args doc global strict out body )
+  (defglobalfun _\@fun ( name args doc global memoize strict out body )
     "`@fun' helper, generates S-expression to define a valid SKILL function."
     (assert doc "@fun - when defining '%N' ?doc is required and should be a string: %N" name doc)
     (let ( ( lambda_sexp
@@ -139,6 +139,7 @@
                         body)
                      ) )
            )
+      (when memoize (setq lambda_sexp `(@memoize ,lambda_sexp)))
       `( prog1
          (define ,name ,lambda_sexp)
          ,@(when global `( ( when (theEnvironment) ( putd ',name ,name) ) ))
@@ -292,23 +293,25 @@ Raise an error otherwise."
                @key
                doc
                global
+               memoize
                ( strict (equal "TRUE" (getShellEnvVar "SKILL_SHARP_STRICT_TYPE_CHECKING")) )
                ( out    '__undefined__                                                     )
                @rest body )
   "TODO - `@fun' implementation is still a draft..."
-  (_\@fun name args doc global strict out body))
+  (_\@fun name args doc global memoize strict out body))
 
 (@macro @proc ( name_and_args
                 @key
                 doc
                 global
+                memoize
                 ( strict (equal "TRUE" (getShellEnvVar "SKILL_SHARP_STRICT_TYPE_CHECKING")) )
                 ( out    '__undefined__                                                     )
                 @rest body )
   "This macro allows C-style writing.
 `@proc' is only `@fun' wrapper (like `procedure' for `defun' or `globalProc' for `defglobalfun').
 Please refer to `@fun' documentation."
-  (_\@fun (car name_and_args) (cdr name_and_args) doc global strict out body)
+  (_\@fun (car name_and_args) (cdr name_and_args) doc global memoize strict out body)
   )
 
 ;*/
