@@ -34,7 +34,7 @@ proc print_help {} {
 proc random_string {} {
   ## Generate a randowm password
   #exec openssl rand -base64 12 | tr , -
-  set charset "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#%^-_=:.<>/"
+  set charset "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#%^-_=:."
   set charset [string map {"," ""} $charset]
   set password ""
   for {set i 0} {$i < 16} {incr i} {
@@ -110,7 +110,7 @@ set port [lindex [fconfigure $server -sockname] 2]
 set host [exec hostname -f]
 
 if {$verbose} {
-  puts stderr "Listening on $host:$port"
+  puts stderr "Listening on $host:$port decrypting with $password"
   flush stderr
 }
 
@@ -138,7 +138,6 @@ proc handle_request {sock addr port} {
   file delete $tmp_msg
 
   if {$verbose} {
-    puts stderr "From $addr:$port |$msg|"
     flush stderr
   }
   puts stdout "$msg"
