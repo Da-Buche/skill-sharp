@@ -32,6 +32,16 @@
   (lambda (obj) (apply '@get obj props))
   )
 
+(@fun @memoize
+  ( ( function ?type funobj )
+    )
+  ?doc "Return FUNCTION wrapper that caches all the inputs and associated results."
+  ?out funobj
+  (let ( ( table (makeTable t nil) )
+         )
+    (lambda ( @rest args ) (car (or table[args] (setf table[args] (list (apply function args))))))
+    ))
+
 (let ()
 
   (@fun @foldl1
