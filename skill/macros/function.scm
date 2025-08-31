@@ -245,11 +245,11 @@ Return nil otherwise."
         (foreach sub_obj obj
           pos++
           (unless type_or_class
-            (return (list nil "extra element"))
+            (return (list nil (lsprintf "%s extra element: %N" msg sub_obj)))
             )
           (if (eq '... (car type_or_class))
               (when (eq sub_type '__undefined__)
-                (return (list nil "type first element cannot be '...'"))
+                (return (list nil (lsprintf "%s type first element cannot be '...'" msg)))
                 )
             (setq sub_type (pop type_or_class))
             )
