@@ -447,6 +447,19 @@ Return nil otherwise."
   (list obj->libName obj->cellName obj->viewName)
   )
 
+(@fun @view_type
+  ( ( obj  ?type dd_view|db_view|( string string string ) )
+    ( cell ?type string|nil ?def nil                      )
+    ( view ?type string|nil ?def nil                      )
+    )
+  ?doc "Return OBJ view type."
+  (@caseq (type obj)
+    ( ddViewType (ddMapGetFileViewType (ddGetObj obj->lib->name obj->cell->name obj->name "*") ) )
+    ( dbobject   obj->cellViewType                                                               )
+    ( list       (ddMapGetFileViewType (apply 'ddGetObj (append1 obj "*")))                      )
+    ( string     (ddMapGetFileViewType (ddGetObj obj cell view "*"))                             )
+    ))
+
 ;; =======================================================
 ;; Tech Files
 ;; =======================================================
