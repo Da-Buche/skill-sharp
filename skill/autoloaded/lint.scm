@@ -44,6 +44,21 @@
         ))
     ))
 
+(@no_lint
+  (_\@lint_add_control_rule ( _\@lint_add_rule _\@lint_add_control_rule SK_RULE ) t
+    (SK_PUSH_VAR 'formlist)
+    (let ( ( args (SK_ARGS) )
+           )
+      (when (eq 'SK_CONTROL (car args)) (pop args))
+      (foreach map sexp (cdr args) (SK_CHECK_FORM sexp))
+      )
+    (SK_POP_VAR 'formlist)))
+
+(@no_lint
+  (_\@lint_add_control_rule ( SK_HINT SK_WARNING SK_ERROR ) t
+    ;; TODO - This rule should work like `lsprintf' one
+    nil))
+
 
 ;; ===============================================================================================================
 ;; Rules
@@ -64,8 +79,10 @@
 ;; -------------------------------------------------------
 
 ;; This is required at least when running Lint from the SKILL Interpreter
-(_\@lint_add_rule ( status sstatus ) (not (errset (funcall 'status (car (SK_ARGS)))))
-  (SK_ERROR UNKNOWN_STATUS_FLAG "Unknown (s)status flag: %N\n" (SK_FORM)))
+(@no_lint
+  (_\@lint_add_rule ( status sstatus ) (not (errset (funcall 'status (car (SK_ARGS)))))
+    (SK_ERROR UNKNOWN_STATUS_FLAG "Unknown (s)status flag: %N\n" (SK_FORM))
+    ))
 
 
 ;; -------------------------------------------------------
@@ -283,15 +300,13 @@
     (unless (and (listp defs) (forall def defs (and (listp def) (cdr def) (not (cddr def)))))
       (SK_ERROR SP_WITH_DEFS "`@letf' first argument should be a list of expression-value pairs: %N" defs)
       )
-    (let ( ( vars (mapcar 'car defs) )
-           )
-      ;; Check definitions, then check body
-      (foreach map def  defs
-        (SK_CHECK_FORM (list (caar def)))
-        (SK_CHECK_FORM (cdar def))
-        )
-      (foreach map sexp body (SK_CHECK_FORM sexp      ))
-      )))
+    ;; Check definitions, then check body
+    (foreach map def  defs
+      (SK_CHECK_FORM (list (caar def)))
+      (SK_CHECK_FORM (cdar def))
+      )
+    (foreach map sexp body (SK_CHECK_FORM sexp      ))
+    ))
 
 (_\@lint_add_control_rule ( @with ) t
   ;; Expand macro to raise WARN MACROEXP1 in case of errors
@@ -322,10 +337,10 @@
 
 (_\@lint_add_control_rule ( @assertion ) t
   (destructuringBind ( @key doc skip info warn error out @rest body ) (SK_ARGS)
+    doc ; Lint waiver
     (foreach map sexp (list skip info warn error out) (SK_CHECK_FORM (list (car sexp))))
     (foreach map sexp body                            (SK_CHECK_FORM sexp             ))
     ));dbind
-
 
 
 ;; ===============================================================================================================
@@ -333,6 +348,7 @@
 ;; ===============================================================================================================
 
 (let ( ignores )
+  ignores
 
   (@fun add_ignore
     ( ( name ?type symbol )
@@ -373,29 +389,37 @@
 ;; *WARNING* (sklint): calling NLambda from Scheme code
 
 (inSkill
-
-  (@fun @lint
-    ( @key
-      ( files        ?type ( string ... )                                                                      )
-      ( ignores      ?type list           ?def ()                                                              )
-      ( file_by_file ?type t|nil          ?def (equal "TRUE" (getShellEnvVar "SKILL_SHARP_LINT_FILE_BY_FILE")) )
-      )
-    ?doc    "`sklint' wrapper with custom ignores."
-    ?out    nil
-    ?global t
-    (@letf ( ( (status printinfix) nil )
+  (defun _\@lint ( @key file ignores )
+    "`sklint' wrapper"
+    ;; TODO - No idea why but lint only works fine the second time on some file...
+    ;; Workaround is to run it once first but redirect its output
+    (@with ( ( port (outfile "/dev/null" ))
              )
-      (if file_by_file
-          (forall file files
-            (sklint ?file file ?ignores (nconc ignores (_\@lint_get_ignores))))
-        (sklint ?file files ?ignores (nconc ignores (_\@lint_get_ignores)))
-        );if
-      ));letf ;fun
+      (@letf ( ( (@poport) port )
+               )
+        (sklint ?file file ?ignores ignores)
+        ))
+    (sklint ?file file ?ignores ignores)
+    ))
 
-  );inSkill
+(@fun @lint
+  ( @key
+    ( files        ?type ( string ... )                                                                      )
+    ( ignores      ?type list           ?def ()                                                              )
+    ( file_by_file ?type t|nil          ?def (equal "TRUE" (getShellEnvVar "SKILL_SHARP_LINT_FILE_BY_FILE")) )
+    )
+  ?doc    "`sklint' wrapper with custom ignores."
+  ?out    nil
+  ?global t
+  (@letf ( ( (status printinfix) nil )
+           )
+    (if file_by_file
+        (forall file files
+          (_\@lint ?file file ?ignores (nconc ignores (_\@lint_get_ignores))))
+      (_\@lint ?file files ?ignores (nconc ignores (_\@lint_get_ignores)))
+      );if
+    ));letf ;fun
 
-;; TODO - Use (car (exists ...)) instead of (car (setof ...)) rule.
 ;; TOOD - Always use `printf, `fprintf', `lsprintf', ... with more than one argument, at least (fprintf "%s" str)
 
-;     ))
 ;*/
