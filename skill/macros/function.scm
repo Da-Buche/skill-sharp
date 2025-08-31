@@ -22,7 +22,7 @@
 
 (let ()
 
-  ;; Important design choice here
+  ;; Important design choice here:
   ;; Arguments are required by default,
   ;; They become optional when they have a ?def value
 
@@ -86,7 +86,7 @@
     )
 
   (defun build_args_check ( name args )
-    "TODO - Parse args to build type predicates"
+    "Parse args to build type predicates"
     (let ( ( arg_pos  0            )
            ( arg_type '@positional )
            )
