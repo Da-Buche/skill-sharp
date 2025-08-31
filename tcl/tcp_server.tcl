@@ -138,6 +138,7 @@ proc handle_request {sock addr port} {
   file delete $tmp_msg
 
   if {$verbose} {
+    puts stderr "From $addr:$port ■$msg■"
     flush stderr
   }
   puts stdout "$msg"
