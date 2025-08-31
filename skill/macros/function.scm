@@ -188,6 +188,8 @@ Return nil otherwise."
   (@type_add 'integer  (lambda ( obj ) (classp obj 'fixnum))         )
   (@type_add 'float    (lambda ( obj ) (classp obj 'flonum))         )
 
+  (@type_add 'ptrnum   (lambda ( obj ) (eq 'ptrnum (type obj)))      )
+
   (when (isCallable 'windowp) (@type_add 'window 'windowp))
 
   (when (isCallable 'dbIsId )
