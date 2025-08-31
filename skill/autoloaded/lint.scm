@@ -356,6 +356,10 @@
 
   (add_ignore 'STATUS2  "Replaced by custom rules as it raises errors for valid statuses."                 )
 
+  ;; TODO - Add rule to check unused argument in destructuringBind
+  ;; (destructuringBind ( a b c ) ) box ...) ; not sure if this is not already ok
+  ;; (destructuringBind ( ( box_x0 box_y0 ) ( box_x1 box_y1 ) ) box ...) ; this one is failing for sure
+
   (@fun _\@lint_get_ignores ()
     ?doc    "Return `sklint' ignored rules names."
     ?out    ( symbol ... )
