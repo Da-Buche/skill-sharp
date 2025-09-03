@@ -22,7 +22,7 @@
 
 (let ()
 
-  ;; Important design choice here
+  ;; Important design choice here:
   ;; Arguments are required by default,
   ;; They become optional when they have a ?def value
 
@@ -86,7 +86,7 @@
     )
 
   (defun build_args_check ( name args )
-    "TODO - Parse args to build type predicates"
+    "Parse args to build type predicates"
     (let ( ( arg_pos  0            )
            ( arg_type '@positional )
            )
@@ -127,21 +127,27 @@
         );foreach mapcan
       ));let ;fun
 
-  (defglobalfun _\@fun ( name args doc global strict out body )
+  (defglobalfun _\@fun ( name args doc global memoize strict out body )
     "`@fun' helper, generates S-expression to define a valid SKILL function."
     (assert doc "@fun - when defining '%N' ?doc is required and should be a string: %N" name doc)
-    `(prog1
-       (,(if global 'defglobalfun 'defun) ,name ,(build_args_list name args)
-         ,(build_doc doc args)
-         ,@(when strict (build_args_check name args))
-         ,@(if (and strict (neq out '__undefined__))
-               `( (_\@fun_type_assert ,(cons 'progn body) ',out ,(lsprintf "%s - output" name)) )
-             body)
-          );def
-       (setf (@arglist ',name) ',args)
-       (setf (@fdoc    ',name) ',doc )
-       (setf (@out     ',name) ',out )
-       ));progn ;fun
+    (let ( ( lambda_sexp
+             `( lambda ,(build_args_list name args)
+                ,(build_doc doc args)
+                ,@(when strict (build_args_check name args))
+                    ,@(if (and strict (neq out '__undefined__))
+                          `( (_\@fun_type_assert ,(cons 'progn body) ',out ,(lsprintf "%s - output" name)) )
+                        body)
+                     ) )
+           )
+      (when memoize (setq lambda_sexp `(@memoize ,lambda_sexp)))
+      `( prog1
+         (define ,name ,lambda_sexp)
+         ,@(when global `( ( when (theEnvironment) ( putd ',name ,name) ) ))
+         (setf (@arglist ',name) ',args)
+         (setf (@fdoc    ',name) ',doc )
+         (setf (@out     ',name) ',out )
+         );prog1
+       ));let ;fun
 
   );closure
 
@@ -181,6 +187,8 @@ Return nil otherwise."
   (@type_add 'function (lambda ( obj ) (classp obj 'funobj))         )
   (@type_add 'integer  (lambda ( obj ) (classp obj 'fixnum))         )
   (@type_add 'float    (lambda ( obj ) (classp obj 'flonum))         )
+
+  (@type_add 'ptrnum   (lambda ( obj ) (eq 'ptrnum (type obj)))      )
 
   (when (isCallable 'windowp) (@type_add 'window 'windowp))
 
@@ -239,11 +247,11 @@ Return nil otherwise."
         (foreach sub_obj obj
           pos++
           (unless type_or_class
-            (return (list nil "extra element"))
+            (return (list nil (lsprintf "%s extra element: %N" msg sub_obj)))
             )
           (if (eq '... (car type_or_class))
               (when (eq sub_type '__undefined__)
-                (return (list nil "type first element cannot be '...'"))
+                (return (list nil (lsprintf "%s type first element cannot be '...'" msg)))
                 )
             (setq sub_type (pop type_or_class))
             )
@@ -287,11 +295,26 @@ Raise an error otherwise."
                @key
                doc
                global
+               memoize
                ( strict (equal "TRUE" (getShellEnvVar "SKILL_SHARP_STRICT_TYPE_CHECKING")) )
                ( out    '__undefined__                                                     )
                @rest body )
   "TODO - `@fun' implementation is still a draft..."
-  (_\@fun name args doc global strict out body))
+  (_\@fun name args doc global memoize strict out body))
+
+(@macro @proc ( name_and_args
+                @key
+                doc
+                global
+                memoize
+                ( strict (equal "TRUE" (getShellEnvVar "SKILL_SHARP_STRICT_TYPE_CHECKING")) )
+                ( out    '__undefined__                                                     )
+                @rest body )
+  "This macro allows C-style writing.
+`@proc' is only `@fun' wrapper (like `procedure' for `defun' or `globalProc' for `defglobalfun').
+Please refer to `@fun' documentation."
+  (_\@fun (car name_and_args) (cdr name_and_args) doc global memoize strict out body)
+  )
 
 ;*/
 

@@ -126,7 +126,8 @@ Otherwise it defaults to the first key."
     ?doc    "Add a script argument."
     ?out    t
     ?global t
-    (assert (@script_is_running?)
+    ;; `funcall' is required so that `@script_is_running?' can be mocked later on
+    (assert (funcall '@script_is_running?)
       "`@script_add_argument' can only be used in running script. (See `@script_is_running?')")
     ;; Make sure keys are valid
     (foreach keys_list (list keys opp_keys)

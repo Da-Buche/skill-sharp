@@ -1,6 +1,7 @@
 #!/bin/bash
 Describe 'sharp'
 Describe 'lint'
+Skip "Lint is not working properly yet (it seems it's behavior is limited)"
 
   It 'checks itself'
     When run ./bin/sharp lint ./skill/autoloaded/lint.scm

@@ -1,0 +1,68 @@
+#!/bin/bash
+
+## List of terminal emulators to try in order
+TERMINALS=(
+  "xfce4-terminal"
+  "gnome-terminal"
+  "konsole"
+  "xterm"
+  ## macOS terminals
+  "iterm"
+  "Terminal"
+)
+
+## Default command to run (can be overridden by passing an argument to the script)
+DEFAULT_CMD="python3 -m textual"
+
+## Function to launch a given command in a terminal
+launch_command() {
+  local TERM="$1"
+  local CMD="$2"
+
+  case "$TERM" in
+    xfce4-terminal ) "$TERM" --hide-menubar --hide-scrollbar --command="$CMD" ;; # --hide-borders
+    gnome-terminal ) "$TERM" -- "$CMD"                                        ;;
+    konsole        ) "$TERM" --hide-menubar -e "$CMD"                         ;; # --noframe
+    xterm          ) "$TERM" -e "$CMD"                                        ;;
+    iterm          )
+      ## iTerm via AppleScript
+      osascript <<EOF
+tell application "iTerm"
+  create window with default profile
+  tell current session of current window
+    write text "$CMD"
+  end tell
+end tell
+EOF
+      ;;
+    Terminal)
+      ## macOS Terminal via AppleScript
+      osascript <<EOF
+tell application "Terminal"
+  do script "$CMD"
+  activate
+end tell
+EOF
+      ;;
+    *) return 1 ;;
+  esac
+}
+
+## Use argument as command if provided
+CMD="${1:-$DEFAULT_CMD}"
+
+## Try each terminal emulator in order
+for TERM in "${TERMINALS[@]}"; do
+  case "$TERM" in
+    iterm | Terminal ) TERM_CMD="osascript" ;;
+    *                ) TERM_CMD="$TERM"     ;;
+  esac
+  if command -v "$TERM_CMD" &>/dev/null; then
+    # shellcheck disable=SC2154 # status is a valid command
+    launch_command "$TERM" "bash -c '$CMD'" && exit "$status"
+  fi
+done
+
+>&2 echo "No supported terminal emulator found."
+exit 1
+

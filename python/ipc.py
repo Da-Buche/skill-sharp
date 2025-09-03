@@ -1,6 +1,6 @@
 #!/bin/bash
 ## Header to use the proper version when running this Python script directly
-""":" Main definitions for project_boilerplate.
+""":" Python Inter Process Communications.
 export SKILL_SHARP_ROOT=$(dirname $(dirname $(realpath $0))) ;
 /usr/bin/env python3 "$0" $@ ; exit $status ; ".
 """
@@ -13,6 +13,7 @@ export SKILL_SHARP_ROOT=$(dirname $(dirname $(realpath $0))) ;
 import os
 import asyncio
 import threading
+import subprocess
 from typing import Callable, Optional
 
 class PID:
@@ -79,7 +80,9 @@ class PID:
 def info(msg):
   print(msg, flush=True)
 
-def python_server():
+def python_server(
+    verbose : bool = False,
+    ):
   """
   Start Python server, it opens an available port and evaluates all incoming data as Python and return it through the same port.
   """
@@ -100,9 +103,20 @@ def python_server():
     """Print DATA"""
     info(data)
 
+  if verbose:
+    verbose_arg = "-v"
+  else:
+    verbose_arg = ""
   script = os.path.expandvars("$SKILL_SHARP_ROOT/bin/tcp_server")
-  return PID(script, stdout_handler, stderr_handler)
+  return PID(f"{script} -l PYTHON {verbose_arg}", stdout_handler, stderr_handler)
 
+
+def skill_client( cmd : str ):
+  """Evaluate CMD in SKILL. and return its result."""
+  script = os.path.expandvars("$SKILL_SHARP_ROOT/bin/tcp_client")
+  result = subprocess.run(f"echo '{cmd}' | {script} -l SKILL++", shell=True, capture_output=True, text=True)
+  print(result.stderr)
+  return result.stdout
 
 if __name__ == "__main__":
   python_server().wait()

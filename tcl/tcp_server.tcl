@@ -34,7 +34,7 @@ proc print_help {} {
 proc random_string {} {
   ## Generate a randowm password
   #exec openssl rand -base64 12 | tr , -
-  set charset "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#%^-_=:.<>/"
+  set charset "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#%^-_=:."
   set charset [string map {"," ""} $charset]
   set password ""
   for {set i 0} {$i < 16} {incr i} {
@@ -71,6 +71,9 @@ for {set i 0} {$i < [llength $argv]} {incr i} {
 ## =======================================================
 ## Clean down servers
 ## =======================================================
+
+## Make sure csv files exists and has the right access
+exec bash -c "touch $file ; chmod 600 $file"
 exec bash -c "\$(realpath \$(dirname [info script])/../bin/tcp_client) --clean"
 
 ## =======================================================
@@ -83,12 +86,31 @@ fconfigure stdin -buffering none -blocking 0
 
 ## Create a socket to listen on any available port
 set server [socket -server accept_client $port]
+
+## Make sure socket is well closed when program is exited
+proc cleanup {} {
+  global server
+  if {[info exists server]} {
+    close $server
+    puts stderr "Server closed."
+    flush stderr
+  }
+}
+
+# Override exit to add cleanup
+rename exit _exit
+proc exit {args} {
+  cleanup
+  eval _exit $args
+}
+
+## Configure socket and retrieve port
 fconfigure $server -buffering none -blocking 1
 set port [lindex [fconfigure $server -sockname] 2]
 set host [exec hostname -f]
 
 if {$verbose} {
-  puts stderr "Listening on $host:$port"
+  puts stderr "Listening on $host:$port decrypting with $password"
   flush stderr
 }
 
@@ -116,7 +138,7 @@ proc handle_request {sock addr port} {
   file delete $tmp_msg
 
   if {$verbose} {
-    puts stderr "From $addr:$port |$msg|"
+    puts stderr "From $addr:$port ■$msg■"
     flush stderr
   }
   puts stdout "$msg"
@@ -140,17 +162,13 @@ proc handle_answer {fd sock} {
 
 set timestamp [clock format [clock seconds] -format "%Y-%m-%d_%H-%M-%S"]
 
-## Make sure csv files exists and has the right access
-set tmp_file [exec mktemp /tmp/csv.XXXXX]
-exec bash -c "touch $file ; chmod 600 $file"
-
 ## Write server data to csv file
+set tmp_file [exec mktemp /tmp/csv.XXXXX]
 exec bash -c "{\
   echo  'timestamp, host, port, password, language, project, config' ;\
   echo '$timestamp,$host,$port,$password,$language,$project,$config' ;\
   grep -v '^timestamp' $file || :                                    ;\
   } >> $tmp_file && mv -f $tmp_file $file"
-
 exec bash -c "chmod 600 $file"
 
 ## =======================================================

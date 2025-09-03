@@ -24,7 +24,7 @@
         (ipcWriteProcess pid (lsprintf "%N" res))
         (unless res
           (@warn "Error when reading from {pid}:\n\
-DATA: |{data}|\n\
+DATA: █{data}█\n\
 ERROR: {errset.errset}")
           (warn "")
           (getWarn)
