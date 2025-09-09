@@ -40,7 +40,6 @@
     (and (get __sym__ ?                     ) (setf __globals__.symbols[  __sym__] (get __sym__ '??                    )))
     ))
 
-
 ;; -------------------------------------------------------
 ;; Load files and run init command
 ;; -------------------------------------------------------
@@ -56,7 +55,6 @@
 (when (stringp (getShellEnvVar "SKILL_SHARP_INIT_COMMAND"))
   (errsetstring (getShellEnvVar "SKILL_SHARP_INIT_COMMAND") t 'ils)
   )
-
 
 ;; -------------------------------------------------------
 ;; Report differences between saved and updated environment
@@ -83,11 +81,7 @@
   (println names __globals__.poport)
   )
 
-
 (exit 0)
 
 ;*/
-
-
-
 
