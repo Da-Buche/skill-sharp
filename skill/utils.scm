@@ -88,6 +88,14 @@ This is probably equivalent to `mktemp` \"unsafe\" --dry-run mode."
     (sort list (lambda (e0 e1) (comp (shape e0) (shape e1))))
     ))
 
+(@fun @repeat
+  ( ( obj  ?type any     )
+    ( n    ?type integer )
+    )
+  ?doc "Return a list containing OBJ N times."
+  ?out list
+  (@for i 1 n obj)
+  )
 
 ;; =======================================================
 ;; Tables
