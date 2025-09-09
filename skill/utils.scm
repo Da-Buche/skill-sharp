@@ -52,7 +52,6 @@ This is probably equivalent to `mktemp` \"unsafe\" --dry-run mode."
     (if (zerop status) stdout (error "@mktemp - %s" stderr))
     ));dbind ;def
 
-
 ;; =======================================================
 ;; Lists
 ;; =======================================================
@@ -108,7 +107,6 @@ This is probably equivalent to `mktemp` \"unsafe\" --dry-run mode."
   ?out list
   (foreach mapcar key table[?] table[key])
   )
-
 
 ;; =======================================================
 ;; Strings
@@ -230,7 +228,6 @@ If NUM is negative, STR is right-padded instead."
   str
   )
 
-
 ;; =======================================================
 ;; Numbers
 ;; =======================================================
@@ -299,7 +296,6 @@ If END is not provided, END defaults to BEG minus 1 and BEG defaults to 0."
       );if
     ));let ;fun
 
-
 ;; =======================================================
 ;; Bounding Boxes
 ;; =======================================================
@@ -319,7 +315,6 @@ If END is not provided, END defaults to BEG minus 1 and BEG defaults to 0."
   ?out number
   (difference (topEdge box) (bottomEdge box))
   )
-
 
 ;; =======================================================
 ;; Files
@@ -351,7 +346,6 @@ If END is not provided, END defaults to BEG minus 1 and BEG defaults to 0."
       )
     (getOutstring out)
     ))
-
 
 ;; =======================================================
 ;; Predicates
@@ -404,7 +398,6 @@ Return nil otherwise."
 ; This is mostly meant to be used inside `mapcan' or `foreach mapcan'."
 ;   ?out list
 ;   (when obj (list obj)))
-
 
 ;; =======================================================
 ;; Universal getter
