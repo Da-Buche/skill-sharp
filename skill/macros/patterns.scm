@@ -303,24 +303,63 @@ This a very common pattern."
      ));dbind ;macro
 
 ;; =======================================================
+;; while
+;; =======================================================
+
+(@macro @while ( @rest args )
+  "Run `while' loop and return the list of results.
+First argument is the mapping function (`mapc', `mapcar' or `mapcan') but it can be omitted, in that case it defaults to `mapcar'."
+  (caseq (car args)
+    ( mapc
+      (pop args)
+      ;; Return the list of condition results
+      (destructuringBind ( condition @key ( var '__\@while_cond_res__ ) @rest body ) args
+        `(let ( ( __\@while_tconc__  (tconc nil nil) )
+                ( ,var               nil             )
+                )
+           (while (setq ,var ,condition)
+             (tconc __\@while_tconc__ ,var)
+             ,@body
+             )
+           (cdar __\@while_tconc__)
+           ));let ;dbind
+      );mapc
+    ;; mapcar & mapcan
+    ( t
+      (let ( ( conc_fun (caseq (car args) ( mapcar (pop args) 'tconc ) ( mapcan (pop args) 'lconc ) ( t 'tconc )) )
+             )
+        (destructuringBind ( condition @key ( var '__\@while_cond_res__ ) @rest body ) args
+          (assert body "@while - body cannot be empty.")
+          `(let ( ( __\@while_tconc__  (tconc nil nil) )
+                  ( ,var               nil             )
+                  )
+             (while (setq ,var ,condition)
+               (,conc_fun __\@while_tconc__ ,(cons 'progn body))
+               )
+             (cdar __\@while_tconc__)
+             ));let ;dbind
+        ));let ;t
+    ));caseq ;macro
+
+;; =======================================================
 ;; for
 ;; =======================================================
 
 (@macro @for ( @rest args )
   "Run `for' loop and return the list of results.
-First argument is the mapping function (`mapcar' or `mapcon') but it can be omitted, in that case it defaults to `mapcar'.
+First argument is the mapping function (`mapcar' or `mapcan') but it can be omitted, in that case it defaults to `mapcar'.
 Other arguments are the same as `for'."
   ;; Like `foreach' first argument is a mapping function (which defaults to `mapcar' instead of `mapc').
   (let ( ( conc_fun (caseq (car args) ( mapcar (pop args) 'tconc ) ( mapcan (pop args) 'lconc ) ( t 'tconc )) )
          )
     (destructuringBind ( var i0 i1 @rest body ) args
       (assert body "@for - body cannot be empty.")
-      `(let ( ( __\@for_var__ (tconc nil nil) )
+      `(let ( ( __\@for_tconc__ (tconc nil nil) )
               )
          (for ,var ,i0 ,i1
-           (,conc_fun __\@for_var__ ,(cons 'progn body))
+           (,conc_fun __\@for_tconc__ ,(cons 'progn body))
            )
-         (cdar __\@for_var__)
+         (cdar __\@for_tconc__)
          ));let ;dbind
     ));let ;macro
 
