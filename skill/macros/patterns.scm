@@ -236,10 +236,6 @@ See also `@wrap' and `@with' for context management."
 
 ;; TODO - Property bags context manager
 
-
-
-
-
 ;; =======================================================
 ;; Anaphoric macros
 ;;
@@ -305,6 +301,28 @@ This a very common pattern."
        (when ,var ,@then)
        )
      ));dbind ;macro
+
+;; =======================================================
+;; for
+;; =======================================================
+
+(@macro @for ( @rest args )
+  "Run `for' loop and return the list of results.
+First argument is the mapping function (`mapcar' or `mapcon') but it can be omitted, in that case it defaults to `mapcar'.
+Other arguments are the same as `for'."
+  ;; Like `foreach' first argument is a mapping function (which defaults to `mapcar' instead of `mapc').
+  (let ( ( conc_fun (caseq (car args) ( mapcar (pop args) 'tconc ) ( mapcan (pop args) 'lconc ) ( t 'tconc )) )
+         )
+    (destructuringBind ( var i0 i1 @rest body ) args
+      (assert body "@for - body cannot be empty.")
+      `(let ( ( __\@for_var__ (tconc nil nil) )
+              )
+         (for ,var ,i0 ,i1
+           (,conc_fun __\@for_var__ ,(cons 'progn body))
+           )
+         (cdar __\@for_var__)
+         ));let ;dbind
+    ));let ;macro
 
 ;*/
 
