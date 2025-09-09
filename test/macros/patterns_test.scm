@@ -79,4 +79,8 @@
   );test
 
 
-
+;; TODO - test @while
+; ILS-2> l = (list 1 2 3)
+; (1 2 3)
+; ILS-2> (@while mapc (pop l) ?var toto (println toto))
+; (1 2 3)
