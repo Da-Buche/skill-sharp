@@ -363,5 +363,23 @@ Other arguments are the same as `for'."
          ));let ;dbind
     ));let ;macro
 
+;; =======================================================
+;; Foreach dbind
+;; =======================================================
+
+(@macro @foreach_dbind ( @rest args )
+  "Parse and split elements into several variables.
+First argument is the mapping function (`mapc', `mapcar' or `mapcan') but it can be omitted, in that case it defaults to `mapcar'.
+"
+  (let ( ( map_fun (caseq (car args) ( ( mapc mapcar mapcan ) (pop args) ) ( t 'mapcar )) )
+         )
+    (destructuringBind ( vars vals @rest body ) args
+      `(foreach ,map_fun __\@foreach_dbind_var__ ,vals
+         (destructuringBind ,vars __\@foreach_dbind_var__
+           ,@body
+           ));dbind ;foreach
+       ));dbind ;let
+  );macro
+
 ;*/
 
