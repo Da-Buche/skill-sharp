@@ -1,6 +1,104 @@
 #!/bin/bash
 Describe 'sharp'
+
 Describe 'lint'
+
+It 'reports issues in `if`, `when`, `unless`'
+When run ./bin/sharp lint ./metatest/lint/if_when_unless.scm
+The stdout should include 'ERROR IF_EXTRA_ARGS at line 9'
+The stdout should include 'INFO IF_NIL at line 16'
+The stdout should include 'WARNING STATIC_CONDITION at line 22  - `if` is useless, condition is static: t - (if t 12 27)'
+The stdout should include 'WARNING STATIC_CONDITION at line 27  - `if` is useless, condition is static: nil - (if nil 12 27)'
+The stdout should include 'WARNING STATIC_CONDITION at line 32  - `if` is useless, condition is static: 12 - (if 12 27 42)'
+The stdout should include 'WARNING STATIC_CONDITION at line 37  - `when` is useless, condition is static:  - (when "" 12 27 42)'
+The stdout should include 'WARNING STATIC_CONDITION at line 47  - `unless` is useless, condition is static:'" '( 12 ) - (unless '( 12 ) '( a b c ))"
+The stderr should be blank
+The status should be failure
+End
+
+It 'reports calls to (car (setof ...))'
+When run ./bin/sharp lint ./metatest/lint/car_setof.scm
+The stdout should include 'INFO CAR_SETOF at line 5   - (car (setof ...)) can almost always be replaced by (car (exists ...)) - (setof elt (list 1 2 3) (evenp elt))'
+The stderr should be blank
+The status should be success
+End
+
+It 'reports line numbers'
+When run ./bin/sharp lint ./metatest/lint/line_numbers.scm
+The stdout should include 'INFO CAR_SETOF at line 7'
+The stdout should include 'WARNING STATIC_CONDITION at line 14'
+The stdout should include 'INFO CAR_SETOF at line 15'
+The stdout should include 'INFO CAR_SETOF at line 16'
+The stdout should include 'INFO CAR_SETOF at line 25'
+The stdout should include 'INFO CAR_SETOF at line 30'
+The stdout should include 'INFO CAR_SETOF at line 34'
+The stdout should include 'INFO CAR_SETOF at line 38'
+The stdout should include 'INFO CAR_SETOF at line 41'
+The stderr should be blank
+The status should be failure
+End
+
+It 'reports line numbers with C-style syntax'
+When run ./bin/sharp lint ./metatest/lint/line_numbers_c_style.scm
+Skip 'I do not care about C-style for now...'
+The stdout should include 'INFO CAR_SETOF at line 7'
+The stdout should include 'INFO CAR_SETOF at line 15'
+The stdout should include 'INFO CAR_SETOF at line 16'
+The stdout should include 'INFO CAR_SETOF at line 25'
+The stdout should include 'INFO CAR_SETOF at line 30'
+The stdout should include 'INFO CAR_SETOF at line 34'
+The stdout should include 'INFO CAR_SETOF at line 38'
+The stdout should include 'INFO CAR_SETOF at line 41'
+The stderr should be blank
+The status should be success
+End
+
+It 'reports line numbers inside complicated macros'
+End
+
+It 'can be waived using `@no_lint'"'"
+When run ./bin/sharp lint ./metatest/lint/waive.scm
+The stdout should include 'INFO CAR_SETOF at line 5'
+The stdout should not include 'INFO CAR_SETOF at line 8'
+The stdout should not include 'INFO CAR_SETOF at line 9'
+The stdout should include 'INFO IF_NIL at line 16'
+The stdout should include 'WARNING STATIC_CONDITION at line 16'
+The stdout should not include 'INFO IF_NIL at line 25'
+The stdout should not include 'WARNING STATIC_CONDITION at line 25'
+The stdout should not include 'INFO IF_NIL at line 36'
+The stdout should not include 'WARNING STATIC_CONDITION at line 36'
+The stdout should include 'ERROR IF_EXTRA_ARGS at line 45'
+The stdout should not include 'ERROR IF_EXTRA_ARGS at line 53'
+The stdout should not include 'ERROR IF_EXTRA_ARGS at line 62'
+The stdout should not include 'waived'
+The stderr should be blank
+The status should be failure
+End
+
+It 'reports unused variables'
+When run ./bin/sharp lint ./metatest/lint/unused_variables.scm
+The stdout should include 'WARNING UNUSED at line 4 - variable c is never used'
+The stdout should include 'WARNING ASSIGNED_ONLY at line 4 - variable a is assigned but never used'
+The stdout should include 'WARNING UNUSED at line 12 - variable unused_var is never used'
+The stdout should include 'WARNING ASSIGNED_ONLY at line 20 - variable unused_var is assigned but never used'
+The stdout should include 'WARNING UNUSED at line 20 - variable another_unused_var is never used'
+The stdout should include 'WARNING ASSIGNED_ONLY at line 29 - variable twelve is assigned but never used'
+The stderr should be blank
+The status should be failure
+End
+
+It 'reports superseded variables'
+End
+
+End
+
+
+
+
+
+
+Describe 'old_lint'
+
 Skip "Lint is not working properly yet (it seems it's behavior is limited)"
 
   It 'checks itself'
@@ -11,15 +109,7 @@ Skip "Lint is not working properly yet (it seems it's behavior is limited)"
     The status should be success
   End
 
-  It 'can be waived using `@no_lint'"'"
-    When run ./bin/sharp lint ./metatest/lint/waive.scm
-    The stdout should include 'INFO (VAR16): ./metatest/lint/waive.scm, line 6 : declaration of variable reported_var supersedes previous declaration at line 5.'
-    The stdout should not include 'ignored_var'
-    The stdout should include "HINT (IF6): ./metatest/lint/waive.scm, line 19 : Remove the 'then nil' part and convert to an 'unless': (if t nil (quote then_part))"
-    The stdout should not include 'waived_then_part'
-    The stderr should be blank
-    The status should be success
-  End
+
 
   It 'only reports wrong `status'"'"' and `sstatus'"'"' calls'
     When run ./bin/sharp lint ./metatest/lint/sstatus.scm
@@ -30,13 +120,6 @@ Skip "Lint is not working properly yet (it seems it's behavior is limited)"
     The stdout should include 'thisDoesNotExist'
     The stderr should be blank
     The status should be failure
-  End
-
-  It 'reports calls to (car (setof ...))'
-  When run ./bin/sharp lint ./metatest/lint/car_setof.scm
-    The stdout should include 'HINT (CAR_SETOF): ./metatest/lint/car_setof.scm, line 6 (call_with) : (car (setof ...)) should be replaced by (car (exists ...)): (setof elt (quote (1 2 3)) (evenp elt))'
-    The stderr should be blank
-    The status should be success
   End
 
   It 'reports missing docstrings in methods'
@@ -158,5 +241,6 @@ Skip "Lint is not working properly yet (it seems it's behavior is limited)"
 
 
 End
+
 End
 

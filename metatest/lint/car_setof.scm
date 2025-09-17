@@ -1,9 +1,8 @@
 (let ()
 
-  (@fun call_with ()
-    ?doc    "dummy function"
-    ?global t
-    (car (setof elt '(1 2 3) (evenp elt)))
+  (defglobalfun car_setof ()
+    "dummy function for lint purposes"
+    (car (setof elt (list 1 2 3) (evenp elt)))
     );fun
 
   );closure
