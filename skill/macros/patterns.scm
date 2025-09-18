@@ -265,7 +265,7 @@ It also respect Scheme simplifaction where 'else' statement can accept any numbe
     (cond
       ( (eq '__unbound__ var) `(if ,test ,then ,@else)                                            )
       ( (symbolp         var) `(let ( ( ,var ,test ) ) (if ,var ,then ,@else))                    )
-      ( t                     (error "@if ?var should be omitted or an unquotted symbol: %N" var) )
+      ( t                     (error "@if ?var should be omitted or an unquoted symbol: %N" var) )
       );cond
     ));dbind ;macro
 
@@ -287,11 +287,11 @@ It also respect Scheme simplifaction where 'then' statement can accept any numbe
     (cond
       ( (eq '__unbound__ var) `(if ,test ,@then ,else)                                      )
       ( (symbolp         var) `(let ( ( ,var ,test ) ) (if ,var ,@then ,else))             )
-      ( t                     (error "@nif ?var should be omitted or an unquotted symbol.") )
+      ( t                     (error "@nif ?var should be omitted or an unquoted symbol.") )
       );cond
     ));dbind ;macro
 
-(@macro @when ( @key  (var (error "@when - ?var is required and should be an unquotted symbol.") )
+(@macro @when ( @key  (var (error "@when - ?var is required and should be an unquoted symbol.") )
                 @rest args "sg" )
   "Combination of `let' and `when', to re-use test result inside the 'then' statement.
 This a very common pattern."
