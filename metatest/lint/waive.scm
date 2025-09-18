@@ -29,7 +29,7 @@
     )
 
   ;; Lint should not raise messages here
-  (defglobalfun dummy_function2 ()
+  (defun dummy_function2 ()
     "dummy"
     (progn
       "NO_LINT"
@@ -38,7 +38,7 @@
         'waived_then_part
          ))
     )
-
+  (dummy_function2)
   )
 
 ;; Lint should raise ERROR IF_EXTRA_ARGS
