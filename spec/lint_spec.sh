@@ -107,24 +107,41 @@ The stderr should be blank
 The status should be failure
 End
 
-It 'reports extra key arguments in local functions'
+It 'reports extra key arguments in local functions (as `@arglist` has to be deduced from function syntax)'
 End
 
 It 'reports missing required key arguments (SKILL# only, not a priority as they raise an error anyway)'
 End
 
-It 'reports wrong `let` definitions'
-When run ./bin/sharp lint ./metatest/lint/let_errors.ils
-The stdout should include 'ERROR SYNTAX_LET_DEF at line 5   - `let` binding must be a symbol or symbol-value pair: (b) - (let ((a 12) (b) (c "str0" "str1") 42) (list a b 42))'
-The stdout should include 'ERROR SYNTAX_LET_DEF at line 6   - `let` binding must be a symbol or symbol-value pair: (c "str0" "str1") - (let ((a 12) (b) (c "str0" "str1") 42) (list a b 42))'
-The stdout should include 'ERROR SYNTAX_LET_DEF at line 7   - `let` binding must be a symbol or symbol-value pair: 42 - (let ((a 12) (b) (c "str0" "str1") 42) (list a b 42))'
+It 'reports syntax errors inside `let` definitions'
+When run ./bin/sharp lint ./metatest/lint/let_syntax_errors.ils
+The stdout should include 'ERROR SYNTAX_LET_BINDING at line 5   - `let` binding must be a symbol or symbol-value pair: (b) - (let ((a 12) (b) (c "str0" "str1") 42) (list a b 42))'
+The stdout should include 'ERROR SYNTAX_LET_BINDING at line 6   - `let` binding must be a symbol or symbol-value pair: (c "str0" "str1") - (let ((a 12) (b) (c "str0" "str1") 42) (list a b 42))'
+The stdout should include 'ERROR SYNTAX_LET_BINDING at line 7   - `let` binding must be a symbol or symbol-value pair: 42 - (let ((a 12) (b) (c "str0" "str1") 42) (list a b 42))'
 The stdout should include 'ERROR MISSING_ARG at line 13  - `let` requires 1 more positional arguments - (let 12)'
 The stdout should include 'ERROR SYNTAX_LET at line 13  - `let` first argument should be a list: 12 - (let 12)'
 The stderr should be blank
 The status should be failure
 End
 
-It 'reports errors inside `let` definitions'
+It 'reports messages inside `let` definitions'
+When run ./bin/sharp lint ./metatest/lint/lint_errors_inside_let_definitions.il
+The stdout should include 'INFO CAR_SETOF at line 4'
+The stdout should include 'ERROR EXTRA_ARGS at line 10  - `setq`'
+The stdout should include 'ERROR SYNTAX_SETQ at line 10  - `setq`'
+The stdout should include 'ERROR EXTRA_ARGS at line 20  - `setq`'
+The stdout should include 'ERROR SYNTAX_SETQ at line 20  - `setq`'
+The stdout should include 'ERROR GLOBAL_USE at line 22  - Undefined global variable is used - abc'
+The stdout should include 'INFO CAR_SETOF at line 24'
+The stderr should be blank
+The status should be failure
+End
+
+
+It 'reports `letseq` that can be replaced by `let`'
+End
+
+It 'reports usage of global variables'
 End
 
 It 'reports unused variables'
@@ -140,6 +157,12 @@ The status should be failure
 End
 
 It 'reports superseded variables'
+When run ./bin/sharp lint ./metatest/lint/superseded_variables.ils
+The stdout should include 'WARNING DEFUN_UNUSED at line 4   - `defun` variable a is unused'
+The stdout should include 'WARNING LET_SUPERSEDE at line 6   - `let` variable a is superseded'
+The stdout should include 'WARNING DEFUN_UNREACHABLE_VAR at line 20  - `defun` another argument is already called a'
+The stderr should be blank
+The status should be failure
 End
 
 It 'only reports wrong `status` and `sstatus` calls'
@@ -153,11 +176,18 @@ The stderr should be blank
 The status should be failure
 End
 
+It 'reports `setof` where variable is never used'
+End
 
+It 'reports `exists` where variable is never used'
+End
+
+It 'reports confusion in cond, example: (cond ( isCallable <name> ))'
+End
 
 It 'checks itself'
 ## DEBUG
-Skip 'for now, this will be the final test to implement all required checks'
+Skip 'Not ready for that yet...'
 When run ./bin/sharp lint ./skill/autoloaded/lint.scm
 The stdout should end with 'PASS'
 The stderr should be blank

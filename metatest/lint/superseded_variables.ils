@@ -1,0 +1,25 @@
+
+(let ()
+
+  (defun cst_fun0 ( a )
+    "dummy"
+    (let ( ( a 12 )
+           )
+      (println a)
+      )
+    )
+
+  );closure
+
+(letseq ( ( a 12       )
+          ( a (add1 a) )
+          )
+  a)
+
+;; Lint should raise a WARNING
+(defun toto (a a)
+  "Return A."
+  a)
+
+;; TODO - also test superseded variables within `letseq`, `defun`, `defglobalfun`, `procedure`, `globalProc`, `define`, `lambda`
+
