@@ -1,6 +1,7 @@
 #!/bin/bash
-Describe 'sharp'
+#shellcheck disable=SC2016 #backquotes are printed on purpose
 
+Describe 'sharp'
 Describe 'lint'
 
 It 'reports issues in `if`, `when`, `unless`'
@@ -56,7 +57,7 @@ End
 It 'reports line numbers inside complicated macros'
 End
 
-It 'can be waived using `@no_lint'"'"
+It 'can be waived using `@no_lint`'
 When run ./bin/sharp lint ./metatest/lint/waive.scm
 The stdout should include 'INFO CAR_SETOF at line 5'
 The stdout should not include 'INFO CAR_SETOF at line 8'
@@ -114,11 +115,11 @@ End
 
 It 'reports wrong `let` definitions'
 When run ./bin/sharp lint ./metatest/lint/let_errors.ils
-The stdout should include 'ERROR LET_DEF_SYNTAX at line 5   - `let` binding must be a symbol or symbol-value pair: (b) - (let ((a 12) (b) (c "str0" "str1") 42) (list a b 42))'
-The stdout should include 'ERROR LET_DEF_SYNTAX at line 6   - `let` binding must be a symbol or symbol-value pair: (c "str0" "str1") - (let ((a 12) (b) (c "str0" "str1") 42) (list a b 42))'
-The stdout should include 'ERROR LET_DEF_SYNTAX at line 7   - `let` binding must be a symbol or symbol-value pair: 42 - (let ((a 12) (b) (c "str0" "str1") 42) (list a b 42))'
+The stdout should include 'ERROR SYNTAX_LET_DEF at line 5   - `let` binding must be a symbol or symbol-value pair: (b) - (let ((a 12) (b) (c "str0" "str1") 42) (list a b 42))'
+The stdout should include 'ERROR SYNTAX_LET_DEF at line 6   - `let` binding must be a symbol or symbol-value pair: (c "str0" "str1") - (let ((a 12) (b) (c "str0" "str1") 42) (list a b 42))'
+The stdout should include 'ERROR SYNTAX_LET_DEF at line 7   - `let` binding must be a symbol or symbol-value pair: 42 - (let ((a 12) (b) (c "str0" "str1") 42) (list a b 42))'
 The stdout should include 'ERROR MISSING_ARG at line 13  - `let` requires 1 more positional arguments - (let 12)'
-The stdout should include 'ERROR LET_SYNTAX at line 13  - `let` first argument should be a list: 12 - (let 12)'
+The stdout should include 'ERROR SYNTAX_LET at line 13  - `let` first argument should be a list: 12 - (let 12)'
 The stderr should be blank
 The status should be failure
 End
@@ -129,11 +130,11 @@ End
 It 'reports unused variables'
 When run ./bin/sharp lint ./metatest/lint/unused_variables.scm
 The stdout should include 'WARNING LET_UNUSED at line 4   - `let` variable c is unused'
-# The stdout should include 'WARNING ASSIGNED_ONLY at line 4 - variable a is assigned but unused'
-# The stdout should include 'WARNING UNUSED at line 12 - variable unused_var is unused'
-# The stdout should include 'WARNING ASSIGNED_ONLY at line 20 - variable unused_var is assigned but unused'
-# The stdout should include 'WARNING UNUSED at line 20 - variable another_unused_var is unused'
-# The stdout should include 'WARNING ASSIGNED_ONLY at line 29 - variable twelve is assigned but unused'
+The stdout should include 'WARNING LET_ASSIGNED_ONLY at line 4   - `let` variable a is assigned only'
+The stdout should include 'WARNING LET_ASSIGNED_ONLY at line 12  - `let` variable unused_var is assigned only'
+The stdout should include 'WARNING LET_ASSIGNED_ONLY at line 20  - `let` variable unused_var is assigned only'
+The stdout should include 'WARNING LET_UNUSED at line 20  - `let` variable another_unused_var is unused'
+The stdout should include 'WARNING LET_ASSIGNED_ONLY at line 29  - `let` variable twelve is assigned only'
 The stderr should be blank
 The status should be failure
 End
@@ -141,7 +142,21 @@ End
 It 'reports superseded variables'
 End
 
+It 'only reports wrong `status` and `sstatus` calls'
+When run ./bin/sharp lint ./metatest/lint/sstatus.scm
+The stdout should not include 'profCount'
+The stdout should not include 'verboseLoad'
+The stdout should not include 'verboseNamespace'
+The stdout should include 'unknown_status_var'
+The stdout should include 'thisDoesNotExist'
+The stderr should be blank
+The status should be failure
+End
+
+
+
 It 'checks itself'
+## DEBUG
 Skip 'for now, this will be the final test to implement all required checks'
 When run ./bin/sharp lint ./skill/autoloaded/lint.scm
 The stdout should end with 'PASS'
@@ -159,22 +174,7 @@ End
 
 
 Describe 'old_lint'
-
 Skip "Lint is not working properly yet (it seems it's behavior is limited)"
-
-
-
-
-  It 'only reports wrong `status'"'"' and `sstatus'"'"' calls'
-    When run ./bin/sharp lint ./metatest/lint/sstatus.scm
-    The stdout should not include 'profCount'
-    The stdout should not include 'verboseLoad'
-    The stdout should not include 'verboseNamespace'
-    The stdout should include 'unknown_status_var'
-    The stdout should include 'thisDoesNotExist'
-    The stderr should be blank
-    The status should be failure
-  End
 
   It 'reports missing docstrings in methods'
     When run ./bin/sharp lint ./metatest/lint/methods_without_docstrings.scm
@@ -221,7 +221,7 @@ Skip "Lint is not working properly yet (it seems it's behavior is limited)"
     The status should be failure
   End
 
-  It 'does not report variables in `@str'"'"' calls as unused'
+  It 'does not report variables in `@str` calls as unused'
     When run ./bin/sharp lint ./metatest/lint/f-strings_variables.scm
     The stdout should include 'UNUSED VAR (Unused): ./metatest/lint/f-strings_variables.scm, line 6 : variable unused_var does not appear to be referenced. (assigned only)'
     The stderr should be blank
@@ -248,7 +248,7 @@ Skip "Lint is not working properly yet (it seems it's behavior is limited)"
     The status should be failure
   End
 
-  It 'reports Lint messages inside `@letf'"'"
+  It 'reports Lint messages inside `@letf`'
     When run ./bin/sharp lint ./metatest/lint/letf_calls.scm
     The stdout should include 'HINT (CAR_SETOF): ./metatest/lint/letf_calls.scm, line 11 (call_with_hint) : (car (setof ...)) should be replaced by (car (exists ...)): (setof elt (quote (1 2 3)) (evenp elt))'
     #The stdout should include 'HINT (EXTRA_LETF): ./metatest/lint/letf_calls.scm, line 23 (call_without_definitions) : @letf without definitions can be replaced by let or progn'
@@ -257,7 +257,7 @@ Skip "Lint is not working properly yet (it seems it's behavior is limited)"
     The status should be failure
   End
 
-  It 'reports Lint messages inside `@wrap'"'"
+  It 'reports Lint messages inside `@wrap`'
   When run ./bin/sharp lint ./metatest/lint/wrap_calls.scm
     The stdout should include 'ERROR (UNKNOWN_STATUS_FLAG): ./metatest/lint/wrap_calls.scm, line 8 (another_dummy_fun) : Unknown (s)status flag: (sstatus ThisStatusDoesNotExist t)'
     The stdout should include 'ERROR (UNKNOWN_STATUS_FLAG): ./metatest/lint/wrap_calls.scm, line 9 (another_dummy_fun) : Unknown (s)status flag: (sstatus ThisStatusDoesNotExist nil)'
@@ -269,14 +269,14 @@ Skip "Lint is not working properly yet (it seems it's behavior is limited)"
     The status should be failure
   End
 
-  It 'reports extra use of `@wrap'"'"
+  It 'reports extra use of `@wrap`'
   When run ./bin/sharp lint ./metatest/lint/empty_wrap.scm
     The stdout should include 'HINT (EXTRA_WRAP): ./metatest/lint/empty_wrap.scm, line 7 (dummy_fun) : @wrap without IN or OUT can be removed or replaced by progn'
     The stderr should be blank
     The status should be success
   End
 
-  It 'only reports wrong arguments in `lambda'"'"' and `defun'"'"' calls'
+  It 'only reports wrong arguments in `lambda` and `defun` calls'
   End
 
   It 'reports unused local functions'
