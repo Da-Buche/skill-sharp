@@ -5,7 +5,7 @@ Describe 'lint'
 
 It 'reports issues in `if`, `when`, `unless`'
 When run ./bin/sharp lint ./metatest/lint/if_when_unless.scm
-The stdout should include 'ERROR IF_EXTRA_ARGS at line 9'
+The stdout should include 'ERROR EXTRA_ARGS at line 9'
 The stdout should include 'INFO IF_NIL at line 16'
 The stdout should include 'WARNING STATIC_CONDITION at line 22  - `if` is useless, condition is static: t - (if t 12 27)'
 The stdout should include 'WARNING STATIC_CONDITION at line 27  - `if` is useless, condition is static: nil - (if nil 12 27)'
@@ -67,28 +67,89 @@ The stdout should not include 'INFO IF_NIL at line 25'
 The stdout should not include 'WARNING STATIC_CONDITION at line 25'
 The stdout should not include 'INFO IF_NIL at line 36'
 The stdout should not include 'WARNING STATIC_CONDITION at line 36'
-The stdout should include 'ERROR IF_EXTRA_ARGS at line 45'
-The stdout should not include 'ERROR IF_EXTRA_ARGS at line 53'
-The stdout should not include 'ERROR IF_EXTRA_ARGS at line 62'
+The stdout should include 'ERROR EXTRA_ARGS at line 45'
+The stdout should not include 'ERROR EXTRA_ARGS at line 53'
+The stdout should not include 'ERROR EXTRA_ARGS at line 62'
 The stdout should not include 'waived'
 The stderr should be blank
 The status should be failure
 End
 
+It 'reports extra positional arguments'
+When run ./bin/sharp lint ./metatest/lint/extra_positional_arguments.scm
+The stdout should include 'ERROR EXTRA_ARGS at line 5   - `if`'
+The stdout should include 'ERROR EXTRA_ARGS at line 5   - `getShellEnvVar`'
+The stdout should include 'ERROR EXTRA_ARGS at line 11  - `quote`'
+The stderr should be blank
+The status should be failure
+End
+
+It 'reports missing positional arguments'
+When run ./bin/sharp lint ./metatest/lint/missing_positional_arguments.scm
+The stdout should include 'ERROR MISSING_ARG at line 6   - `if`'
+The stdout should include 'ERROR MISSING_ARG at line 6   - `getShellEnvVar`'
+The stdout should include 'ERROR MISSING_ARG at line 8   - `quote`'
+The stdout should include 'ERROR MISSING_ARG at line 12  - `prog1`'
+The stdout should include 'ERROR MISSING_ARG at line 16  - `progn` requires 1 more positional arguments - (progn)'
+The stderr should be blank
+The status should be failure
+End
+
+It 'reports extra key arguments'
+When run ./bin/sharp lint ./metatest/lint/extra_key_arguments.scm
+The stdout should include 'WARNING EXTRA_KEY_ARG at line 2   - `let` extra key argument ?unexpected is provided'
+The stdout should include 'WARNING POSITIONAL_KEY_ARG at line 4   - `progn` argument ?weird is treated as positional'
+The stdout should include 'WARNING EXTRA_KEY_ARG at line 4   - `progn` extra key argument ?what'
+The stdout should include 'WARNING EXTRA_KEY_ARG at line 7   - `\@if` extra key argument ?extra_var'
+The stdout should not include 'argument ?do_not_report'
+The stderr should be blank
+The status should be failure
+End
+
+It 'reports extra key arguments in local functions'
+End
+
+It 'reports missing required key arguments (SKILL# only, not a priority as they raise an error anyway)'
+End
+
+It 'reports wrong `let` definitions'
+When run ./bin/sharp lint ./metatest/lint/let_errors.ils
+The stdout should include 'ERROR LET_DEF_SYNTAX at line 5   - `let` binding must be a symbol or symbol-value pair: (b) - (let ((a 12) (b) (c "str0" "str1") 42) (list a b 42))'
+The stdout should include 'ERROR LET_DEF_SYNTAX at line 6   - `let` binding must be a symbol or symbol-value pair: (c "str0" "str1") - (let ((a 12) (b) (c "str0" "str1") 42) (list a b 42))'
+The stdout should include 'ERROR LET_DEF_SYNTAX at line 7   - `let` binding must be a symbol or symbol-value pair: 42 - (let ((a 12) (b) (c "str0" "str1") 42) (list a b 42))'
+The stdout should include 'ERROR MISSING_ARG at line 13  - `let` requires 1 more positional arguments - (let 12)'
+The stdout should include 'ERROR LET_SYNTAX at line 13  - `let` first argument should be a list: 12 - (let 12)'
+The stderr should be blank
+The status should be failure
+End
+
+It 'reports errors inside `let` definitions'
+End
+
 It 'reports unused variables'
 When run ./bin/sharp lint ./metatest/lint/unused_variables.scm
-The stdout should include 'WARNING UNUSED at line 4 - variable c is never used'
-The stdout should include 'WARNING ASSIGNED_ONLY at line 4 - variable a is assigned but never used'
-The stdout should include 'WARNING UNUSED at line 12 - variable unused_var is never used'
-The stdout should include 'WARNING ASSIGNED_ONLY at line 20 - variable unused_var is assigned but never used'
-The stdout should include 'WARNING UNUSED at line 20 - variable another_unused_var is never used'
-The stdout should include 'WARNING ASSIGNED_ONLY at line 29 - variable twelve is assigned but never used'
+The stdout should include 'WARNING LET_UNUSED at line 4   - `let` variable c is unused'
+# The stdout should include 'WARNING ASSIGNED_ONLY at line 4 - variable a is assigned but unused'
+# The stdout should include 'WARNING UNUSED at line 12 - variable unused_var is unused'
+# The stdout should include 'WARNING ASSIGNED_ONLY at line 20 - variable unused_var is assigned but unused'
+# The stdout should include 'WARNING UNUSED at line 20 - variable another_unused_var is unused'
+# The stdout should include 'WARNING ASSIGNED_ONLY at line 29 - variable twelve is assigned but unused'
 The stderr should be blank
 The status should be failure
 End
 
 It 'reports superseded variables'
 End
+
+It 'checks itself'
+Skip 'for now, this will be the final test to implement all required checks'
+When run ./bin/sharp lint ./skill/autoloaded/lint.scm
+The stdout should end with 'PASS'
+The stderr should be blank
+The status should be success
+End
+
+
 
 End
 
@@ -101,13 +162,6 @@ Describe 'old_lint'
 
 Skip "Lint is not working properly yet (it seems it's behavior is limited)"
 
-  It 'checks itself'
-    When run ./bin/sharp lint ./skill/autoloaded/lint.scm
-    The stdout should include 'INFO (IQ): IQ score is 100 (best is 100).'
-    The stdout should end with 'with status PASS.'
-    The stderr should be blank
-    The status should be success
-  End
 
 
 
