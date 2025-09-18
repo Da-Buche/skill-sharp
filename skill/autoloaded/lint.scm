@@ -47,9 +47,32 @@
 This is the default Lint 'control' rule."
   ?out nil
   ;(@debug "@lint_default_rule - sexp: {sexp}\n  messages: {messages}\n\n")
-  (let ( ( sexp_pos 0 )
+  (let ( ( sexp_pos 1          )
+         ( fun      (car sexp) )
+         ( args     (cdr sexp) )
          )
-    (foreach sub_sexp sexp
+    ;; Check function
+    (caseq (type fun)
+      ( symbol
+        (cond
+          ;; Variable is defined
+          ( (exists env envs (and (tablep env) env[fun]))
+            ;; TODO - Make sure that variable describes a function
+            
+            )
+          ;; Variable is callable
+          ( (isCallable fun) )
+          ;; Not callable...
+          ( t (@lint_msg sexp messages levels 'WARNING 'UNCALLABLE "{fun} is not callable") )
+          ))
+      ( list
+        ;; TODO - List might sometimes be callable
+        
+        )
+      ( t (@lint_msg sexp messages levels 'WARNING 'UNCALLABLE "{fun} is not callable") )
+      )
+    ;; Check arguments
+    (foreach sub_sexp args
       (_\@lint_sexp sub_sexp messages (cons sexp_pos++ levels) (cons sexp parents) envs scheme)
       ))
   nil)
@@ -86,19 +109,25 @@ This is the default Lint 'control' rule."
   (defglobalfun _\@lint_sexp ( sexp messages levels parents envs scheme )
     "Lint SEXP."
     ;(@debug "_@lint_sexp\n  sexp: {sexp}\n  messages: {messages}\n\n")
+    ;; TODO - At least in debug mode, assert that levels and parents are matching (in terms of nested expressions)
+    
     (cond
       ;; Symbol, check variable
       ( (symbolp sexp)
         ;; Make sure variable exists, mark it as used
-        (let ( ( env (car (exists env envs env[sexp])) )
-               )
-          (if env
-              (setf env[sexp]->status 'used)
-            ;; TODO - Check if global variable exists (report it)
-            ;; TODO - Report if variable is undefined
-            ()
-            ))
-        )
+        (@if (car (exists env envs env[sexp]))
+             ?var env
+             (setf env[sexp]->status 'used)
+          (cond
+            ;; Symbol is t, nothing to say
+            ( (eq t sexp) )
+            ;; Variable is bound
+            ( (if scheme (boundp sexp (schemeTopLevelEnv)) (boundp sexp))
+              (@lint_msg sexp messages levels 'WARNING 'GLOBAL_USE "Global variable is used")
+              )
+            ( t (@lint_msg sexp messages levels 'ERROR 'GLOBAL_USE "Undefined global variable is used") )
+            );cond
+          ))
       ;; Atom, skip it
       ( (atom sexp)
         nil
@@ -235,11 +264,33 @@ Output is positional arguments, key arguments and rest argument."
 (defun @lint_msg ( sexp messages levels type name msg )
   "Add Lint message to MESSAGES.
 SEXP is the expression concerned by the message.
-LEVELS containes the information about the nested parent expressions to reach the concerned SEXP.
+LEVELS contains the information about the nested parent expressions to reach the concerned SEXP.
 TYPE describe message level (INFO, WARNING or ERROR).
 NAME is the message reference."
   (tconc messages (list type name levels msg sexp))
   nil)
+
+(defun @lint_resolve_env ( sexp messages levels env )
+  "Resolve ENV and report unused variables in SEXP."
+  (let ( ( fun (car sexp) )
+         )
+    (foreach name env[?]
+      (@caseq env[name]->status
+        ( ( used called global ) nil )
+        ( assigned
+          (@lint_msg sexp messages levels 'WARNING (concat (upperCase fun) '_ASSIGNED_ONLY)
+            (@str "`{fun}` variable {name} is assigned only"))
+          )
+        ( t
+          (@lint_msg sexp messages levels 'WARNING (concat (upperCase fun) '_UNUSED)
+            (@str "`{fun}` variable {name} is unused"))
+          )
+        ));caseq ;foreach
+    ));let ;fun
+
+;; =======================================================
+;; Rules Definitions
+;; =======================================================
 
 ;; -------------------------------------------------------
 ;; Lint waiver
@@ -309,6 +360,36 @@ NAME is the message reference."
     ))
 
 ;; -------------------------------------------------------
+;; `setof`, `exists` & `forall`
+;; -------------------------------------------------------
+
+(@lint_rule
+  ?functions '( setof exists forall )
+  ?control t
+  ?rule_fun
+  (lambda ( sexp messages levels parents envs scheme )
+    (unless
+      (errset
+        (destructuringBind ( fun var elts predicate ) sexp
+          (@nif (symbolp var)
+                (@lint_msg sexp messages levels 'ERROR (concat (upperCase fun) '_VARIABLE)
+                  (@str "`{fun}` first argument should be an unquoted symbol")
+                  )
+            (let ( (env (makeTable t nil))
+                   )
+              (setf env[var] (list nil 'status 'unused))
+              (_\@lint_sexp elts      messages (cons 2 levels) (cons sexp parents) envs            scheme)
+              (_\@lint_sexp predicate messages (cons 3 levels) (cons sexp parents) (cons env envs) scheme)
+              (@lint_resolve_env sexp messages levels env)
+              )
+            ))
+        nil)
+      (@lint_msg sexp messages levels 'ERROR (concat 'SYNTAX_ (upperCase (car sexp)))
+        (@str "`{(car sexp)}` syntax should be ({(car sexp)} <variable> <list> <predicate>)"))
+      )
+    ))
+
+;; -------------------------------------------------------
 ;; (car (setof ...))
 ;; -------------------------------------------------------
 
@@ -332,7 +413,7 @@ NAME is the message reference."
   (lambda ( sexp messages levels parents envs scheme )
     (cond
       ;; Check minumun number of arguments
-      ( (not (cddr sexp)) (@lint_msg sexp messages levels 'ERROR 'CASE_MISSING_ARGS (@str "`{(car sexp)}` requires at least two arguments.")) )
+      ( (not (cddr sexp)) (@lint_msg sexp messages levels 'ERROR 'CASE_MISSING_ARGS (@str "`{(car sexp)}` requires at least two arguments")) )
       ( t
         (destructuringBind ( fun _val @rest cases ) sexp
           (let ( ( case_sexp_pos 2 )
@@ -365,7 +446,7 @@ NAME is the message reference."
 ;; -------------------------------------------------------
 
 (@lint_rule
-  ?functions '( let )
+  ?functions '( let letseq )
   ?control t
   ?rule_fun
   (lambda ( sexp messages levels parents envs scheme )
@@ -377,8 +458,11 @@ NAME is the message reference."
           (let ( ( env      (makeTable t nil) )
                  ( sexp_pos 2                 )
                  )
+            ;; In `letseq` current environment is already available for next definitions
+            (when (eq fun 'letseq) (setq envs (cons env envs)))
             (@nif (listp defs)
-                  (@lint_msg sexp messages levels 'ERROR 'SYNTAX_LET (@str "`{fun}` first argument should be a list: {defs}"))
+                  (@lint_msg sexp messages levels 'ERROR (concat 'SYNTAX_ (upperCase fun))
+                    (@str "`{fun}` first argument should be a list: {defs}"))
               ;; Define each variable in environment
               (let ( ( def_pos -1 )
                      name has_val
@@ -393,7 +477,8 @@ NAME is the message reference."
                     ( list
                       (@nif (and (symbolp (car def)) (cdr def) (not (cddr def)))
                             ;; Definition is wrong, report it
-                            (@lint_msg sexp messages (constar def_pos 1 levels) 'ERROR 'SYNTAX_LET_DEF (@str "`{fun}` binding must be a symbol or symbol-value pair: {def}"))
+                        (@lint_msg sexp messages (constar def_pos 1 levels) 'ERROR (concat 'SYNTAX_ (upperCase fun) '_BINDING)
+                          (@str "`{fun}` binding must be a symbol or symbol-value pair: {def}"))
                         (setq name     (car def))
                         (setq has_val t        )
                         ;; Check variable definition
@@ -405,10 +490,22 @@ NAME is the message reference."
                         ));nif ;list
                     (t
                       ;; Variable definition should be a symbol or a symbol-value pair
-                      (@lint_msg sexp messages (constar def_pos 1 levels) 'ERROR 'SYNTAX_LET_DEF (@str "`{fun}` binding must be a symbol or symbol-value pair: {def}"))
+                      (@lint_msg sexp messages (constar def_pos 1 levels) 'ERROR (concat 'SYNTAX_ (upperCase fun) '_BINDING)
+                        (@str "`{fun}` binding must be a symbol or symbol-value pair: {def}"))
                       ));t ;caseq
                   ;; Add variable to env
-                  (when name (setf env[name] (list nil 'status (if has_val 'assigned 'unused))))
+                  (when (exists env envs env[name])
+                    (@lint_msg sexp messages (constar def_pos 1 levels) 'WARNING (concat (upperCase fun) '_SUPERSEDE)
+                      (@str "`{fun}` variable {name} is superseded")
+                      ))
+                  ;; Report two variables having the same name in the same let
+                  (cond
+                    ( (not name) )
+                    ( env[name]
+                      (@lint_msg sexp messages (constar def_pos 1 levels) 'WARNING (concat (upperCase fun) '_UNREACHABLE_VAR)
+                        (@str "`{fun}` another variable is already called {name}")) )
+                    (t (setf env[name] (list nil 'status (if has_val 'assigned 'unused))) )
+                    )
                   ));foreach ;let
               (push env envs)
               ;; Check body
@@ -416,12 +513,7 @@ NAME is the message reference."
                 (_\@lint_sexp sub_sexp messages (cons sexp_pos++ levels) (cons sexp parents) envs scheme)
                 )
               ;; Check unused variables
-              (foreach name env[?]
-                (@caseq env[name]->status
-                  ( ( used called global ) nil )
-                  ( assigned (@lint_msg sexp messages levels 'WARNING 'LET_ASSIGNED_ONLY (@str "`{fun}` variable {name} is assigned only")) )
-                  ( t        (@lint_msg sexp messages levels 'WARNING 'LET_UNUSED        (@str "`{fun}` variable {name} is unused"       )) )
-                  ));caseq ;foreach
+              (@lint_resolve_env sexp messages levels env)
               );nif
             ));let ;dbind
         ));t ;cond
@@ -439,9 +531,10 @@ NAME is the message reference."
     (unless
       (errset
         (destructuringBind (fun name value) sexp
-          (cond
-            ( (tablep (car envs) (setf (car envs)[name] (list nil 'status 'assigned)) ) )
-            ( t (@lint_msg sexp messages levels 'GLOBAL (@str "`{fun}` global definition: {name}")) )
+          (@if (exists env envs (and (tablep env) env[name]))
+               ?var env
+               (setf (car envs)[name]->status 'assigned)
+            (@lint_msg sexp messages levels 'WARNING 'GLOBAL (@str "`{fun}` global definition: {name}"))
             )
           ;; Check value
           (_\@lint_sexp value messages (cons 2 levels) (cons sexp parents) envs scheme)
@@ -450,6 +543,8 @@ NAME is the message reference."
       (@lint_msg sexp messages levels 'ERROR 'SYNTAX_SETQ (@str "`{(car sexp)}` syntax must be ({(car sexp)} <name> <value>)"))
       )
     ))
+
+;; TODO - (set (quote <name>) <value>)
 
 ;; -------------------------------------------------------
 ;; Functions definition
@@ -465,6 +560,8 @@ NAME is the message reference."
             ( env  (car envs) )
             name
             bindings
+            bindings_levels
+            bindings_pos
             body
             body_pos
             )
@@ -479,7 +576,8 @@ NAME is the message reference."
                 (@str "`{fun}` syntax must be ({fun} <name> <value>) or ({fun} ( <name> <args>... ) <body>...)")
                 ))
             ;; Local variable
-            ( (tablep env) (setf env[name] (list nil 'status 'assigned)) )
+            ;; In SKILL, `define` can only be used to define global functions
+            ( (and scheme (tablep env)) (setf env[name] (list nil 'status 'assigned)) )
             ;; Global variable
             ( t (@lint_msg sexp messages levels 'INFO 'GLOBAL (@str "`{fun}` global definition: {name}")) )
             )
@@ -502,9 +600,10 @@ NAME is the message reference."
           (setq name     (caar args))
           (setq bindings (cdar args))
           (setq body     (cdr  args))
-          ;; TODO - Define bindings_levels and bindings_pos
-          
-          (setq body_pos 2)
+          ;; Define bindings_levels and bindings_pos
+          (setq bindings_levels (cons 1 levels))
+          (setq bindings_pos    1              )
+          (setq body_pos        2              )
           )
 
         ;; `defun`, `defglobalfun`
@@ -523,9 +622,10 @@ NAME is the message reference."
           (setq name     (car  args))
           (setq bindings (cadr args))
           (setq body     (cddr args))
-          ;; TODO - Define bindings_levels and bindings_pos
-          
-          (setq body_pos 3)
+          ;; Define bindings_levels and bindings_pos
+          (setq bindings_levels (cons 2 levels))
+          (setq bindings_pos    0              )
+          (setq body_pos        3              )
           )
 
         ;; `lambda`
@@ -540,9 +640,10 @@ NAME is the message reference."
             )
           (setq bindings (car args))
           (setq body     (cdr args))
-          ;; TODO - Define bindings_levels and bindings_pos
-          
-          (setq body_pos 2)
+          ;; Define bindings_levels and bindings_pos
+          (setq bindings_levels (cons 1 levels))
+          (setq bindings_pos    0              )
+          (setq body_pos        2              )
           )
 
         ;; Rest is unsupported and should never happen
@@ -563,12 +664,47 @@ NAME is the message reference."
         ( t (@lint_msg sexp messages levels 'INFO 'GLOBAL (@str "`{fun}` global definition: {name}")) )
         );cond
 
-      ;; TODO - Make sure arguments are valid, define new_env using bindings
-      
-      ;; Check body
-      (foreach sub_sexp body
-        (_\@lint_sexp sub_sexp messages (cons body_pos++ levels) (cons sexp parents) envs scheme)
-        )
+      ;; Make sure bindings syntax is valid, define new_env using bindings
+      (let ( ( env         (makeTable t nil)   )
+             ( binding_pos (sub1 bindings_pos) )
+             name has_val
+             )
+        (foreach binding bindings
+          binding_pos++
+          (setq name    nil)
+          (setq has_val nil)
+          (cond
+            ( (memq binding '( @optional @rest @key @aux )) )
+            ( (symbolp binding) (setq name binding) )
+            ( (and (listp binding) (symbolp (car binding)) (cdr binding) (not (cddr binding)))
+              (setq name    (car binding))
+              (setq has_val t            )
+              ;; Check default value
+              (_\@lint_sexp (cadr binding) messages
+                (constar 1 binding_pos bindings_levels)
+                (constar binding bindings sexp parents)
+                (if scheme (cons env envs) envs)
+                scheme
+                ))
+            ( t
+              (@lint_msg sexp messages (constar binding_pos bindings_levels) 'ERROR (concat 'SYNTAX_ (upperCase fun) '_BINDING)
+                (@str "`{fun}` binding must be a symbol or symbol-value pair: {binding}"))
+              ));t ;cond
+          (cond
+            ( (not name) )
+            ( env[name]
+              (@lint_msg sexp messages (constar binding_pos bindings_levels) 'WARNING (concat (upperCase fun) '_UNREACHABLE_VAR)
+                (@str "`{fun}` another argument is already called {name}")) )
+            ( t (setf env[name] (list nil 'status (if has_val 'assigned 'unused))) )
+            )
+          );foreach
+        ;; Check body
+        (foreach sub_sexp body
+          (_\@lint_sexp sub_sexp messages (cons body_pos++ levels) (cons sexp parents) (cons env envs) scheme)
+          );foreach
+        ;; Check unused variables
+        (@lint_resolve_env sexp messages levels env)
+        );let
       );prog
     ))
 
@@ -587,15 +723,20 @@ NAME is the message reference."
 
 (@lint_rule
   ?functions '( status sstatus )
+  ?control t
   ?rule_fun
-  (lambda ( sexp messages levels @rest _ )
+  (lambda ( sexp messages levels parents @rest args )
     ;; Static condition
     (unless (errset (funcall 'status (nth 1 sexp)))
       (@lint_msg sexp messages levels 'WARNING 'STATUS_FLAG (@str "`{(car sexp)}` unknown flag: {(nth 1 sexp)}"))
-      ))
-  )
-
-
+      )
+    ;; Parse remaining arguments
+    (let ( ( sexp_pos 2 )
+           )
+      (foreach sub_sexp (nthcdr 2 sexp)
+        (apply '_\@lint_sexp sub_sexp messages (cons sexp_pos++ levels) (cons sexp parents) args)
+        ));foreach ;let
+    ))
 
 ;; =======================================================
 ;; Apply rules
