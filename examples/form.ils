@@ -1,12 +1,12 @@
 ;; ===============================================================================================================
 ;; This is an example to describe most GUI capabilities in Cadence SKILL / SKILL++
-;; 
+;;
 ;; A. Buchet - August 2025
 ;; ===============================================================================================================
 
     myColorArray = hiCreateColorArray( )
     myColorArray[0] = hiMatchColorByName( "thistle")
-       ; `a' denotes thistle 
+       ; `a' denotes thistle
 
 myColorArray[12] = hiMatchColor( list( 1000 0 0 ))
    ; `m' denotes red

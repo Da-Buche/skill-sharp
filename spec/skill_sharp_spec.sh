@@ -1,36 +1,45 @@
 #!/bin/bash
 Describe 'skill#'
 
+## Requirements
+missing_fd() { ! fd  --version >/dev/null 2>&1; }
 
-It 'passes Lint checks (All files together)'
-Skip "Lint is not working properly yet (it seems it's behavior is limited)"
-When run ./bin/sharp lint ./skill
-The stdout should include 'INFO (IQ): IQ score is 100 (best is 100).'
-The stderr should be blank
-The status should be success
-End
-
-
-It 'passes Lint checks (File by file)'
-Skip "Lint is not working properly yet (it seems it's behavior is limited)"
-When run env SKILL_SHARP_LINT_FILE_BY_FILE=TRUE ./bin/sharp lint ./skill
-The stdout should be present
-The stderr should be blank
-The status should be success
-End
-
-
-It 'passes unit-tests using SKILL interpreter'
-When run ./bin/sharp test ./test
+It 'passes Lint (all files together)'
+When run bash -c "SKILL_SHARP_LINT_HIDE_SEXPS=TRUE SKILL_SHARP_LINT_HIDE_IGNORES=NOT_CALLABLE ./bin/sharp lint ./skill"
 The stdout should end with 'PASS'
 The stderr should be blank
 The status should be success
 End
 
 
+Describe 'lint'
+Skip if "fd not available" missing_fd
+
+  Parameters:dynamic
+  for file in $(fd '(.scm|.ils?)$' skill) ; do
+    %data "${file}"
+  done
+  End
+
+  It "passes for $1"
+  When run bash -c "SKILL_SHARP_LINT_HIDE_SEXPS=TRUE SKILL_SHARP_LINT_HIDE_IGNORES=NOT_CALLABLE ./bin/sharp lint $1"
+  The stdout should end with 'PASS'
+  The stderr should be blank
+  The status should be success
+  End
+
+End
+
 Describe 'unit-tests'
 
-It 'passes unit-tests (including in-code ones) using SKILL interpreter'
+  It 'passes unit-tests using SKILL interpreter'
+  When run ./bin/sharp test ./test
+  The stdout should end with 'PASS'
+  The stderr should be blank
+  The status should be success
+  End
+
+  It 'passes unit-tests (including in-code ones) using SKILL interpreter'
   When run env SKILL_SHARP_RUN_TEST=TRUE ./bin/sharp test ./test
   The stdout should end with 'PASS'
   The stderr should be blank

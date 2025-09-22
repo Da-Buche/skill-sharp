@@ -83,8 +83,8 @@
           ( t
             ;; `list' here compensates for mapcan
             (list
-              (letseq ( ( val_type (pop val_types)                       )
-                        ( res      (when val_type (list ?type val_type)) )
+              (letseq ( ( val_type (pop val_types)                        )
+                        ( res      (when val_type (list '?type val_type)) )
                         )
                 (caseq arg_type
                   ;; Argument has no default value
@@ -92,8 +92,8 @@
                   ;; Argument has default value, check if it is provided, default to nil otherwise
                   ( ( @optional @key @rest @aux )
                     (caseq (type arg)
-                      ( symbol (constar arg       ?def nil        res)                        )
-                      ( list   (constar (car arg) ?def (cadr arg) res)                        )
+                      ( symbol (constar arg       '?def nil        res)                       )
+                      ( list   (constar (car arg) '?def (cadr arg) res)                       )
                       ( t      (error "caseq - (type arg) should be one of '( symbol list )") )
                       ))
                   ( t (error "caseq - arg_type should be one of '( @positional @optional @key @rest @aux )") )
@@ -162,9 +162,9 @@
 
 ;; TODO - Lint rule SETF3 does not work with quoted characters
 ;; The comparison works with double escape (contact Cadence support)
-(define setf_\\\@arglist setf_\@arglist)
-(define setf_\\\@fdoc    setf_\@fdoc   )
-(define setf_\\\@out     setf_\@out    )
+(define setf_\\\@arglist (getd 'setf_\@arglist))
+(define setf_\\\@fdoc    (getd 'setf_\@fdoc   ))
+(define setf_\\\@out     (getd 'setf_\@out    ))
 
 (setf (fdoc 'setf_\\\@arglist) "`setf' helper for `@arglist'")
 (setf (fdoc 'setf_\\\@fdoc   ) "`setf' helper for `@fdoc'"   )

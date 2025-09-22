@@ -2,7 +2,9 @@
 
 (progn
 
-  (if (getShellEnvVar "DUMMY" 12)
+  (getShellEnvVar "DUMMY" 12)
+
+  (if (getShellEnvVar "DUMMY")
       'then
     'else
     'extra

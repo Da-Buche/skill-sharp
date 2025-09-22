@@ -22,9 +22,7 @@ This design choice is also consistent with Python's f-strings."
     ( t                              (lsprintf spec obj) )
     ));cond ;fun
 
-(let ( in out args char translate error_message
-       ;; TODO - Those are defined only because Lint does not suppport @fun properly yet
-       translate_as_is translate_evaluated )
+(let ( in out args char translate error_message )
 
   (@fun translate_as_is ()
     ?doc "Write characters as is from input port until an open bracket is found."

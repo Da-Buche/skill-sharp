@@ -93,7 +93,7 @@ This is probably equivalent to `mktemp` \"unsafe\" --dry-run mode."
     )
   ?doc "Return a list containing OBJ N times."
   ?out list
-  (@for i 1 n obj)
+  (@for _i 1 n obj)
   )
 
 ;; =======================================================
@@ -474,7 +474,7 @@ Return nil otherwise."
 (@fun @tech_files ()
   ?doc "Return all the available tech files."
   ?out ( tech_file ... )
-  (mapcar techGetTechFile (@tech_libs))
+  (mapcar 'techGetTechFile (@tech_libs))
   )
 
 ;; =======================================================

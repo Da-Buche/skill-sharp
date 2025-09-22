@@ -25,7 +25,8 @@
 
 (defmethod printself ( ( obj @test ) )
   "Prettifier for @test class."
-  (lsprintf "@test(%N)[%N]" obj->title obj))
+  (lsprintf "@test(%N)[%N]" obj->title obj)
+  )
 
 (defmethod @get_assertions ( (test @test) )
   "Get TEST assertions objects."

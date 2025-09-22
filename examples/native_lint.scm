@@ -1,3 +1,5 @@
+;; TODO - This file is meant to be refactored into custom Lint rules then removed
+
 ;; ===============================================================================================================
 ;; Lint rules and associated functions
 ;;
@@ -73,17 +75,6 @@
 ;; =======================================================
 ;; Native Code Rules
 ;; =======================================================
-
-;; -------------------------------------------------------
-;; Unknown `status' or `sstatus' calls
-;; -------------------------------------------------------
-
-;; This is required at least when running Lint from the SKILL Interpreter
-(@no_lint
-  (_\@lint_add_rule ( status sstatus ) (not (errset (funcall 'status (car (SK_ARGS)))))
-    (SK_ERROR UNKNOWN_STATUS_FLAG "Unknown (s)status flag: %N\n" (SK_FORM))
-    ))
-
 
 ;; -------------------------------------------------------
 ;; (car (setof ...)) to replace by (car (exists ...))

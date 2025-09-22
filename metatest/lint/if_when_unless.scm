@@ -48,6 +48,15 @@
       '( a b c)
       )
 
+    ;; This is valid
+    (if (getShellEnvVar "DUMMY")
+        then
+        12
+      unless
+      27
+      42
+      )
+
     );fun
 
   );closure

@@ -134,8 +134,8 @@ This is the SKILL++ equivalent to Emacs Lisp `cl-letf'.
 See also `@wrap' and `@with' for context management."
   ;; Check unevaluated inputs
   (assert (listp defs) "@letf - DEFS should be a list of pairs: %N" defs)
-  (assert defs         "@letf - DEFS cannot be nil: %N"             defs)
-  (assert body         "@letf - BODY cannot be nil: %N"             body)
+  (assert defs         "@letf - DEFS cannot be nil"                     )
+  (assert body         "@letf - BODY cannot be nil"                     )
   ;; Return built S-expression
   (car (_\@letf defs body))
   )
@@ -188,8 +188,8 @@ This is inspired by Python `with` context manager.
 See also `@wrap' and `@with' for context management."
   ;; Check unevaluated inputs
   (assert (listp defs) "@with - DEFS should be a list of pairs: %N" defs)
-  (assert defs         "@with - DEFS cannot be nil: %N"             defs)
-  (assert body         "@with - BODY cannot be nil: %N"             body)
+  (assert defs         "@with - DEFS cannot be nil"                     )
+  (assert body         "@with - BODY cannot be nil"                     )
   ;; Return built S-expression
   (car (_\@with defs body))
   )
@@ -253,6 +253,7 @@ This a very common pattern.
 
 It also respect Scheme simplifaction where 'else' statement can accept any number of S-expressions.
 (There is no need for an extra `progn')"
+  (assert (cdr args) "@if - requires at least two positional arguments: %N" args)
   (destructuringBind ( test then @rest else ) args
     ;; Shape else
     (setq else
@@ -275,6 +276,7 @@ This a very common pattern.
 
 It also respect Scheme simplifaction where 'then' statement can accept any number of S-expressions.
 (There is no need for an extra `progn')"
+  (assert (cdr args) "@nif - requires at least two positional arguments: %N" args)
   (destructuringBind ( test else @rest then ) args
     ;; Shape then
     (setq then
@@ -295,6 +297,7 @@ It also respect Scheme simplifaction where 'then' statement can accept any numbe
                 @rest args "sg" )
   "Combination of `let' and `when', to re-use test result inside the 'then' statement.
 This a very common pattern."
+  (assert (cdr args) "@when - requires at least two positional arguments: %N" args)
   (destructuringBind ( test @rest then ) args
     `(let ( ( ,var ,test )
             )

@@ -87,11 +87,11 @@
 
   );closure
 
-(define setf_\@get_debug @set_debug)
+(define setf_\@get_debug (getd '@set_debug))
 (setf (fdoc 'setf_\@get_debug) "`setf' helper for `@get_debug")
 
 ;; Lint waiver
-(define setf_\\\@get_debug @set_debug)
+(define setf_\\\@get_debug (getd '@set_debug))
 (setf (fdoc 'setf_\\\@get_debug) "`setf' helper for `@get_debug")
 
 ;; Enable debugging by default
@@ -136,16 +136,16 @@
   (unwindProtect
     (progn
       (rexMagic t)
-      (load (simplifyFilename (strcat (get_filename piport) "/../macros/macro.scm"     )))
-      (load (simplifyFilename (strcat (get_filename piport) "/../macros/function.scm"  )))
-      (load (simplifyFilename (strcat (get_filename piport) "/../macros/class.scm"     )))
-      (load (simplifyFilename (strcat (get_filename piport) "/../macros/patterns.scm"  )))
-      (load (simplifyFilename (strcat (get_filename piport) "/../macros/f-strings.scm" )))
-      (load (simplifyFilename (strcat (get_filename piport) "/../legacy.scm"           )))
-      (load (simplifyFilename (strcat (get_filename piport) "/../pretty_print.scm"     )))
-      (load (simplifyFilename (strcat (get_filename piport) "/../functional.scm"       )))
-      (load (simplifyFilename (strcat (get_filename piport) "/../utils.scm"            )))
-      (load (simplifyFilename (strcat (get_filename piport) "/../testing.scm"          )))
+      (load (simplifyFilename (strcat (get_filename (@piport)) "/../macros/macro.scm"     )))
+      (load (simplifyFilename (strcat (get_filename (@piport)) "/../macros/function.scm"  )))
+      (load (simplifyFilename (strcat (get_filename (@piport)) "/../macros/class.scm"     )))
+      (load (simplifyFilename (strcat (get_filename (@piport)) "/../macros/patterns.scm"  )))
+      (load (simplifyFilename (strcat (get_filename (@piport)) "/../macros/f-strings.scm" )))
+      (load (simplifyFilename (strcat (get_filename (@piport)) "/../legacy.scm"           )))
+      (load (simplifyFilename (strcat (get_filename (@piport)) "/../pretty_print.scm"     )))
+      (load (simplifyFilename (strcat (get_filename (@piport)) "/../functional.scm"       )))
+      (load (simplifyFilename (strcat (get_filename (@piport)) "/../utils.scm"            )))
+      (load (simplifyFilename (strcat (get_filename (@piport)) "/../testing.scm"          )))
       );progn
     (rexMagic magic)
     ));unwindProtect ;let
@@ -201,11 +201,10 @@
         ;; Write command to cmd_file
         (@write_file cmd_file command)
         ;; Run command
-        (let ( ( exit_status (sh (lsprintf "bash -c \"$(<%s)\" >%s 2>%s ; echo \"$?\" >%s ;" cmd_file out_file err_file sts_file)) )
-               )
-          ;; Return results
-          (list (@read_file out_file) (@read_file err_file) (atoi (@read_file sts_file)))
-          ));let ;progn
+        (sh (lsprintf "bash -c \"$(<%s)\" >%s 2>%s ; echo \"$?\" >%s ;" cmd_file out_file err_file sts_file))
+        ;; Return results
+        (list (@read_file out_file) (@read_file err_file) (atoi (@read_file sts_file)))
+        );progn
         ;; Properly delete associated files
       (foreach file (list cmd_file out_file err_file sts_file)
         (errset (deleteFile file) t))
@@ -259,9 +258,9 @@
 ;; Define loading functions
 ;; =======================================================
 
-(letseq ( ( current_file (get_filename piport)                     )
+(letseq ( ( current_file (get_filename (progn "NO_LINT" piport)) )
           ( skill_root   (@realpath (strcat current_file "/..")) )
-          ( loaded_files (makeTable t nil)                         )
+          ( loaded_files (makeTable t nil)                       )
           )
 
   ;; Define module root

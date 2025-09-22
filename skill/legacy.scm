@@ -86,8 +86,7 @@ as when an unset value is defined it cannot be reverted back."
     ))
 
 (unless (isCallable 'setf_getShellEnvVar)
-  (define setf_getShellEnvVar @setf_getShellEnvVar))
-
+  (define setf_getShellEnvVar (getd '@setf_getShellEnvVar)))
 
 ;*/
 
