@@ -10,19 +10,19 @@
     )
   ?doc "Return OBJ as a string (like `printself').
 If OBJ is already a string, it is returned as is.
+If @str.pretty is non-nil and OBJ is a list: it is pretty-printed.
 
 This function is meant to be used as `@str' macro helper to avoid double-quotes when inserting strings.
 Those double-quotes are easily added by hand when required while removing afterwards is way more complicated.
 This design choice is also consistent with Python's f-strings."
   ?out string
-  (if (stringp obj)
-      obj
-    (lsprintf spec obj)
-    ));if ;fun
+  (cond
+    ( (stringp obj)                  obj                 )
+    ( (and (listp obj) @str.pretty ) (@pretty_print obj) )
+    ( t                              (lsprintf spec obj) )
+    ));cond ;fun
 
-(let ( in out args char translate error_message
-       ;; TODO - Those are defined only because Lint does not suppport @fun properly yet
-       translate_as_is translate_evaluated )
+(let ( in out args char translate error_message )
 
   (@fun translate_as_is ()
     ?doc "Write characters as is from input port until an open bracket is found."
@@ -144,6 +144,8 @@ Everything between '{' and '}' will be evaluated in current environment.
 
 Expressions inside '{' and '}' can end with any format specification like %A or %-12.27f.
 (As described in `fprintf' documentation.)
+
+If @str.pretty is non-nil, lists are pretty-printed.
 "
   ;; No idea why the type letter in arguments template is not taken in account
   ;; Without the following line, when running (@str symbol)

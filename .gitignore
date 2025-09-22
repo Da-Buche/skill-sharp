@@ -2,6 +2,7 @@
 
 .git/
 private/
+__pycache__/
 
 report/results_junit.xml
 .shellspec-quick.log

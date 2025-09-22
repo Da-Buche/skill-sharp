@@ -23,7 +23,7 @@
       (foreach lp tech_file->lps
         (@when (drFindPacket "display" (techGetLPPacketName lp))
           ?var packet
-          (destructuringBind ( _display _packet fill_style _line_style fill_color _line_color ) packet
+          (destructuringBind ( _display _packet _fill_style _line_style fill_color _line_color ) packet
             (setf table[fill_color] t)
             ));dbind ;when
         ));foreach lp ;foreach tech_file

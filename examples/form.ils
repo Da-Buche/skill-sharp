@@ -1,0 +1,94 @@
+;; ===============================================================================================================
+;; This is an example to describe most GUI capabilities in Cadence SKILL / SKILL++
+;;
+;; A. Buchet - August 2025
+;; ===============================================================================================================
+
+    myColorArray = hiCreateColorArray( )
+    myColorArray[0] = hiMatchColorByName( "thistle")
+       ; `a' denotes thistle
+
+myColorArray[12] = hiMatchColor( list( 1000 0 0 ))
+   ; `m' denotes red
+
+myColorArray[4] = hiMatchColor( list( 0 0 1000))
+   ; `e' denotes blue
+
+iconString = "\
+11111111\
+1aaaaaa1\
+1aeeeea1\
+1aemmea1\
+1aemmea1\
+1aeeeea1\
+1aaaaaa1\
+11111111"
+
+myIcon = hiStringToIcon(myColorArray iconString 8 8)
+
+
+
+(inScheme
+(let ()
+
+  (defglobalfun example_gui ()
+    "Display an 'Example GUI'."
+    (let ( ( form (create_form) )
+           )
+      ;; Set form help callback
+      (setf form->hiFormSym->hiHelpAction 'example_gui_help)
+      ;; Display form under the mouse
+      (hiDisplayForm form -1:-1)
+      ))
+
+  (defun create_form ()
+    "Create the form and return it."
+    (hiCreateLayoutForm (gensym 'example_form) "Example GUI"
+      (hiCreateFormLayout 'main_layout ?items (list
+          (hiCreateLabel ?name 'label ?labelText "<font size='+2' color='red'>Dummy Text...</font>")
+          ;; Add a field wich displays a tooltip when hovered
+          (let ( ( field (hiCreateStringField
+                           ?name     'input
+                           ?prompt   "Input"
+                           ?defValue "This field display a tooltip when hovered."
+                           ) )
+                 )
+            ;; Tooltip is set here, it can be HTML
+            (setf field->hiToolTip "<font size='+2'> <b>This is bold!</b><br/> <font color='red'>This is red!</font> </font> <br/>
+This text is a bit smaller...")
+            field
+            )
+          ;; Cyclic field with string, string-icon pair and icon values
+          (hiCreateCyclicField
+            ?name 'combo_field
+            ?choices
+            (list
+              "item0"
+              (list "metal" (list (@realpath "$SKILL_SHARP_ROOT/pictures/icons/sharp.png") 16 16))
+              (list (@realpath "$SKILL_SHARP_ROOT/pictures/icons/sharp.png") 16 16)
+              myIcon
+              ))
+
+          ;; Color field
+          (@color_field ?name 'color_field)
+
+          ));main_layout
+      ))
+
+  (defglobalfun example_gui_help ( @optional _obj_type _obj_name _obj_detail _more_detail @rest _ )
+    "Custom help callback."
+    (@show _form _form->?? _form_name _form_name->??)
+    (hiDisplayAppDBox
+      ?name         (gensym 'example_form_help_dbox)
+      ?dboxBanner   "Example GUI Help"
+      ?dboxText     "Example GUI help goes here..."
+      ?dialogType   (symeval 'hicInformationDialog)
+      ?buttonLayout 'Close
+      ))
+
+  ));SKILL++ closure
+
+(example_gui)
+
+;*/
+

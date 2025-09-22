@@ -20,8 +20,8 @@
         (_user_time _system_time clock_time _page_faults)
         (measureTime
           ;; Load init
-          (unless (errset (load (simplifyFilename (strcat (get_filename piport) "/../init.scm"))))
-            (fprintf (dynamic errport) "Unable to read SKILL# init!\n")
+          (unless (errset (load (simplifyFilename (strcat (get_filename (symeval 'piport)) "/../init.scm"))))
+            (fprintf (inSkill (symeval 'errport)) "Unable to read SKILL# init!\n")
             (setq no_error nil)
             ;(exit 1)
             ))

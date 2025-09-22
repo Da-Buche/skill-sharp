@@ -3,8 +3,8 @@
   (@fun call_with ()
     ?doc    "dummy function"
     ?global t
-    (@with ( ( used_port  (outfile  "/dev/nukll" ) )
-             ( unused_var (instring "dummy"      ) )
+    (@with ( ( used_port  (outfile  "/dev/null" ) )
+             ( unused_var (instring "dummy"     ) )
              )
       (car (setof elt '(1 2 3) (evenp elt)))
       (fprintf used_port "%s\n" "Test")

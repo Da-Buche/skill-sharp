@@ -3,7 +3,7 @@
 ; alias error "echo '\!:1' >/dev/stderr && exit 1"
 ; setenv SKILL_SHARP_ROOT `realpath $0`/../..
 ; setenv SKILL_SHARP_ARGV "$argv"
-; test 1 = "$?SKILL_INTERPRETER" || setenv SKILL_INTERPRETER "$CDS_INST_DIR/tools.lnx86/dfII/bin/skill"
+; test 1 = "$?SKILL_INTERPRETER" || setenv SKILL_INTERPRETER "$CDS_INST_DIR/tools.lnx86/bin/cdsmps"
 ; "$SKILL_INTERPRETER" `realpath $0`
 ; exit $status ;
 
@@ -19,7 +19,7 @@
 ;; =======================================================
 
 (unless (errset (load (simplifyFilename "$SKILL_SHARP_ROOT/skill/loader.scm")))
-  (fprintf (dynamic errport) "Unable to read SKILL# loader!\n")
+  (fprintf (symeval 'errport) "Unable to read SKILL# loader!\n")
   (exit 1)
   )
 

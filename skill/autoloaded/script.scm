@@ -385,12 +385,12 @@ A positional required argument (i.e. without ?default) cannot be defined after a
   );closure
 
 ;; Add `setf' helpers
-(define setf_\@script_get_description @script_set_description)
-(define setf_\@script_get_version     @script_set_version    )
+(define setf_\@script_get_description (getd '@script_set_description))
+(define setf_\@script_get_version     (getd '@script_set_version    ))
 
 ;; Fix lint warnings
-(define setf_\\\@script_get_description @script_set_description)
-(define setf_\\\@script_get_version     @script_set_version    )
+(define setf_\\\@script_get_description (getd '@script_set_description))
+(define setf_\\\@script_get_version     (getd '@script_set_version    ))
 
 (setf (fdoc 'setf_\@script_get_description  ) "`setf' helper for `@script_get_description'")
 (setf (fdoc 'setf_\\\@script_get_description) "`setf' helper for `@script_get_description'")

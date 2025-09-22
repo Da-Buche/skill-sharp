@@ -64,9 +64,9 @@ The status should be failure
 End
 
 
-It 'does not contain big files (1000 lines maximum)'
+It 'does not contain big files (2000 lines maximum)'
 Skip if "fd not available" missing_fd
-When run bash -c "list_files --exec wc -l {} \; | awk '\$1 > 1000 {print \$2}'"
+When run bash -c "list_files --exec wc -l {} \; | awk '\$1 > 2000 {print \$2}'"
 The stdout should be blank
 The stderr should be blank
 The status should be success

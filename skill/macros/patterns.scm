@@ -134,8 +134,8 @@ This is the SKILL++ equivalent to Emacs Lisp `cl-letf'.
 See also `@wrap' and `@with' for context management."
   ;; Check unevaluated inputs
   (assert (listp defs) "@letf - DEFS should be a list of pairs: %N" defs)
-  (assert defs         "@letf - DEFS cannot be nil: %N"             defs)
-  (assert body         "@letf - BODY cannot be nil: %N"             body)
+  (assert defs         "@letf - DEFS cannot be nil"                     )
+  (assert body         "@letf - BODY cannot be nil"                     )
   ;; Return built S-expression
   (car (_\@letf defs body))
   )
@@ -188,8 +188,8 @@ This is inspired by Python `with` context manager.
 See also `@wrap' and `@with' for context management."
   ;; Check unevaluated inputs
   (assert (listp defs) "@with - DEFS should be a list of pairs: %N" defs)
-  (assert defs         "@with - DEFS cannot be nil: %N"             defs)
-  (assert body         "@with - BODY cannot be nil: %N"             body)
+  (assert defs         "@with - DEFS cannot be nil"                     )
+  (assert body         "@with - BODY cannot be nil"                     )
   ;; Return built S-expression
   (car (_\@with defs body))
   )
@@ -236,10 +236,6 @@ See also `@wrap' and `@with' for context management."
 
 ;; TODO - Property bags context manager
 
-
-
-
-
 ;; =======================================================
 ;; Anaphoric macros
 ;;
@@ -257,6 +253,7 @@ This a very common pattern.
 
 It also respect Scheme simplifaction where 'else' statement can accept any number of S-expressions.
 (There is no need for an extra `progn')"
+  (assert (cdr args) "@if - requires at least two positional arguments: %N" args)
   (destructuringBind ( test then @rest else ) args
     ;; Shape else
     (setq else
@@ -269,7 +266,7 @@ It also respect Scheme simplifaction where 'else' statement can accept any numbe
     (cond
       ( (eq '__unbound__ var) `(if ,test ,then ,@else)                                            )
       ( (symbolp         var) `(let ( ( ,var ,test ) ) (if ,var ,then ,@else))                    )
-      ( t                     (error "@if ?var should be omitted or an unquotted symbol: %N" var) )
+      ( t                     (error "@if ?var should be omitted or an unquoted symbol: %N" var) )
       );cond
     ));dbind ;macro
 
@@ -279,6 +276,7 @@ This a very common pattern.
 
 It also respect Scheme simplifaction where 'then' statement can accept any number of S-expressions.
 (There is no need for an extra `progn')"
+  (assert (cdr args) "@nif - requires at least two positional arguments: %N" args)
   (destructuringBind ( test else @rest then ) args
     ;; Shape then
     (setq then
@@ -291,20 +289,100 @@ It also respect Scheme simplifaction where 'then' statement can accept any numbe
     (cond
       ( (eq '__unbound__ var) `(if ,test ,@then ,else)                                      )
       ( (symbolp         var) `(let ( ( ,var ,test ) ) (if ,var ,@then ,else))             )
-      ( t                     (error "@nif ?var should be omitted or an unquotted symbol.") )
+      ( t                     (error "@nif ?var should be omitted or an unquoted symbol.") )
       );cond
     ));dbind ;macro
 
-(@macro @when ( @key  (var (error "@when - ?var is required and should be an unquotted symbol.") )
+(@macro @when ( @key  (var (error "@when - ?var is required and should be an unquoted symbol.") )
                 @rest args "sg" )
   "Combination of `let' and `when', to re-use test result inside the 'then' statement.
 This a very common pattern."
+  (assert (cdr args) "@when - requires at least two positional arguments: %N" args)
   (destructuringBind ( test @rest then ) args
     `(let ( ( ,var ,test )
             )
        (when ,var ,@then)
        )
      ));dbind ;macro
+
+;; =======================================================
+;; while
+;; =======================================================
+
+(@macro @while ( @rest args )
+  "Run `while' loop and return the list of results.
+First argument is the mapping function (`mapc', `mapcar' or `mapcan') but it can be omitted, in that case it defaults to `mapcar'."
+  (caseq (car args)
+    ( mapc
+      (pop args)
+      ;; Return the list of condition results
+      (destructuringBind ( condition @key ( var '__\@while_cond_res__ ) @rest body ) args
+        `(let ( ( __\@while_tconc__  (tconc nil nil) )
+                ( ,var               nil             )
+                )
+           (while (setq ,var ,condition)
+             (tconc __\@while_tconc__ ,var)
+             ,@body
+             )
+           (cdar __\@while_tconc__)
+           ));let ;dbind
+      );mapc
+    ;; mapcar & mapcan
+    ( t
+      (let ( ( conc_fun (caseq (car args) ( mapcar (pop args) 'tconc ) ( mapcan (pop args) 'lconc ) ( t 'tconc )) )
+             )
+        (destructuringBind ( condition @key ( var '__\@while_cond_res__ ) @rest body ) args
+          (assert body "@while - body cannot be empty.")
+          `(let ( ( __\@while_tconc__  (tconc nil nil) )
+                  ( ,var               nil             )
+                  )
+             (while (setq ,var ,condition)
+               (,conc_fun __\@while_tconc__ ,(cons 'progn body))
+               )
+             (cdar __\@while_tconc__)
+             ));let ;dbind
+        ));let ;t
+    ));caseq ;macro
+
+;; =======================================================
+;; for
+;; =======================================================
+
+(@macro @for ( @rest args )
+  "Run `for' loop and return the list of results.
+First argument is the mapping function (`mapcar' or `mapcan') but it can be omitted, in that case it defaults to `mapcar'.
+Other arguments are the same as `for'."
+  ;; Like `foreach' first argument is a mapping function (which defaults to `mapcar' instead of `mapc').
+  (let ( ( conc_fun (caseq (car args) ( mapcar (pop args) 'tconc ) ( mapcan (pop args) 'lconc ) ( t 'tconc )) )
+         )
+    (destructuringBind ( var i0 i1 @rest body ) args
+      (assert body "@for - body cannot be empty.")
+      `(let ( ( __\@for_tconc__ (tconc nil nil) )
+              )
+         (for ,var ,i0 ,i1
+           (,conc_fun __\@for_tconc__ ,(cons 'progn body))
+           )
+         (cdar __\@for_tconc__)
+         ));let ;dbind
+    ));let ;macro
+
+;; =======================================================
+;; Foreach dbind
+;; =======================================================
+
+(@macro @foreach_dbind ( @rest args )
+  "Parse and split elements into several variables.
+First argument is the mapping function (`mapc', `mapcar' or `mapcan') but it can be omitted, in that case it defaults to `mapcar'.
+"
+  (let ( ( map_fun (caseq (car args) ( ( mapc mapcar mapcan ) (pop args) ) ( t 'mapcar )) )
+         )
+    (destructuringBind ( vars vals @rest body ) args
+      `(foreach ,map_fun __\@foreach_dbind_var__ ,vals
+         (destructuringBind ,vars __\@foreach_dbind_var__
+           ,@body
+           ));dbind ;foreach
+       ));dbind ;let
+  );macro
 
 ;*/
 

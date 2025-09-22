@@ -13,9 +13,9 @@
 ;; ===============================================================================================================
 
 ;; Make sure stdin is not polluted when loading the target file
-(setf __globals__.poport poport)
+(setf __globals__.poport (progn "NO_LINT" poport))
 (setguard 'poport (lambda _ (outfile "/dev/null")))
-(setq poport nil)
+(progn "NO_LINT" (setq poport nil))
 
 ;; Run before command
 (when (stringp (getShellEnvVar "SKILL_SHARP_BEFORE_COMMAND"))
@@ -31,7 +31,7 @@
 (setf __globals__.classes   (makeTable t nil))
 (setf __globals__.symbols   (makeTable t nil))
 
-(foreach __sym__ oblist
+(foreach __sym__ (progn "NO_LINT" oblist)
   (when (and (boundp '__sym__) (neq 'oblist __sym__) (neq '__globals__ __sym__))
     (and (isCallable __sym__                ) (setf __globals__.functions[__sym__] (getd    __sym__                    )))
     (and (boundp __sym__                    ) (setf __globals__.variables[__sym__] (symeval __sym__                    )))
@@ -39,7 +39,6 @@
     (and (findClass __sym__                 ) (setf __globals__.classes[  __sym__] (findClass __sym__                  )))
     (and (get __sym__ ?                     ) (setf __globals__.symbols[  __sym__] (get __sym__ '??                    )))
     ))
-
 
 ;; -------------------------------------------------------
 ;; Load files and run init command
@@ -57,7 +56,6 @@
   (errsetstring (getShellEnvVar "SKILL_SHARP_INIT_COMMAND") t 'ils)
   )
 
-
 ;; -------------------------------------------------------
 ;; Report differences between saved and updated environment
 ;; -------------------------------------------------------
@@ -68,7 +66,7 @@
 (setf __globals__.new_classes   nil)
 (setf __globals__.new_symbols   nil)
 
-(foreach __sym__ oblist
+(foreach __sym__ (progn "NO_LINT" oblist)
   (when (and (boundp '__sym__) (neq 'oblist __sym__) (neq '__globals__ __sym__))
     (and (isCallable __sym__                )                            (nequal (getd    __sym__                    ) __globals__.functions[__sym__]) (pushf __sym__ __globals__.new_functions) )
     (and (boundp __sym__                    )                            (nequal (symeval __sym__                    ) __globals__.variables[__sym__]) (pushf __sym__ __globals__.new_variables) )
@@ -83,11 +81,7 @@
   (println names __globals__.poport)
   )
 
-
 (exit 0)
 
 ;*/
-
-
-
 

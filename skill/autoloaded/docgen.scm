@@ -118,7 +118,7 @@ $SKILL_SHARP_ROOT/bin/globals {(buildString files)}"))
                )
           (foreach arg args
             ;; Support for _ as rest argument
-            (when (eq '_ arg) (setq arg (list "" ?type '( any ... ) ?def nil)))
+            (when (eq '_ arg) (setq arg (list "" '?type '( any ... ) '?def nil)))
             (@caseq (type arg)
               ( symbol
                 (@caseq arg
