@@ -33,21 +33,29 @@ Cadence SKILL++ Enhanced Framework
 SKILL# offers out-of-the-box tools for novice users, including:
 
 - Advanced Lint rules
-- Code formatting
+- Code formatting (#TODO)
 
 For advanced users, it also provides:
 
 - Unit-Testing Framework
+- Documentation Generation
+- Fully Specified, Documented and Tested API
+- Macros to target design patterns and reduce human error
 - On-Demand (lazy or strict) Type-Checking
-- Automatic Documentation Generation
-- Specified, Documented and Tested API
 
 
 ## Requirements
-SKILL# mostly relies on `$CDS_INST_DIR/tools.lnx86/dfII/bin/skill` interpreter.
+
+### To Use
+
+SKILL# mostly relies on `$CDS_INST_DIR/tools.lnx86/dfII/bin/skill` interpreter.  
 Of course it also works within Virtuoso.
 
-**If Virtuoso is installed and `$CDS_INST_DIR` is defined, everything should work fine.**
+> [!NOTE]
+>
+> If Virtuoso is installed and `$CDS_INST_DIR` is defined, everything should work fine.
+
+### To Develop
 
 For development and testing, SKILL# relies on Open-Source projects:
 
@@ -71,9 +79,11 @@ The `bin/sharp` utility provides the following commands:
 | `sharp globals` | Load files from provided paths and report global definitions.             |
 | `sharp docgen`  | Load files from provided paths and print associated `.fnd` documentation. |
 | `sharp format`  | Pretty print the contents of files from provided paths.             #TODO |
+<!---
 | `sharp blunt`   | Print files from provided paths without SKILL# dependencies.        #TODO |
+-->
 
-> **_NOTE:_**
+> [!NOTE]
 >
 > _"files from provided paths"_ refers to `{.il, .ils, .scm}` files found using `find` on all paths provided as arguments (files or directories).
 >
@@ -86,7 +96,7 @@ To enable the full SKILL# API inside Virtuoso, load the following command or pla
 (load (simplifyFilename "$SKILL_SHARP_ROOT/skill/loader.scm"))
 ```
 
-> **_NOTE:_**
+> [!NOTE]
 >
 > Replace $SKILL_SHARP_ROOT with the path to this repository's root directory.
 
@@ -120,7 +130,7 @@ SKILL# provides two ways to waive lint rules:
 (@no_lint (car (setof elt (list 1 2 3) (evenp elt))))
 ```
 
-> **_NOTE:_**
+> [!NOTE]
 >
 > It is often better to waive warnings instead of degrading valid code to make it compliant.
 
