@@ -1,0 +1,4 @@
+*.scm linguist-language=Scheme
+*.ils linguist-language=SKILL++
+*.il  linguist-language=SKILL
+*.py  linguist-language=Python
