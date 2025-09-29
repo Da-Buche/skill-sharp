@@ -1,8 +1,9 @@
-<!--
+---
+marp: true
 theme: gaia
 class: invert two-columns
 auto-scaling: true
--->
+---
 
 <style>
 section::after {
@@ -50,7 +51,7 @@ paginate: true
 ### Out-of-the-Box Tools
 
 - Advanced Linter
-- Code formatter
+- Code formatter [unfinished]
 - Enhanced Finder
 
 <br>
@@ -117,21 +118,121 @@ _paginate: skip
 ## Features
 
 ---
-### Advanced Linter
+### Rules for native Linter
 
-#### Waiver
+- Waiver
+  ```lisp
+  (progn "NO_LINT" ...)
+  {"NO_LINT" ...}
+  ```
 
-#### Detect unused local functions
+- Hints
+  ```lisp
+  (car (setof ...)) -> (car (exists ...))
+  ```
 
-#### Detect superseded functions
 
-#### Hints
+- Missing docstrings
+
+---
+### Custom SKILL++ Linter
+
+#### Detect unused & superseded local functions
+
+```lisp
+(let ()
+  (defun custom_fun0 ( @rest _ ) "dummy" nil)
+  (defun custom_fun0 ( @rest _ ) "dummy" nil)
+  )
+```
+
+```lisp
+WARNING DEFUN_SUPERSEDE at line 3   - `defun` variable custom_fun0 is superseded
+WARNING LET_UNUSED at line 1   - `let` variable custom_fun0 is unused
+```
+
+Line numbers are reported inside all forms except macros
+(only in Lisp syntax for now)
+
+---
+### Custom SKILL++ Linter
+
+#### Syntax forms support
+
+```lisp
+;; This is valid SKILL but reported by Lint
+(defun print_and_return args (println args) args)
+(lambda _ t)
+```
 
 
 ---
+### Unit-Testing Framework
+
+```scheme
+
+(defun print_hello_world_and_return_12 (name "t")
+  "Print 'Hello World!' said by NAME and return 12."
+  (info "%s says 'Hello World! to poport'\n" name)
+  (warn "%s says 'Hello World! to woport'\n" name)
+  12)
+
+(@test
+  ?fun 'print_hello_world_and_return_12
+  (@assertion
+    ?doc "Works with John"
+    (print_hello_world_and_return_12 "John")
+    ?out 12
+    ?info "John says 'Hello World!' to poport"
+    ?warn "John says 'Hello World!' to woport"
+    )
+  (@assertion
+    ?doc "Fails with a symbol"
+    (print_hello_world_and_return_12 'John_as_a_symbol)
+    ?error "print_hello_world_and_return_12: argument #1 should be a string"
+    )
+  )
+```
+
+---
+```lisp 
+;; ./failing_assertion.ils
+(@test
+   ?fun 'plus
+   ?doc "Test with failing assertion"
+   (@assertion 12+27 ?out 42)
+   )
+
+> (@test_run_all ?files '("./failing_assertion.ils"))
+Failed @test("primop plus")[stdobj@0x2703d080] from *ciwInPort*
+
+Failures when running @assertion(0)[stdobj@0x2703d098]:
+  (plus 12 27)
+
+Different output:
+Expected: █42█
+Got     : █39█
+
+Total tests: 2
+ - skipped tests: 0
+ - passed  tests: 0
+ - failed  tests: 1
+
+Total assertions: 2
+ - skipped assertions: 0
+ - passed  assertions: 0
+ - failed  assertions: 1
+
+FAIL
+```
+
+
+
+<!--
+---
 ### Formatter
 
-<!-- TODO -->
+ TODO -->
 
 ---
 ### Type-Checking
@@ -203,8 +304,17 @@ _paginate: false
 - Case-sensitive when upper case
 - Restrict to name, description, ...
 
-![bg right fit](https://github.com/Da-Buche/skill-sharp/blob/main/pictures/README/SKILL_Finder.png?raw=true)
+<!-- TODO: Fix link to dev branch -->
+![bg right fit](https://github.com/Da-Buche/skill-sharp/blob/dev/pictures/README/SKILL_Finder.png?raw=true)
 
+
+---
+<!-- 
+_class: invert lead
+_paginate: skip
+-->
+
+## Design Patterns / Macros
 
 ---
 ### F-Strings
@@ -245,3 +355,52 @@ The default is {pi}. \n\
   (list (rexMagic) (getShellEnvVar "CUSTOM_VARIABLE") (status optimizeTailCall))
   )
 ```
+
+---
+### With
+<!-- 
+_paginate: skip
+-->
+
+```scheme
+;; Filter INFO lines from log file (Ports are properly closed afterwards)
+(@with ( ( in_port  (infile  "~/sandbox/log.txt"         ) )
+         ( out_port (outfile "~/sandbox/filtered_log.txt") )
+         )
+  (let ( line )
+    (while (gets line in_port)
+      (unless (pcreMatchp "^INFO" line) (fprintf out_port "%s" line))
+      )))
+```
+
+
+```lisp
+(defmethod @in ( ( obj dbobject ) @rest _ ) "Nothing to do here" nil)
+
+(defmethod @out ( ( obj dbobject ) @rest _ )
+  "Context manager when releasing a dbobject."
+  (if (equal "cellView" obj->objType) (dbClose obj)
+    (error "@out - %N is not a supported type.")))
+```
+
+---
+### Case
+
+```lisp
+(@case (css)->objType ; An ellipse is selected
+  ( "polygon" (css)->points )
+  ( "rect"    (destructuringBind ( ( x0 y0 ) ( x1 y1 ) ) (css)->bBox)
+                (list x0:y0 x1:y0 x1:y1 x0:y1) )
+  )
+*Error* Value is not amongst valid cases ("polygon" "rect"): "ellipse"
+```
+
+```lisp
+(@caseq 'd
+  ( a 12 )
+  ( b 27 )
+  ( c 42 )
+  )
+*Error* Value is not amongst valid cases (a b c): 'd
+```
+
