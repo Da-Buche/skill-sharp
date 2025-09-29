@@ -13,7 +13,7 @@
 <!---
 Generated using https://www.asciiart.eu/text-to-ascii-art
 
-Modified version below but it dow not appear properly on all browsers...
+Modified version below but it does not appear properly on all browsers...
 <pre style='font-family: "Courier New", Courier, monospace; line-height: 0.567;'>
 ◥■■■■■■■◣ ◥■■◣ ◥■■◣  ◥■■◣ ◥■■◣     ◥■■◣         ◥■■◣   ◥■■◣
  ◥■■◣░░░░  ◥■■◣◢■■◤   ◥■■◣ ◥■■◣     ◥■■◣      ◥■■■■■■■■■■■■■■■◣
