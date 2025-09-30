@@ -14,8 +14,11 @@
 
 ;; Make sure stdin is not polluted when loading the target file
 (setf __globals__.poport (progn "NO_LINT" poport))
+(setf __globals__.woport (progn "NO_LINT" woport))
 (setguard 'poport (lambda _ (outfile "/dev/null")))
+(setguard 'woport (lambda _ (outfile "/dev/null")))
 (progn "NO_LINT" (setq poport nil))
+(progn "NO_LINT" (setq woport nil))
 
 ;; Run before command
 (when (stringp (getShellEnvVar "SKILL_SHARP_BEFORE_COMMAND"))
@@ -77,8 +80,11 @@
 
 ;; Print difference between the two states
 (sstatus printinfix ())
-(foreach names (list __globals__.new_functions __globals__.new_variables __globals__.new_scheme __globals__.new_classes __globals__.new_symbols)
-  (println names __globals__.poport)
+(foreach names (if (equal "TRUE" (getShellEnvVar "SKILL_SHARP_GLOBALS_SHOW_PROPS"))
+                   (list __globals__.new_functions __globals__.new_variables __globals__.new_scheme __globals__.new_classes __globals__.new_symbols)
+                 (list __globals__.new_functions __globals__.new_variables __globals__.new_scheme __globals__.new_classes)
+                 )
+  (println (sort names 'alphalessp) __globals__.poport)
   )
 
 (exit 0)

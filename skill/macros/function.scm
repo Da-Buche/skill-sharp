@@ -145,7 +145,7 @@
          ,@(when global `( ( when (theEnvironment) ( putd ',name ,name) ) ))
          (setf (@arglist ',name) ',args)
          (setf (@fdoc    ',name) ',doc )
-         (setf (@out     ',name) ',out )
+         (setf (@output  ',name) ',out )
          );prog1
        ));let ;fun
 

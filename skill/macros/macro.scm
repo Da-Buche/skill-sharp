@@ -144,18 +144,18 @@
   ;; (otherwise `fdoc' gets overwritten)
   ;; -------------------------------------
 
-  (defglobalfun @out ( fun "u" )
+  (defglobalfun @output ( fun "u" )
     "Return FUN arguments list."
-    ;; TODO - @out should work with macros
+    ;; TODO - @output should work with macros
     (let ( (name (get_name fun))
            )
-      (when (symbolp name) (get name '@out))
+      (when (symbolp name) (get name '@output))
       ));let ;def
 
-  (defglobalfun setf_\@out ( args fun "gs" )
+  (defglobalfun setf_\@output ( args fun "gs" )
     "Set ARGS as FUN arguments list."
-    ;; TODO - setf_\@out should work with macros
-    (setf (get fun '@out) args)
+    ;; TODO - setf_\@output should work with macros
+    (setf (get fun '@output) args)
     )
 
   );closure
@@ -164,11 +164,11 @@
 ;; The comparison works with double escape (contact Cadence support)
 (define setf_\\\@arglist (getd 'setf_\@arglist))
 (define setf_\\\@fdoc    (getd 'setf_\@fdoc   ))
-(define setf_\\\@out     (getd 'setf_\@out    ))
+(define setf_\\\@output  (getd 'setf_\@output ))
 
 (setf (fdoc 'setf_\\\@arglist) "`setf' helper for `@arglist'")
 (setf (fdoc 'setf_\\\@fdoc   ) "`setf' helper for `@fdoc'"   )
-(setf (fdoc 'setf_\\\@out    ) "`setf' helper for `@out'"    )
+(setf (fdoc 'setf_\\\@output ) "`setf' helper for `@output'" )
 
 
 (setf (@fdoc '@macro) "`defmacro' wrapper, mostly for documentation purposes.")

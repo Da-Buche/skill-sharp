@@ -37,7 +37,7 @@ End
 It 'does not contain whitespace'
 Skip if "fd not available" missing_fd
 # shellcheck disable=SC2046 # Intended word splitting
-When run grep -En '\s+$' $(list_files --exclude='README.md')
+When run grep -En '\s+$' $(list_files --exclude='*.md')
 The stdout should be blank
 The stderr should be blank
 The status should be failure

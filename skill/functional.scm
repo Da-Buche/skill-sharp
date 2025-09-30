@@ -4,6 +4,12 @@
 ;; A. Buchet - April 2025
 ;; ===============================================================================================================
 
+(@fun @getd ( ( name ?type symbol ) )
+  ?doc "`getd` wrapper to guarantee output type."
+  ?out callable
+  (or (getd name) (@error "@getd - Unable to retrieve function named {name}"))
+  )
+
 (@fun @nil ( @rest _ )
   ?doc    "Always return nil."
   ?out    nil

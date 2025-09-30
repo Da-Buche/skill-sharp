@@ -27,10 +27,13 @@
 (let ( ( table (makeTable t nil) )
        )
 
-  (defmethod initializeInstance @after ( ( obj @fnd_category ) @rest _ )
-    "Properly store OBJ."
-    (setf table[obj->name] obj)
-    )
+  ;; Waiver so Lint does not report `initializeInstance` as a global definition
+  ;; (Files in autoloaded folder are used to check that Lint and `globals` return the same output)
+  (@no_lint
+    (defmethod initializeInstance @after ( ( obj @fnd_category ) @rest _ )
+      "Properly store OBJ."
+      (setf table[obj->name] obj)
+      ))
 
   (@fun _\@fnd_category_by_name
     ( ( name ?type string )

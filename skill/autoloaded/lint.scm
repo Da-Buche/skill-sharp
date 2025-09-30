@@ -5,173 +5,6 @@
 ;; ===============================================================================================================
 
 ;; =======================================================
-;; Fixes arguments check for macros and syntax forms
-;; =======================================================
-
-;; TODO - Contact Cadence support about (arglist '...) for all the wrongly defined functions
-
-(setf (@arglist 'if)
-  '( ( g_general  ?type general          )
-     ( g_general  ?type general          )
-     ;; @rest here to support 'then & 'else
-     @rest
-     ( g_general  ?type general ?def nil )
-     ))
-
-;; No idea why but (arglist 'defun) does not mention body
-(setf (@arglist 'defun)
-  '( ( s_symbol  ?type symbol  )
-     ( g_general ?type general )
-     ( g_general ?type general )
-     @rest
-     ( body ?type ( general ... ) )
-     ))
-
-(setf (@arglist 'defglobalfun) (@arglist 'defun    ))
-(setf (@arglist 'globalProc  ) (@arglist 'procedure))
-
-(setf (@arglist '@macro)
-  '( ( name ?type symbol )
-     ( args ?type list   )
-     ( doc  ?type string )
-     @rest
-     ( body ?type ( general ...) )
-     ))
-
-(setf (@arglist 'defmacro)
-  '( ( name ?type symbol )
-     ( args ?type list   )
-     @rest
-     ( body ?type ( general ...) )
-     ))
-
-(setf (@arglist 'defclass)
-  '( ( s_className ?type symbol )
-     ( s_superClassNames ?type ( symbol ... )         ?def nil )
-     ( slots             ?type ( symbol general ... ) ?def nil )
-     ))
-
-(setf (@arglist 'defmethod) (@arglist 'defun))
-
-(setf (@arglist 'prog)
-  '( ( l_list    ?type list    )
-     @rest
-     ( g_general ?type general )
-     ))
-
-(setf (@arglist 'destructuringBind)
-  '( ( args ?type list )
-     ( list ?type list )
-     @rest
-     ( body ?type general)
-     ))
-
-(setf (@arglist '_destructuringBind) (@arglist 'destructuringBind))
-
-(setf (@arglist 'unwindProtect)
-  '( ( body    ?type general )
-     ( cleanup ?type general )
-     ))
-
-(setf (@arglist 'cfiUnwindProtect) (@arglist 'unwindProtect))
-
-
-(setf (@arglist 'setf)
-  '( ( g_general ?type general )
-     ( g_general ?type general )
-     ))
-
-;; `setf` helpers
-(foreach fun_name '( arrayref car cadr get getd getq getqq getShellEnvVar nth status )
-  (setf (@arglist (concat 'setf_ fun_name)) (cons '( obj ?type general ) (@arglist fun_name)))
-  )
-
-(setf (@arglist 'push)
-  '( ( obj    ?type general )
-     ( target ?type list    )
-     ))
-
-(setf (@arglist 'pushf) (@arglist 'push))
-
-(setf (@arglist 'funcall)
-  '( ( u_function ?type function )
-     @rest
-     ( g_general ?def nil ?type ( general ... ) )
-     ))
-
-(setf (@arglist 'apply)
-  '( ( u_function ?type function )
-     @rest
-     ( g_general ?def nil ?type ( general ... ) )
-     ))
-
-;; Printing functions
-(foreach function '( info warn error printf lsprintf )
-  (setf (@arglist function)
-    '( ( string    ?type string  ?def "" )
-       @rest
-       ( values    ?type ( general ... ) )
-       )
-     ))
-
-(setf (@arglist 'assert) (cons '( predicate ?type general) (@arglist 'error)))
-
-(setf (@arglist 'for)
-  '( ( var ?type symbol  )
-     ( beg ?type integer )
-     ( end ?type integer )
-     @rest
-     ( body ?type ( general ...) )
-     ))
-
-(setf (@arglist '@while)
-  '( ( bool ?type general    )
-     @key
-     ( var  ?type symbol|nil )
-     @rest
-     ( body ?type ( general ...) )
-     ))
-
-(setf (@arglist '_backquote) '( ( obj ?type general ) ))
-
-(setf (@arglist 'let)
-  '( ( bindings ?type list    )
-     ( body     ?type general )
-     @rest
-     ( body     ?type ( general ... ))
-     ))
-
-(setf (@arglist 'letseq) (@arglist 'let))
-
-(setf (@arglist 'fprintf)
-  '( ( p_port    ?type port   )
-     ( t_string  ?type string )
-     @rest
-     ( g_general ?def nil ?type general)
-     ))
-
-(setf (@arglist 'strcat)
-  '( ( S_stringSymbol ?type stringSymbol )
-     @rest
-     ( S_stringSymbol ?type stringSymbol )
-     ))
-
-(setf (@arglist 'makeInstance)
-  '( ( class ?type class|symbol )
-     @rest
-     ( args ?type ( general ... ) )
-     ))
-
-(setf (@arglist 'nconc)
-  '( ( l0 ?type list )
-     ( l1 ?type list )
-     @rest
-     ( ln ?type ( list ... ) )
-     ))
-
-(setf (@arglist 'dynamic) '( ( name ?type symbol ) ))
-
-;; =======================================================
 ;; Add Rule
 ;; =======================================================
 
@@ -525,14 +358,6 @@ NAME is the message reference."
   "Lint waiver, equivalent to `progn'."
   (constar 'progn "NO_LINT" body))
 
-(@no_lint
-  (SK_RULE SK_CONTROL ( @no_lint ) t nil)
-  (SK_RULE SK_CONTROL ( progn    ) t
-    ;; Check `progn' first argument
-    (unless (equal "NO_LINT" (car (SK_ARGS)))
-      (foreach map sexp (SK_ARGS) (SK_CHECK_FORM sexp))
-      )))
-
 (@lint_rule
   ?functions '( quote @no_lint )
   ?control t
@@ -635,7 +460,7 @@ NAME is the message reference."
     ))
 
 ;; -------------------------------------------------------
-;; (car (setof ...))
+;; (car (setof ...)) to replace by (car (exists ...))
 ;; -------------------------------------------------------
 
 (@lint_rule
@@ -753,8 +578,11 @@ NAME is the message reference."
            )
       (@caseq fun
         ( putpropq (@lint_sexp obj messages (cons 1 levels) (cons sexp parents) envs scheme) )
-        ( putpropqq (unless (symbolp obj)
-                      (@lint_msg sexp messages levels 'ERROR 'SYNTAX_PUTPROPQQ (@str "`{fun}` argument should be an unquoted symbol: {obj}"))))
+        ( putpropqq
+          (if (symbolp obj)
+              (@lint_msg sexp messages levels 'INFO 'GLOBAL (@str "`{fun}` global definition: {obj}.{key}"))
+            (@lint_msg sexp messages levels 'ERROR 'SYNTAX_PUTPROPQQ (@str "`{fun}` argument should be an unquoted symbol: {obj}"))
+            ))
         )
       (unless (symbolp key)
         (@lint_msg sexp messages levels 'ERROR 'SYNTAX_ (concat (upperCase fun))
@@ -852,7 +680,7 @@ NAME is the message reference."
   (lambda ( sexp messages levels parents envs scheme )
     (unless
       (errset
-        (destructuringBind (fun name value) sexp
+        (destructuringBind ( fun name value @optional ( env '__UNDEFINED__ ) ) sexp
           (cond
             ;; Treat `setq` and (set (quote <name>) ...) the same way
             ( (or (eq fun 'setq)
@@ -868,8 +696,18 @@ NAME is the message reference."
                    ;; Assigned is a special status where variable appears as used but is in fact "only-assigned"
                    (when (eq 'unused (car res_envs)[name]->status)
                      (setf (car res_envs)[name]->status 'assigned))
-                (@lint_msg sexp messages levels 'WARNING 'GLOBAL (@str "`{fun}` global definition: {name}"))
-                )
+                (cond
+                  ;; SKILL definition
+                  ( (and (not scheme) (eq env '__UNDEFINED__))
+                    (@lint_msg sexp messages levels 'WARNING 'GLOBAL (@str "`{fun}` global definition: {name}"))
+                    )
+                  ;; Function defintion
+                  ( (and (listp value) (symbolp (car value)) (memq (@output (car value)) '( function funobj callable )))
+                    (@lint_msg sexp messages levels 'WARNING 'GLOBAL (@str "`{fun}` global function definition: {name}"))
+                    )
+                  ;; Scheme definition
+                  ( t (@lint_msg sexp messages levels 'WARNING 'GLOBAL (@str "`{fun}` global scheme definition: {name}")) )
+                  ))
               ;; Check value
               (@lint_sexp value messages (cons 2 levels) (cons sexp parents) envs scheme)
               )
@@ -913,11 +751,18 @@ NAME is the message reference."
               (return)
               )
             ;; Local variable
-            ;; In SKILL, `define` can only be used to define global functions
             ( (and scheme (tablep (car envs))) (setf (car envs)[name] (list nil 'status 'unused)) )
             ;; Global variable
-            ( t (@lint_msg sexp messages levels 'INFO 'GLOBAL (@str "`{fun}` global definition: {name}")) )
-            )
+            ;; In SKILL, `define` can only be used to define global functions
+            ( t
+              (if (and (listp (cadr args))
+                       (symbolp (caadr args))
+                       (memq (@output (caadr args)) '( function funobj callable ))
+                       )
+                  (@lint_msg sexp messages levels 'INFO 'GLOBAL (@str "`{fun}` global function definition: {name}"))
+                (@lint_msg sexp messages levels 'INFO 'GLOBAL (@str "`{fun}` global definition: {name}"))
+                ))
+            );cond
           ;; Check assigned value S-expression
           (@lint_sexp (cadr args) messages (cons 2 levels) (cons sexp parents) envs scheme)
           (return)
@@ -1033,14 +878,20 @@ NAME is the message reference."
       (cond
         ( (not name) (assert (eq fun 'lambda) "Only `lambda` should not be defining a variable") )
         ( (tablep (car envs))
-          (@nif (memq fun '( globalProc defglobalfun defmacro defmethod ))
-                ;; Definition is local only
-                (setf (car envs)[name] (list nil 'status 'unused 'type 'function))
-            ;; Definition is local and global
-            (setf (car envs)[name] (list nil 'status 'global))
-            (@lint_msg sexp messages levels 'INFO 'GLOBAL (@str "`{fun}` global definition: {name}"))
+          (cond
+            ( (or (not scheme)
+                  (memq fun '( globalProc defglobalfun defmacro defmethod ))
+                  )
+              ;; Definition is local and global
+              (setf (car envs)[name] (list nil 'status 'global))
+              (@lint_msg sexp messages levels 'INFO 'GLOBAL (@str "`{fun}` global function definition: {name}"))
+              )
+            ( t
+              ;; Definition is local only
+              (setf (car envs)[name] (list nil 'status 'unused 'type 'function))
+              )
             ))
-        ( t (@lint_msg sexp messages levels 'INFO 'GLOBAL (@str "`{fun}` global definition: {name}")) )
+        ( t (@lint_msg sexp messages levels 'INFO 'GLOBAL (@str "`{fun}` global function definition: {name}")) )
         );cond
 
       ;; Make sure bindings syntax is valid, define new_env using bindings
@@ -1224,13 +1075,6 @@ NAME is the message reference."
 ;; -------------------------------------------------------
 ;; Unknown `status` or `sstatus` calls
 ;; -------------------------------------------------------
-
-;; This is required at least when running Lint from the SKILL Interpreter
-;; Otherwise some valid statuses are reported as unknown
-(@no_lint
-  (SK_RULE SK_CONTROL ( status sstatus ) (not (errset (funcall 'status (car (SK_ARGS)))))
-    (SK_ERROR UNKNOWN_STATUS_FLAG "Unknown (s)status flag: %N\n" (SK_FORM))
-    ))
 
 (@lint_rule
   ?functions '( status sstatus )
@@ -1497,10 +1341,16 @@ NAME is the message reference."
 
   (@fun @lint
     ( @key
-      ( files      ?type ( string ... )                 )
-      ( info_port  ?type port           ?def (@poport)  )
-      ( warn_port  ?type port           ?def (@errport) )
-      ( err_port   ?type port           ?def (@errport) )
+      ( files      ?type ( string ... )                                                         )
+      ( info_port  ?type port           ?def (@poport)                                          )
+      ;; warn_port defaults to stderr using SKILL Interpreter but woport otherwise
+      ( warn_port  ?type port           ?def (if (eq (@poport) (@woport)) (@errport) (@woport)) )
+      ( err_port   ?type port           ?def (@errport)                                         )
+      ( filters
+        ?type ( symbol ... )
+        ?def  (mapcar 'concat (parseString (or (getShellEnvVar "SKILL_SHARP_LINT_FILTERS") "") ","))
+        ?doc  "Only print infos, warnings and errors that matches exactly words in this comma-separated value"
+        )
       ( ignores
         ?type ( symbol ... )
         ?def  (mapcar 'concat (parseString (or (getShellEnvVar "SKILL_SHARP_LINT_HIDE_IGNORES") "") ","))
@@ -1510,6 +1360,11 @@ NAME is the message reference."
         ?type t|nil
         ?def  (equal "TRUE" (getShellEnvVar "SKILL_SHARP_LINT_HIDE_SEXPS"))
         ?doc  "Do not print S-expressions where error occured"
+        )
+      ( no_header
+        ?type t|nil
+        ?def  nil
+        ?doc  "When non-nil, header and output status are omitted."
         )
       )
     ?doc "Run Sharper Lint on FILES.
@@ -1571,9 +1426,9 @@ All report messages are printed to PORT."
         ;; -------------------------------------------------------
         ;; Format messages in a nice report
         ;; -------------------------------------------------------
-        (@fprintf info_port "Running Lint - {(getCurrentTime)}\n")
+        (unless no_header (@fprintf info_port "Running Lint - {(getCurrentTime)}\n"))
         (@foreach_dbind ( file res )  (cdar results_by_file)
-          (@fprintf info_port "File {file}:\n")
+          (unless no_header (@fprintf info_port "File {file}:\n"))
           (@foreach_dbind ( _beg_pos ( _beg_line _end_line ) messages ) res
             ;; No need to print where top-level S-expressions are found
             ;; Only the info, warnings and errors matter
@@ -1583,22 +1438,25 @@ All report messages are printed to PORT."
             ;     (@fprintf info_port "  Top-level S-Expression at lines {beg_line} - {(sub1 end_line)}:\n")
             ;     ))
             (@foreach_dbind ( type name line text sexp ) messages
-              (unless (memq name ignores)
-                (let ( port )
-                  (@caseq type
-                    ( INFO    (setq port info_port)                        )
-                    ( WARNING (setq port warn_port) (setq lint_status nil) )
-                    ( ERROR   (setq port err_port ) (setq lint_status nil) )
-                    );caseq
-                  (if (or hide_sexps (eq 'GLOBAL name))
-                      (@fprintf port "  {type%7s} {name%s} at line {line%-3d} - {text}\n")
-                    (@fprintf port "  {type%7s} {name%s} at line {line%-3d} - {text} - {sexp}\n")
-                    ));if ;let
-                ));unless ;foreach_dbind message
-            );foreach_dbind lines
-          (newline info_port)
+              (cond
+                ( (memq name ignores)                     )
+                ( (and filters (not (memq name filters))) )
+                ( t
+                  (let ( port )
+                    (@caseq type
+                      ( INFO    (setq port info_port)                        )
+                      ( WARNING (setq port warn_port) (setq lint_status nil) )
+                      ( ERROR   (setq port err_port ) (setq lint_status nil) )
+                      );caseq
+                    (if (or hide_sexps (eq 'GLOBAL name))
+                        (@fprintf port "  {type%7s} {name%s} at line {line%-3d} - {text}\n")
+                      (@fprintf port "  {type%7s} {name%s} at line {line%-3d} - {text} - {sexp}\n")
+                      ));if ;let
+                  ));t ;cond
+              ));foreach_dbind message ;foreach_dbind lines
+          (unless no_header (newline info_port))
           );foreach_dbind file
-        (println (if lint_status 'PASS 'FAIL))
+        (unless no_header (println (if lint_status 'PASS 'FAIL) info_port))
         ;; Return status
         lint_status
         );letf

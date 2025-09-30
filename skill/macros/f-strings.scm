@@ -18,6 +18,8 @@ This design choice is also consistent with Python's f-strings."
   ?out string
   (cond
     ( (stringp obj)                  obj                 )
+    ;; Fix backslashes when printing symbols
+    ( (symbolp obj)                  (strcat obj)        )
     ( (and (listp obj) @str.pretty ) (@pretty_print obj) )
     ( t                              (lsprintf spec obj) )
     ));cond ;fun

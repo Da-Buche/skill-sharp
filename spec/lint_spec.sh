@@ -105,7 +105,7 @@ When run ./bin/sharp lint ./metatest/lint/extra_key_arguments.scm
 The stderr should include 'WARNING EXTRA_KEY_ARG at line 2   - `let` extra key argument ?unexpected is provided'
 The stderr should include 'WARNING POSITIONAL_KEY_ARG at line 4   - `progn` argument ?weird is treated as positional'
 The stderr should include 'WARNING EXTRA_KEY_ARG at line 4   - `progn` extra key argument ?what'
-The stderr should include 'WARNING EXTRA_KEY_ARG at line 7   - `\@if` extra key argument ?extra_var'
+The stderr should include 'WARNING EXTRA_KEY_ARG at line 7   - `@if` extra key argument ?extra_var'
 The stderr should not include 'argument ?do_not_report'
 The stdout should end with 'FAIL'
 The status should be failure
@@ -132,9 +132,7 @@ It 'reports messages inside `let` definitions'
 When run ./bin/sharp lint ./metatest/lint/lint_errors_inside_let_definitions.il
 The stdout should include 'INFO CAR_SETOF at line 4'
 The stderr should include 'ERROR EXTRA_ARGS at line 10  - `setq`'
-The stderr should include 'ERROR SYNTAX_SETQ at line 10  - `setq`'
 The stderr should include 'ERROR EXTRA_ARGS at line 20  - `setq`'
-The stderr should include 'ERROR SYNTAX_SETQ at line 20  - `setq`'
 The stderr should include 'ERROR GLOBAL_USE at line 22  - Undefined global variable is used: abc'
 The stdout should include 'INFO CAR_SETOF at line 24'
 The status should be failure
@@ -235,10 +233,10 @@ The stderr should include '*Error* @str: argument #1 should be a string'
 The stderr should include "*Error* @str: too many arguments (1 expected, 2 given)"
 The stderr should include '*Error* Open-bracket is never closed in f-string : \"Bracket is never closed { 12 27\"'
 ## TODO - Test more advanced f-string cases (never opened closing-bracket, brackets inside evaluated part, ...)
-The stderr should include 'ERROR MACRO_EXPANSION at line 9   - `\@str` error when expanding macro'
-The stderr should include 'ERROR EXTRA_ARGS at line 13  - `\@str` extra arguments are provided'
-The stderr should include 'ERROR MACRO_EXPANSION at line 13  - `\@str` error when expanding macro'
-The stderr should include 'ERROR MACRO_EXPANSION at line 16  - `\@str` error when expanding macro'
+The stderr should include 'ERROR MACRO_EXPANSION at line 9   - `@str` error when expanding macro'
+The stderr should include 'ERROR EXTRA_ARGS at line 13  - `@str` extra arguments are provided'
+The stderr should include 'ERROR MACRO_EXPANSION at line 13  - `@str` error when expanding macro'
+The stderr should include 'ERROR MACRO_EXPANSION at line 16  - `@str` error when expanding macro'
 The stderr should not include '(@str "{var} {var}")'
 The stdout should end with 'FAIL'
 The status should be failure
@@ -255,9 +253,9 @@ End
 
 It 'reports unused variables in anaphoric macros'
 When run ./bin/sharp lint ./metatest/lint/anaphoric_macros.scm
-The stderr should include 'WARNING @IF_UNUSED at line 7   - `\@if` variable var_if is unused'
-The stderr should include 'WARNING @NIF_UNUSED at line 11  - `\@nif` variable var_nif is unused'
-The stderr should include 'WARNING @WHEN_UNUSED at line 15  - `\@when` variable var_when is unused'
+The stderr should include 'WARNING @IF_UNUSED at line 7   - `@if` variable var_if is unused'
+The stderr should include 'WARNING @NIF_UNUSED at line 11  - `@nif` variable var_nif is unused'
+The stderr should include 'WARNING @WHEN_UNUSED at line 15  - `@when` variable var_when is unused'
 The stdout should end with 'FAIL'
 The status should be failure
 End
@@ -265,7 +263,7 @@ End
 It 'only reports wrong arguments in `lambda` and `defun` calls'
 When run ./bin/sharp lint ./metatest/lint/symbol_as_fun_args.scm
 The stderr should include 'ERROR SYNTAX_DEFUN at line 4'
-The stdout should include 'INFO GLOBAL at line 9   - `defglobalfun` global definition: valid_fun'
+The stdout should include 'INFO GLOBAL at line 9   - `defglobalfun` global function definition: valid_fun'
 The stderr should include 'WARNING LAMBDA_UNUSED at line 13  - `lambda` variable args is unused'
 The stderr should not include 'ERROR SYNTAX_DEFUN at line 9'
 The stderr should not include 'variable _ is unused'
@@ -310,7 +308,7 @@ When run ./bin/sharp lint ./metatest/lint/functions.scm
 The stderr should include 'unused_defun_function0 is unused'
 The stderr should include 'superseded_defun_function0 is unused'
 The stderr should include 'superseded_defun_function1 is unused'
-The stdout should include 'INFO GLOBAL at line 17  - `defglobalfun` global definition: defglobalfun_function0'
+The stdout should include 'INFO GLOBAL at line 17  - `defglobalfun` global function definition: defglobalfun_function0'
 The stdout should end with 'FAIL'
 The status should be failure
 End
@@ -318,7 +316,7 @@ End
 It 'reports duplicated definitions'
 When run ./bin/sharp lint ./metatest/lint/functions.scm
 The stderr should include 'WARNING DEFUN_SUPERSEDE at line 13  - `defun` variable superseded_defun_function0 is superseded'
-The stderr should include 'WARNING @FUN_SUPERSEDE at line 26  - `\@fun` variable superseded_defun_function1 is superseded'
+The stderr should include 'WARNING @FUN_SUPERSEDE at line 26  - `@fun` variable superseded_defun_function1 is superseded'
 The stdout should end with 'FAIL'
 The status should be failure
 End
@@ -326,7 +324,7 @@ End
 
 It 'reports usage of debugging functions'
 When run ./bin/sharp lint ./metatest/lint/debugging_functions.scm
-The stderr should include 'WARNING DEBUGGING at line 4   - `\@show` debugging function should not be used in production - (\@show 12 27)'
+The stderr should include 'WARNING DEBUGGING at line 4   - `@show` debugging function should not be used in production - (\@show 12 27)'
 The stderr should include 'WARNING DEBUGGING at line 9   - `pp` debugging function should not be used in production - (pp \@show)'
 The stdout should end with 'FAIL'
 The status should be failure

@@ -4,11 +4,10 @@
 ;; A. Buchet - April 2025
 ;; ===============================================================================================================
 
-(@no_lint
-  (@fun @print_args ( @rest (args) )
-    ?doc "Print all provided arguments."
-    (@show args)
-    )
+(@fun @print_args ( @rest ( args ) )
+  ?doc "Print all provided arguments."
+  (@no_lint (@show args))
+  args
   )
 
 ;; TODO - Profile macro, but this requires skillDev license
