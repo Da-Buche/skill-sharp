@@ -37,7 +37,7 @@ End
 It 'does not contain whitespace'
 Skip if "fd not available" missing_fd
 # shellcheck disable=SC2046 # Intended word splitting
-When run grep -En '\s+$' $(list_files --exclude='*.md')
+When run grep -En '\s+$' $(list_files --exclude='*.md' --exclude='*.pdf')
 The stdout should be blank
 The stderr should be blank
 The status should be failure
@@ -47,7 +47,7 @@ End
 It 'does not contain tabs'
 Skip if "fd not available" missing_fd
 # shellcheck disable=SC2046 # Intended word splitting
-When run grep -n $'\t' $(list_files --exclude='Makefile')
+When run grep -n $'\t' $(list_files --exclude='Makefile' --exclude='*.pdf')
 The stdout should be blank
 The stderr should be blank
 The status should be failure
@@ -57,7 +57,7 @@ End
 It 'does not contain carriage returns'
 Skip if "fd not available" missing_fd
 # shellcheck disable=SC2046 # Intended word splitting
-When run grep -n $'\r' $(list_files)
+When run grep -n $'\r' $(list_files --exclude='*.pdf')
 The stdout should be blank
 The stderr should be blank
 The status should be failure
