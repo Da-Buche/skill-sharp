@@ -107,51 +107,13 @@
   (add_command "globals"
     (lambda ( @rest args )
       (@debug "Running Globals on {args}")
-      (if (equal "TRUE" (getShellEnvVar "SKILL_SHARP_GLOBALS_LOAD"))
-          ;; Load files and report definitions using `globals`
-          (destructuringBind ( stdout stderr _status )
-                             (@bash (@str "$SKILL_SHARP_ROOT/bin/globals {(buildString args)}"))
-            (fprintf (@errport) "%s" stderr)
-            (fprintf (@poport ) "%s" stdout)
-            );dbind
-        ;; No load, use Lint to parse the files and report global definitions
-        (@with ( ( port     (outstring)           )
-                 ( nullport (outfile "/dev/null") )
-                 )
-          (@lint
-            ?files     (@skill_files args)
-            ?filters   '(GLOBAL)
-            ?info_port port
-            ?warn_port port
-            ?err_port  nullport
-            ?no_header t
-            )
-          (@letf ( ( (rexMagic) t )
-                   )
-            ;; Parse Lint results
-            (let ( functions variables scheme classes symbols name )
-              (foreach line (parseString (getOutstring port) "\n")
-                (assert (pcreMatchp "`([a-zA-Z0-9_@\\\\]+)` global (scheme |function )?definition: ([a-zA-Z0-9_@?\\\\]+)" line) "Global message has the wrong format: %N" line)
-                (setq name (concat (pcreSubstitute "\\3")))
-                (@caseq (concat (pcreSubstitute "\\1"))
-                  ( (define setq )
-                    (case (pcreSubstitute "\\2")
-                      ( "scheme "   (push name scheme   ) )
-                      ( "function " (push name functions) )
-                      ( t           (push name variables) )
-                      ) )
-                  ( putpropqq (push name symbols) )
-                  ( ( \\\@fun @fun defun defglobalfun defmethod defmacro ) (push name functions) )
-                  ));foreach line
-              ;; Report global symbol properties only when required
-              (foreach names (if (equal "TRUE" (getShellEnvVar "SKILL_SHARP_GLOBALS_SHOW_PROPS"))
-                                 (list functions variables scheme classes symbols )
-                               (list functions variables scheme classes)
-                               )
-                (println (sort (@unique names) 'alphalessp) (@poport))
-                ));foreach ;let
-            ));letf ;with
-        );if
+      ;; Make sure warnings are printed to stderr
+      (@letf ( ( (@woport) (@errport) )
+               )
+        ;; Most arguments are passed to `@globals` using shell variables
+        (foreach names (@globals ?files (@skill_files args))
+          (println (sort (@unique names) 'alphalessp) (@poport))
+          ))
       ))
 
   ;; -------------------------------------------------------
