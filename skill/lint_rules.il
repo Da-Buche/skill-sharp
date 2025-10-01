@@ -45,6 +45,32 @@
     )
   }
 
+;; -------------------------------------------------------
+;; Debug functions
+;; -------------------------------------------------------
+
+{ "NO_LINT"
+  (SK_RULE ( break breakpt breakptMethod
+             clear cont continue count
+             debugQuit debugStatus dump
+             gcsummary getAllLoadedFiles getCallingFunction getFunctions getGFbyClass
+             ilAddTopLevelErrorHandler ilDebugCountLevels ilGetGFbyClass ilGetIdeSessionWindow ilGetTCovFiles ilMergeTCovData
+             ilRemoveMethod ilRemoveTopLevelErrorHandler ilSlotBoundp ilToolBox inNext inStepOut installDebugger
+             listAlias listFunctions listVariables
+             memoryAllocated
+             next
+             pp printFunctions printObject printstruct printVariables
+             removeMethod resume
+             skillDebugger skillDevStatus stacktrace step stepend stepout
+             toplevel tracef tracelevlimit tracelevunlimit tracep tracev
+             unbreakpt unbreakptMethod uncount uninstallDebugger untrace untracep untracev unwatch
+             watch where whereIs
+             ;; Custom
+             @show @print_args @print_table @runtime
+             )
+    (SK_WARNING DEBUG_FUNCTIONS "%N debugging function should not be used in production" (car (SK_FORM)))
+    )
+  }
 
 ;*/
 
