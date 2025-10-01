@@ -1352,7 +1352,8 @@ NAME is the message reference."
         ?doc  "Only print infos, warnings and errors that matches exactly words in this comma-separated value"
         )
       ( ignores
-        ?type ( symbol ... )
+        ;; TODO - Type checking should be ok when ( <name> ... ) is an empty list
+        ?type ( symbol ... )|nil
         ?def  (mapcar 'concat (parseString (or (getShellEnvVar "SKILL_SHARP_LINT_HIDE_IGNORES") "") ","))
         ?doc  "Waive infos, warnings and errors whose names matches exactly words in this comma-separated value"
         )
