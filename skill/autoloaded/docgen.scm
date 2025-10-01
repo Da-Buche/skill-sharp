@@ -46,6 +46,7 @@
     ?doc "Return all global definitions from FILES."
     ?out ( ( symbol ... ) ... )
     ?global t
+    (assert files "@globals - ?files is nil")
     (if load_files
         ;; Load files and report definitions using `globals`
         (destructuringBind ( stdout stderr _status )

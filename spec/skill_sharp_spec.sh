@@ -33,21 +33,21 @@ End
 Describe 'unit-tests'
 
   It 'passes unit-tests using SKILL interpreter'
-  When run ./bin/sharp test ./test
+  When run ./bin/sharp test ./skill ./test
   The stdout should end with 'PASS'
   The stderr should be blank
   The status should be success
   End
 
   It 'passes unit-tests (including in-code ones) using SKILL interpreter'
-  When run env SKILL_SHARP_RUN_TEST=TRUE ./bin/sharp test ./test
+  When run env SKILL_SHARP_RUN_TEST=TRUE ./bin/sharp test ./skill ./test
   The stdout should end with 'PASS'
   The stderr should be blank
   The status should be success
   End
 
   It 'passes unit-tests (including in-code ones) using SKILL interpreter with strict Type-Checking'
-  When run env SKILL_SHARP_RUN_TEST=TRUE SKILL_SHARP_STRICT_TYPE_CHECKING=TRUE ./bin/sharp test ./test
+  When run env SKILL_SHARP_RUN_TEST=TRUE SKILL_SHARP_STRICT_TYPE_CHECKING=TRUE ./bin/sharp test ./skill ./test
   The stdout should end with 'PASS'
   The stderr should be blank
   The status should be success
@@ -56,7 +56,7 @@ Describe 'unit-tests'
   It 'passes unit-tests using cdsmps'
   When run env SKILL_INTERPRETER="$CDS_INST_DIR/tools.lnx86/bin/cdsmps" \
                SKILL_SHARP_RUN_TEST=TRUE                                \
-               ./bin/sharp test ./test
+               ./bin/sharp test ./skill ./test
   The stdout should end with 'PASS'
   The stderr should be blank
   The status should be success

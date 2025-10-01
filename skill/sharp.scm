@@ -96,8 +96,25 @@
   (add_command "test"
     (lambda ( @rest args )
       (@debug "Running Test on {args}")
-      ;; Load SKILL and test files, then run tests and exit accordingly
-      (@exit (if (@test_run_all ?files (@skill_files args)) 0 1))
+      (let ( ( source_files nil )
+             ( test_files   nil )
+             ( tests_status 1   )
+             )
+        ;; Segregate source and test files according to _test suffix
+        (foreach file (@skill_files args)
+          (if (pcreMatchp "_test\\.(ils?|scm)$" file)
+              (push file test_files)
+            (push file source_files)
+            ))
+        (cond
+          ;; No tests files, load all provided files
+          ( (not test_files) (when (@test_run_all ?test_files source_files)                          (setq tests_status 0)) )
+          ( t                (when (@test_run_all ?source_files source_files ?test_files test_files) (setq tests_status 0)) )
+          )
+        (@exit tests_status)
+        ;; Load SKILL and test files, then run tests and exit accordingly
+        ;(@exit (if (@test_run_all ?files ) 0 1))
+        )
       ))
 
   ;; -------------------------------------------------------

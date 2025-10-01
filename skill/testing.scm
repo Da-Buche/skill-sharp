@@ -164,12 +164,14 @@
     (setf assertion->status value)
     )
 
-  (@fun @test_print_report ( @rest _ )
+  (@fun @test_print_report ( @key ( table ?type table ?def (makeTable t nil)) @rest _)
     ?doc    "Print Unit-Tests report."
     ?out    t|nil
     ?global t
     ;; Print failure messages
     (foreach test (_\@tests)
+      ;; Mark associated function as tested
+      (setf table[test->fun] 'tested)
       (when (eq 'fail test->status)
         (let ( ( port (@errport) )
                )
@@ -193,9 +195,16 @@
           (drain port)
           ))
       )
-    ;; Print global report
-    (let ( ( pass (and (plusp test_new) (zerop test_fail) (zerop assertion_fail)) )
-           )
+    ;; Print untested functions
+    (letseq ( ( untested_names (sort (setof name table[?] (neq 'tested table[name])) 'alphalessp)                   )
+              ( pass           (and (plusp test_new) (zerop test_fail) (zerop assertion_fail) (not untested_names)) )
+              )
+      ;; Print untested functions
+      (when untested_names
+        (@info "Untested Functions:\n  {(buildString untested_names \"\n  \")}\n")
+        (newline)
+        )
+      ;; Print global report
       (@info "\
 Total tests: {test_new}\n\
  - skipped tests: {test_skip}\n\
@@ -516,7 +525,10 @@ Got     : █{assertion->warn_result}█"))
 ;; =======================================================
 
 (@fun @test_run_all
-  ( @key ( files ?type ( string ... ) )
+  ( @key
+    ( test_files        ?type ( string ... )                 ?doc "Files containing tests (and/or definitions) those files are loaded."   )
+    ( source_files      ?type ( string ... ) ?def test_files ?doc "Source files are used to make sure all global definitions are tested." )
+    ( load_source_files ?type t|nil          ?def nil        ?doc "If non-nil, source files are also loaded."                             )
     @rest _
     )
   ?doc "Load all SKILL or SKILL++ FILES.
@@ -528,9 +540,18 @@ Return nil otherwise."
            )
     ;; Reset existing tests.
     ;(_\@tests_reset)
+    ;; Load source files when required
+    (when load_source_files (mapcar '@load source_files))
     ;; Load all files containing tests
-    (mapcar '@load files)
-    ;; Run tests and return t or nil accordingly
-    (@test_print_report)
+    (mapcar '@load test_files)
+    ;; Build table containing all defined functions
+    (let ( ( tested_by_name (makeTable t nil) )
+           )
+      (foreach name (and source_files (car (@globals ?files source_files)))
+        (setf tested_by_name[name] 'not_tested)
+        )
+      ;; Run tests and return t or nil accordingly
+      (@test_print_report ?table tested_by_name)
+      )
     ));letf ;fun
 
