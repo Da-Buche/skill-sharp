@@ -93,7 +93,7 @@ This is probably equivalent to `mktemp` \"unsafe\" --dry-run mode."
     )
   ?doc "Return a list containing OBJ N times."
   ?out list
-  (@for _i 1 n obj)
+  (@for _ 1 n obj)
   )
 
 ;; =======================================================

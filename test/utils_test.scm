@@ -100,6 +100,36 @@
 
   )
 
+(@test
+  ?fun '@mktemp
+  ?doc "Temporary files are generated using Unix `mktemp`."
+
+  (@assertion
+    (let ( ( file (@mktemp) ) ) (prog1 (and (stringp file) (isFile file)) (deleteFile file)))
+    ?out t
+    )
+
+  (@assertion
+    (let ( ( file0 (@mktemp "file.XXX") )
+           ( file1 (@mktemp "file.XXX") )
+           )
+      (prog1
+       (and (stringp file0) (isFile file0)
+            (stringp file1) (isFile file1)
+            (nequal file0 file1)
+            )
+       (progn (deleteFile file0) (deleteFile file1))
+       )
+    ?out t
+    ))
+
+  (@assertion
+    (@mktemp "test")
+    ?error "mktemp: too few X's in template"
+    )
+
+  )
+
 ;; =======================================================
 ;; Lists
 ;; =======================================================
@@ -152,6 +182,28 @@
     ?doc "By default, `@sort' compares using `@alphalessp'."
     (@sort '( 12 a b 12.27 c "a" 27 "b" 27 "c" ) ?shape 'printself)
     ?out '( "a" "b" "c" 12 12.27 27 27 a b c )
+    )
+
+  )
+
+(@test
+  ?fun '@repeat
+  ?doc "`@repeat` works with any object."
+
+  (@assertion
+    (@repeat "abc" 5)
+    ?out '("abc" "abc" "abc" "abc" "abc")
+    )
+
+  (@assertion
+    (@repeat (list 12 27) 3)
+    ?out '((12 27) (12 27) (12 27))
+    )
+
+  (@assertion
+    ?doc "All elements are identical (each reference is exactly the same pointer)."
+    (let ( ( l (@repeat (list 0 1 2 3) 10) ) ) (forall elt (cdr l) (eq elt (car l))))
+    ?out t
     )
 
   )

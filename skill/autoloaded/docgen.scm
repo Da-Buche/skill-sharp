@@ -75,7 +75,7 @@
           ;; Parse Lint results
           (let ( functions variables scheme classes symbols name )
             (foreach line (parseString (getOutstring port) "\n")
-              (assert (pcreMatchp "`([a-zA-Z0-9_@\\\\]+)` global (scheme |function )?definition: ([a-zA-Z0-9_@?\\\\]+)" line) "Global message has the wrong format: %N" line)
+              (assert (pcreMatchp "`([a-zA-Z0-9_@\\\\]+)` global (scheme |function )?definition: ([^ \t\n.]+)" line) "Global message has the wrong format: %N" line)
               (setq name (concat (pcreSubstitute "\\3")))
               (@caseq (concat (pcreSubstitute "\\1"))
                 ( (define setq )
@@ -85,7 +85,7 @@
                     ( t           (push name variables) )
                     ) )
                 ( putpropqq (push name symbols) )
-                ( ( \\\@fun @fun defun defglobalfun defmethod defmacro ) (push name functions) )
+                ( ( \\\@fun @fun defun defglobalfun defmethod defmacro procedure globalProc ) (push name functions) )
                 ));foreach line
             ;; Report global symbol properties only when required
             (if show_props

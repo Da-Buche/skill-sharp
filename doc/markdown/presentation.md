@@ -321,7 +321,7 @@ _paginate: skip
 
 ```scheme
 ;; Values are placed where they should be evaluated:
-(@str "The result of 12 plus 27 is {12+27}.)")
+(@str "The result of 12 plus 27 is {12+27}.")
 
 (@str "
 The current shell is {(getShellEnvVar \"SHELL\")}.
