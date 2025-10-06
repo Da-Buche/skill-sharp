@@ -119,9 +119,9 @@
             (nequal file0 file1)
             )
        (progn (deleteFile file0) (deleteFile file1))
-       )
+       ))
     ?out t
-    ))
+    )
 
   (@assertion
     (@mktemp "test")
