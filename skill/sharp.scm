@@ -100,6 +100,10 @@
              ( test_files   nil )
              ( tests_status 1   )
              )
+        ;; Toggle required switches
+        ;; TODO - Those should be arguments provided using Shell variables
+        (sstatus keepNLInString t)
+        (sstatus saveInlineDoc  t)
         ;; Segregate source and test files according to _test suffix
         (foreach file (@skill_files args)
           (if (pcreMatchp "_test\\.(ils?|scm)$" file)
