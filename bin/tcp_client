@@ -66,6 +66,13 @@ fi
 ## Check if CSV file exists
 [[ -f "$CSV_FILE" ]] || error "Error: CSV file '$CSV_FILE' not found."
 
+## Support Mac & Unix versions of ncat
+if ncat --version 1>/dev/null 2>/dev/null; then
+    NCAT="ncat"
+else
+    NCAT="nc"
+fi
+
 ## =======================================================
 ## Clean server file
 ## =======================================================
@@ -75,7 +82,7 @@ clean_file() {
   head -n1 "$CSV_FILE"
   while IFS=, read -r TIMESTAMP HOST PORT PASSWORD LANGUAGE PROJECT CONFIG; do
     ## Make sure output from a dummy request is valid
-    response=$(echo '"Is server alive?"' | gpg --symmetric --cipher-algo AES256 --passphrase "$PASSWORD" --batch --yes 2>/dev/null | nc -w5 "$HOST" "$PORT" 2>/dev/null)
+    response=$(echo '"Is server alive?"' | gpg --symmetric --cipher-algo AES256 --passphrase "$PASSWORD" --batch --yes 2>/dev/null | "$NCAT" -w5 "$HOST" "$PORT" 2>/dev/null)
     # Check if response contains 'alive'
     if echo "$response" | grep -q "alive"; then
       echo "$TIMESTAMP,$HOST,$PORT,$PASSWORD,$LANGUAGE,$PROJECT,$CONFIG"
@@ -133,7 +140,7 @@ PASSWORD=$(echo "$PASSWORD" | xargs)
 ## =======================================================
 
 ## Encrypt stdin with GPG and forward to server via netcat
-gpg --symmetric --cipher-algo AES256 --passphrase "$PASSWORD" --batch --yes | nc "$HOST" "$PORT"
+gpg --symmetric --cipher-algo AES256 --passphrase "$PASSWORD" --batch --yes | "$NCAT" "$HOST" "$PORT"
 
 exit 0
 
