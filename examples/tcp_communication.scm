@@ -38,11 +38,11 @@
                 (let ( ( msg field->value )
                        )
                   (tconc messages msg)
-                  (setf form->html (messages_to_html messages))
+                  (setf form->html->value (messages_to_html messages))
                   (@queue
                     (lambda ()
                       (tconc messages (car (@bash (@str "echo '{msg}' | $SKILL_SHARP_ROOT/bin/tcp_client -l PYTHON"))))
-                      (setf form->html (messages_to_html messages))
+                      (setf form->html->value (messages_to_html messages))
                       ))
                   ))
               )
