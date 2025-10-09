@@ -194,7 +194,7 @@
           ))
       )
     ;; Print untested functions
-    (letseq ( ( untested_names (sort (setof name globals (not (get name '@test))) 'alphalessp)                     )
+    (letseq ( ( untested_names (sort (@unique (setof name globals (and (nequal '_ (getchar name 1)) (not (get name '@test))))) 'alphalessp)                     )
               ( pass           (and (plusp test_new) (zerop test_fail) (zerop assertion_fail) (not untested_names)) )
               )
       ;; Print untested functions
