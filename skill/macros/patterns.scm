@@ -112,8 +112,11 @@ temporary value becomes permanent.)
         (list
           `(let ( ( __\@letf_var__ ,(car def) )
                   )
+             ;; `setf` call is placed here, if it fails, the value should not be set
+             ;; And this is required so `status optimizeTailCall` can be used within `@letf`
+             (@setf ,(car def) ,(cadr def))
              (unwindProtect
-               (progn (setf ,(car def) ,(cadr def)) ,@(_\@letf (cdr defs) body))
+               ,@(_\@letf (cdr defs) body)
                (@setf ,(car def) __\@letf_var__)
                )))
          );let
