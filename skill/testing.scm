@@ -309,15 +309,15 @@ Total assertions: {assertion_new}\n\
         `(progn
            ;; For global functions, store test behind the function name symbol
            (when (getd (get ,test 'fun))
-             (when (@get ,test 'fun '@test)
+             (when (get (get ,test 'fun) '@test)
                (@set_status ,test 'fail)
                (let ( ( msg (lsprintf "Function %s is already tested by %A."
-                              (get ,test 'fun) (@get ,test 'fun '@test)) )
+                              (get ,test 'fun) (get (get ,test 'fun) '@test)) )
                       )
                  (pushf msg (get ,test 'messages))
                  (error "%s" msg)
                  ))
-             (setf (@get ,test 'fun '@test) ,test)
+             (setf (get (get ,test 'fun) '@test) ,test)
              )
            ;; Store test environment to be able to re-run it
            (setf (get ,test 'environment) (theEnvironment))

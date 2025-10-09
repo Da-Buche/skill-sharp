@@ -296,7 +296,9 @@ If END is not provided, END defaults to BEG minus 1 and BEG defaults to 0."
     )
   ?doc "Convert HEX into decimal."
   ?out integer
-  (evalstring (strcat "0x" hex)))
+  (or (car (errsetstring (strcat "0x" hex)))
+      (error "@hex_to_dec - Not a valid hexadecimal number: %N" hex)
+      ))
 
 (@fun @dec_to_hex
   ( ( dec    ?type integer )
@@ -307,7 +309,7 @@ If END is not provided, END defaults to BEG minus 1 and BEG defaults to 0."
   (let ( ( res (numConv (lsprintf "%d" dec) "hex" nil) )
          )
     (if (plusp digits)
-        (@padd res digits)
+        (@padd res digits "0")
       res
       );if
     ));let ;fun
@@ -317,7 +319,7 @@ If END is not provided, END defaults to BEG minus 1 and BEG defaults to 0."
 ;; =======================================================
 
 (@fun @box_width
-  ( ( box ?type box )
+  ( ( box ?type box|dbobject )
     )
   ?doc "Return BOX width"
   ?out number
@@ -325,7 +327,7 @@ If END is not provided, END defaults to BEG minus 1 and BEG defaults to 0."
   )
 
 (@fun @box_height
-  ( ( box ?type box )
+  ( ( box ?type box|dbobject )
     )
   ?doc "Return BOX height"
   ?out number
@@ -403,8 +405,8 @@ If END is not provided, END defaults to BEG minus 1 and BEG defaults to 0."
 (@fun @nonblankstring?
   ( ( obj ?type any )
     )
-  ?doc    "Return t if STR is a non-blank string, nil otherwise."
-  (and (stringp obj) (not (blankstrp (@strip obj))))
+  ?doc    "Return STR if it is a non-blank string, nil otherwise."
+  (and (stringp obj) (not (blankstrp (@strip obj))) obj)
   )
 
 ; (@fun @when_list
