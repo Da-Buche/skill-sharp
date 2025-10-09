@@ -51,12 +51,6 @@ Warnings catched during evaluation can be fetched using `getMuffleWarnings'."
 
   );unless
 
-(unless (isCallable 'xor)
-  (@fun xor ( (e0) (e1) )
-    ?doc "Returns the XOR value of the boolean inputs E0 and E1."
-    (and (or e0 e1) (not (and e0 e1))))
-  );unless
-
 ;; =======================================================
 ;; Missing setf helpers
 ;; =======================================================

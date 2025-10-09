@@ -5,6 +5,22 @@
 ;; ===============================================================================================================
 
 ;; =======================================================
+;; Booleans
+;; =======================================================
+
+(@fun @xor
+  ( ( obj0 ?type general )
+    ( obj1 ?type general )
+    )
+  ?doc "Return nil if OBJ0 and OBJ1 are both non-nil or both nil.
+Otherwise, it returns a non-nil value (OBJ1 or t).
+
+Native `xor` is a macro and thus it cannot be used in functional programming.
+(i.e. with `foldl1` for instance."
+  (if obj0 (not obj1) obj1)
+  )
+
+;; =======================================================
 ;; Unix utilites
 ;; =======================================================
 

@@ -110,7 +110,7 @@
 ;; TODO - Remove commented code
 ; (defmethod initializeInstance @after ( ( assertion @assertion ) @rest _ )
 ;   "Set OBJ as currently built one, so it can be accessed in class default values."
-;   (assert (xor (neq assertion->out '__undefined__) assertion->error)
+;   (assert (@xor (neq assertion->out '__undefined__) assertion->error)
 ;     "@assertion - Exactly one of ?out or ?error should be provided.")
 ;   )
 
@@ -246,7 +246,7 @@ Total assertions: {assertion_new}\n\
           (destructuringBind ( @key (doc "") (out '__undefined__) (error '__undefined__) @rest _ ) (cdr sexp)
             ;; Assert cannot be used here as `error' is redefined locally
             (unless (stringp doc) (funcall 'error "@assertion - ?doc should be a string."))
-            (unless (xor (eq out '__undefined__) (eq error '__undefined__))
+            (unless (@xor (eq out '__undefined__) (eq error '__undefined__))
               (funcall 'error "@assertion - Exactly one of ?out or ?error should be provided."))
             ;; Define assertion and expand it in `_@assertion' macro call
             (let ( ( assertion (makeInstance '@assertion ?num num++ ?doc doc) ) )
