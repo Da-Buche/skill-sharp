@@ -21,6 +21,7 @@
 
 (@test
   ?fun '@xor
+  ?doc "@xor truth table."
 
   (@assertion
     (@xor nil nil)
@@ -677,16 +678,219 @@ Kevin   layouter\n\
 
   )
 
+(@test
+  ?fun '@hex_to_dec
+  ?doc "Return hexadecimal values of given numbers."
+  ?skip (not (isCallable 'numConv))
+
+  (@assertion
+    (@hex_to_dec "0")
+    ?out 0
+    )
+
+  (@assertion
+    (@hex_to_dec "1")
+    ?out 1
+    )
+
+  (@assertion
+    (@hex_to_dec "A")
+    ?out 10
+    )
+
+  (@assertion
+    (@hex_to_dec "F")
+    ?out 15
+    )
+
+  (@assertion
+    (@hex_to_dec "G")
+    ?error "Not a valid hexadecimal number: \"G\""
+    )
+
+  (@assertion
+    (@hex_to_dec "FF")
+    ?out 255
+    )
+
+  (@assertion
+    (@hex_to_dec "E12AF25")
+    ?out 236105509
+    )
+
+  (@assertion
+    ?doc "Make sure back and forth convertion is valid."
+    (forall num '( 0 1 12 27 42 4455 1234567890 )
+      (equal num (@hex_to_dec (@dec_to_hex num)))
+      )
+    ?out t
+    )
+
+  )
+
+(@test
+  ?fun '@dec_to_hex
+  ?doc "Return hexadecimal values of given numbers."
+  ?skip (not (isCallable 'numConv))
+
+  (@assertion
+    (@dec_to_hex 0)
+    ?out "0"
+    )
+
+  (@assertion
+    (@dec_to_hex 1)
+    ?out "1"
+    )
+
+  (@assertion
+    (@dec_to_hex 10)
+    ?out "a"
+    )
+
+  (@assertion
+    (@dec_to_hex 15)
+    ?out "f"
+    )
+
+  (@assertion
+    (@dec_to_hex 255)
+    ?out "ff"
+    )
+
+  (@assertion
+    (@dec_to_hex 236105509)
+    ?out "e12af25"
+    )
+
+  (@assertion
+    (@dec_to_hex 255 4)
+    ?out "00ff"
+    )
+
+  (@assertion
+    ?doc "Make sure back and forth convertion is valid."
+    (forall num '( 0 1 12 27 42 4455 1234567890 )
+      (equal num (@dec_to_hex (@hex_to_dec num)))
+      )
+    ?out t
+    )
+
+  )
+
+
+;; =======================================================
+;; Bounding Boxes
+;; =======================================================
+
+(@test
+  ?fun '@box_width
+  ?doc "Check bounding box width for different objects."
+  ?skip (not (isCallable 'topEdge))
+
+  (@assertion
+    (@box_width (list 0:0 1:1))
+    ?out 1
+    )
+
+  (@assertion
+    (@box_width (list 0.0:12.01 27.3:42.002))
+    ?out 27.3
+    )
+
+  (@assertion
+    (@box_width (list -4.3:-22.123 -0.1:-0.543))
+    ?out 4.2
+    )
+
+  )
+
+(@test
+  ?fun '@box_height
+  ?doc "Check bounding box height for different objects."
+  ?skip (not (isCallable 'topEdge))
+
+  (@assertion
+    (@box_height (list 0:0 1:1))
+    ?out 1
+    )
+
+  (@assertion
+    (@box_height (list 0.0:12.01 27.3:42.002))
+    ?out 29.992
+    )
+
+  (@assertion
+    (@box_height (list -4.3:-22.123 -0.1:-0.543))
+    ?out 21.58
+    )
+
+  )
 
 ;; =======================================================
 ;; Miscellaneous
 ;; =======================================================
 
+(@test
+  ?fun '@skill_files
+
+  (@assertion
+    ?doc "Return SKILL files from a known folder."
+    (sort (mapcar '@basename (@skill_files (list "$SKILL_SHARP_ROOT/metatest/globals"))) '@alphalessp)
+    ?out '("classes.il" "classes.ils" "definitions.scm" "functions.il" "functions.ils" "variables.il" "variables.ils")
+    )
+  )
+
+(@test
+  ?fun '@file_contents
+  ?doc "Retrieve contents of known files."
+
+  (@assertion
+    (let ( ( tmp_file (@mktemp) )
+           )
+      (unwindProtect
+        (progn
+          (@bash (@str "echo 12 > {tmp_file} ; echo 27 >> {tmp_file}"))
+          (@file_contents tmp_file)
+          )
+        (deleteFile tmp_file)
+        ))
+    ?out "12\n27\n"
+    )
+  )
 
 ;; =======================================================
 ;; Predicates
 ;; =======================================================
 
+(@test
+  ?fun '@nonblankstring?
+
+  (@assertion
+    ?doc "Return nil for anything that is not a string."
+    (@nonblankstring? 12)
+    ?out nil
+    )
+
+  (@assertion
+    ?doc "Return nil for an empty string."
+    (@nonblankstring? "")
+    ?out nil
+    )
+
+  (@assertion
+    ?doc "Return nil for a whitespace string."
+    (@nonblankstring? " \t")
+    ?out nil
+    )
+
+  (@assertion
+    ?doc "Return the provided string otherwise."
+    (@nonblankstring? " abc ")
+    ?out " abc "
+    )
+
+  )
 
 ;; =======================================================
 ;; Universal getter

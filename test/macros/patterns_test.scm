@@ -1,4 +1,8 @@
 
+;; =======================================================
+;; Debugging macro
+;; =======================================================
+
 (@test
   ?fun '@show
 
@@ -19,19 +23,97 @@
 
   )
 
-; (progn
+;; =======================================================
+;; case & caseq
+;; =======================================================
 
-;   (@if (getShellEnvVar "IF_VARIABLE")
-;        (@info "IF_VARIABLE is defined: {(getShellEnvVar \"IF_VARIABLE\")}")
-;     (@warn "IF_VARIABLE is not defined")
-;     12)
+(@test
+  ?fun '@case
+  ?doc "Works like `case` but raises meaningful errors in unsupported cases."
 
-;   (@nif (getShellEnvVar "NIF_VARIABLE")
-;         (@info "NIF_VARIABLE is defined: {(getShellEnvVar \"NIF_VARIABLE\")}")
-;     (@warn "NIF_VARIABLE is not defined")
-;     27)
+  (@assertion
+    (@case 12
+      ( 12 'even )
+      ( 27 'odd  )
+      )
+    ?out 'even
+    )
 
-;   )
+  (@assertion
+    (@case "ellipse"
+      ( "rect"    'rectangle )
+      ( "ellipse" 'ellipse   )
+      ( "polygon" 'polygon   )
+      )
+    ?out 'ellipse
+    )
+
+  (@assertion
+    (@case "inst"
+      ( "rect"    'rectangle )
+      ( "ellipse" 'ellipse   )
+      ( "polygon" 'polygon   )
+      )
+    ?error "Value is not amongst valid cases (\"rect\" \"ellipse\" \"polygon\")"
+    )
+  )
+
+(@test
+  ?fun '@caseq
+  ?doc "Works like `caseq` but raises meaningful errors in unsupported cases."
+
+  (@assertion
+    (@caseq 12
+      ( 12 'even )
+      ( 27 'odd  )
+      )
+    ?out 'even
+    )
+
+  (@assertion
+    (@caseq 'ellipse
+      ( rect    'rectangle )
+      ( ellipse 'ellipse   )
+      ( polygon 'polygon   )
+      )
+    ?out 'ellipse
+    )
+
+  (@assertion
+    (@caseq 'inst
+      ( rect    'rectangle )
+      ( ellipse 'ellipse   )
+      ( polygon 'polygon   )
+      )
+    ?error "Value is not amongst valid cases (rect ellipse polygon)"
+    )
+  )
+
+;; =======================================================
+;; wrap
+;; =======================================================
+
+(@test
+  ?fun '@wrap
+
+  (@assertion
+    ?doc "@wrap executes operation in the right order."
+    (@wrap (println 'BEG) (println 'END) (println 'BODY) 12)
+    ?out 12
+    ?info "BEG\nBODY\nEND\n"
+    )
+
+  (@assertion
+    ?doc "@wrap executes end expression even when an error occurs."
+    (@wrap (println 'BEG) (println 'END) (error "BODY") 12)
+    ?info "BEG\nEND\n"
+    ?error "BODY"
+    )
+  )
+
+;; =======================================================
+;; letf
+;; =======================================================
 
 (@test
   ?fun '@letf
@@ -58,6 +140,9 @@
 
   );test
 
+;; =======================================================
+;; with
+;; =======================================================
 
 (@test
   ?fun '@with
@@ -66,7 +151,7 @@
     ?doc "`@with' properly closes ports"
     (letseq ( ( port (outstring) )
               ( str  (@with ( ( out_port port )
-                                )
+                              )
                        (fprintf out_port "Hello World!\n")
                        (getOutstring out_port)
                        ))
@@ -76,11 +161,197 @@
     ?out (list nil "Hello World!\n")
     )
 
+  ;; TODO - test @with with dummy cellview using ?skip
+
   );test
 
+;; =======================================================
+;; Anaphoric macros
+;; =======================================================
 
-;; TODO - test @while
-; ILS-2> l = (list 1 2 3)
-; (1 2 3)
-; ILS-2> (@while mapc (pop l) ?var toto (println toto))
-; (1 2 3)
+(@test
+  ?fun '@if
+
+  (@assertion
+    ?doc "`@if` works like `if` when condition is non-nil."
+    (@if t 'then 'else 12)
+    ?out 'then
+    )
+
+  (@assertion
+    ?doc "`@if` else statement can contain several expressions."
+    (@if nil 'then 'else 12)
+    ?out 12
+    )
+
+  (@assertion
+    ?doc "`@if` can store the condition result into a variable."
+    (@if 12+27
+      ?var res
+      (list res res)
+      'else
+       )
+    ?out '(39 39)
+    )
+
+  )
+
+(@test
+  ?fun '@nif
+
+  (@assertion
+    ?doc "`@nif` works like not `if` when condition is nil."
+    (@nif nil 'else 'then 12)
+    ?out 'else
+    )
+
+  (@assertion
+    ?doc "`@nif` then statement can contain several expressions."
+    (@nif t 'else 'then 12)
+    ?out 12
+    )
+
+  (@assertion
+    ?doc "`@nif` can store the condition result into a variable."
+    (@nif 12+27
+      ?var res
+      'then
+      (list res res)
+      )
+    ?out '(39 39)
+    )
+
+  )
+
+(@test
+  ?fun '@when
+
+  (@assertion
+    ?doc "`@when` works like `when` without variable."
+    (eval '(@when t 'then 12))
+    ?error "?var is required and should be an unquoted symbol"
+    )
+
+  (@assertion
+    ?doc "`@when` can store the condition result into a variable."
+    (@when 12+27
+      ?var res
+      'then
+      (list res res)
+      )
+    ?out '(39 39)
+    )
+
+  )
+
+;; =======================================================
+;; While
+;; =======================================================
+
+(@test
+  ?fun '@while
+
+  (@assertion
+    ?doc "`@while` returns the list of last loop values by default."
+    (let ( ( i 3 )
+           )
+      (@while (plusp i) i--)
+      )
+    ?out '(3 2 1)
+    )
+
+  (@assertion
+    ?doc "`@while mapc` returns the list condition results."
+    (let ( ( l (list 1 2 3) )
+           )
+      (@while mapc (pop l))
+      )
+    ?out '(1 2 3)
+    )
+
+  (@assertion
+    ?doc "`@while mapcar` returns the list of last loop values."
+    (let ( ( i 3 )
+           )
+      (@while mapcar (plusp i) i--)
+      )
+    ?out '(3 2 1)
+    )
+
+  (@assertion
+    ?doc "`@while mapcan` returns the concatenated list of last loop values."
+    (let ( ( i 3 )
+           )
+      (@while mapcan (plusp i) (list i-- t))
+      )
+    ?out '(3 t 2 t 1 t)
+    )
+
+  ;; Using ?var
+
+  (@assertion
+    ?doc "`@while` accepts ?var and returns the list of last loop values by default."
+    (let ( ( l (list 1 2 3) )
+           )
+      (@while (pop l)
+        ?var elt
+        (println elt)
+        (list elt elt)
+        )
+      )
+    ?info "1\n2\n3\n"
+    ?out '((1 1) (2 2) (3 3))
+    )
+
+  (@assertion
+    ?doc "`@while mapc` accepts ?var and returns the list condition results."
+    (let ( ( l (list 1 2 3) )
+           )
+      (@while mapc (pop l)
+        ?var elt
+        (println elt)
+        )
+      )
+    ?info "1\n2\n3\n"
+    ?out '(1 2 3)
+    )
+
+  (@assertion
+    ?doc "`@while mapcar` accepts ?var and returns the list of last loop values."
+    (let ( ( l (list 1 2 3) )
+           )
+      (@while mapcar (pop l)
+        ?var elt
+        (println elt)
+        (list elt elt)
+        )
+      )
+    ?info "1\n2\n3\n"
+    ?out '((1 1) (2 2) (3 3))
+    )
+
+  (@assertion
+    ?doc "`@while mapcan` accepts ?var and returns the concatenated list of last loop values."
+    (let ( ( l (list 1 2 3) )
+           )
+      (@while mapcan (pop l)
+        ?var elt
+        (println elt)
+        (list elt elt)
+        )
+      )
+    ?info "1\n2\n3\n"
+    ?out '(1 1 2 2 3 3)
+    )
+
+  )
+
+;; =======================================================
+;; For
+;; =======================================================
+
+
+
+;; =======================================================
+;; Foreach D-bind
+;; =======================================================
