@@ -86,13 +86,19 @@ See reference : https://en.wikipedia.org/wiki/Fold_(higher-order_function)"
     ?doc "`@queue' helper to be called inside `hiEnqueueCmd'."
     ?out t
     ?global t
-    (while (cdar queue)
-      (@if (cddar queue) (funcall (popf (cdar queue)))
-        ;; Prevent queue from becoming empty and breaking tconc structure
-        (tconc queue nil)
-        (assert (not (popf (car queue))) "_\\@queue - A non-nil object was removed from queue...")
-        (funcall (popf (car queue)))
-        ))
+    (unless
+      (errset
+        (while (cdar queue)
+          (@if (cddar queue) (funcall (popf (cdar queue)))
+            ;; Prevent queue from becoming empty and breaking tconc structure
+            (tconc queue nil)
+            (assert (not (popf (car queue))) "_\\@queue - A non-nil object was removed from queue...")
+            (funcall (popf (car queue)))
+            ))
+        t)
+      ;; Restore queue in case an error occured
+      (setq queue (tconc nil nil))
+      )
     ;; Always return t
     t)
 
