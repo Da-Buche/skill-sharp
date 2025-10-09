@@ -36,9 +36,9 @@ The result of this call is used as init and applied recursively to the tail of L
     (let ( ( tail_call_opt (status optimizeTailCall) )
            res )
       (sstatus optimizeTailCall t)
-      (rec function (car l) (cdr l))
+      (setq res (rec function (car l) (cdr l)))
       (sstatus optimizeTailCall tail_call_opt)
-      ))
+      res))
 
   ));scheme closure
 
