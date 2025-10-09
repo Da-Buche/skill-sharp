@@ -531,8 +531,14 @@ Kevin   layouter\n\
 
   )
 
-
-
+; (@test
+;   ?fun '@escape_chars
+;   (@assertion
+;     (@escape_chars "Escaped characters : \\@ \\\\ \"")
+;     ?out "Escaped characters : \\@ \\\\ \\\""
+;     )
+;   ;; TODO - Not sure @escape_chars is useful
+;   )
 
 ;; =======================================================
 ;; Numbers

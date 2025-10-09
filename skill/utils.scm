@@ -230,19 +230,19 @@ If NUM is negative, STR is right-padded instead."
   (pcreReplace (pcreCompile "\n*$") str "\n" 1)
   )
 
-(@fun @escape_chars
-  ( ( str ?type string )
-    )
-  ?doc "Return STR where special characters have been escaped."
-  ?out string
-  (foreach pair '( ;( "\\" "\\\\" )
-                   ( "\"" "\\\"" )
-                   )
-    (destructuringBind (match replace) pair
-      (setq str (@exact_replace match str replace))
-      ));destructuringBind ;foreach
-  str
-  )
+; (@fun @escape_chars
+;   ( ( str ?type string )
+;     )
+;   ?doc "Return STR where special characters have been escaped."
+;   ?out string
+;   (foreach pair '( ;( "\\" "\\\\" )
+;                    ( "\"" "\\\"" )
+;                    )
+;     (destructuringBind (match replace) pair
+;       (setq str (@exact_replace match str replace))
+;       ));destructuringBind ;foreach
+;   str
+;   )
 
 ;; =======================================================
 ;; Numbers
@@ -367,38 +367,38 @@ If END is not provided, END defaults to BEG minus 1 and BEG defaults to 0."
 ;; Predicates
 ;; =======================================================
 
-(@fun @is?
-  ( ( predicate ?type callable )
-    ( object    ?type any      )
-    )
-  ?doc "PREDICATE wrapper.
-Return OBJECT when it passes PREDICATE and is non-nil.
-Return t when OBJECT passes PREDICATE but is nil.
-Return nil otherwise."
-  (when (funcall predicate object) (or object t))
-  )
+; (@fun @is?
+;   ( ( predicate ?type callable )
+;     ( object    ?type any      )
+;     )
+;   ?doc "PREDICATE wrapper.
+; Return OBJECT when it passes PREDICATE and is non-nil.
+; Return t when OBJECT passes PREDICATE but is nil.
+; Return nil otherwise."
+;   (when (funcall predicate object) (or object t))
+;   )
 
-(@fun @of_type?
-  ( ( type   ?type symbol )
-    ( object ?type any    )
-    )
-  ?doc "`type' predicate wrapper.
-Return OBJECT when it is of TYPE and is non-nil.
-Return t when OBJECT is of TYPE but is nil.
-Return nil otherwise."
-  (when (eq type (typep object)) (or object t))
-  )
+; (@fun @of_type?
+;   ( ( type   ?type symbol )
+;     ( object ?type any    )
+;     )
+;   ?doc "`type' predicate wrapper.
+; Return OBJECT when it is of TYPE and is non-nil.
+; Return t when OBJECT is of TYPE but is nil.
+; Return nil otherwise."
+;   (when (eq type (typep object)) (or object t))
+;   )
 
-(@fun @of_class?
-  ( ( class   ?type symbol )
-    ( object ?type any    )
-    )
-  ?doc "`classp' predicate wrapper.
-Return OBJECT when it belongs to CLASS and is non-nil.
-Return t when OBJECT belongs to CLASS but is nil.
-Return nil otherwise."
-  (when (classp object class) (or object t))
-  )
+; (@fun @of_class?
+;   ( ( class   ?type symbol )
+;     ( object ?type any    )
+;     )
+;   ?doc "`classp' predicate wrapper.
+; Return OBJECT when it belongs to CLASS and is non-nil.
+; Return t when OBJECT belongs to CLASS but is nil.
+; Return nil otherwise."
+;   (when (classp object class) (or object t))
+;   )
 
 (@fun @nonblankstring?
   ( ( obj ?type any )
