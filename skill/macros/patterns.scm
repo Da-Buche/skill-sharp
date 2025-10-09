@@ -116,7 +116,7 @@ temporary value becomes permanent.)
              ;; And this is required so `status optimizeTailCall` can be used within `@letf`
              (@setf ,(car def) ,(cadr def))
              (unwindProtect
-               ,@(_\@letf (cdr defs) body)
+               (progn ,@(_\@letf (cdr defs) body))
                (@setf ,(car def) __\@letf_var__)
                )))
          );let
