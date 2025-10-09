@@ -278,7 +278,7 @@
           (fprintf port "<font color='darkgreen'>;; %s</font>\n" test->doc)
           )
         (foreach map assertions (@get_assertions test)
-          (@when (@is? '@nonblankstring? (car assertions)->doc)
+          (@when (@nonblankstring? (car assertions)->doc)
             ?var doc
             (fprintf port "<font color='darkgreen'>;; %s</font>\n" doc)
             )
@@ -286,9 +286,9 @@
           (letseq ( ( assertion (car assertions)                                   )
                     ( input     assertion->body_quoted                             )
                     ( output    (car assertion->body_result)                       )
-                    ( info      (@is? '@nonblankstring? assertion->info_expected ) )
-                    ( warn      (@is? '@nonblankstring? assertion->warn_expected ) )
-                    ( error     (@is? '@nonblankstring? assertion->error_expected) )
+                    ( info      (@nonblankstring? assertion->info_expected ) )
+                    ( warn      (@nonblankstring? assertion->warn_expected ) )
+                    ( error     (@nonblankstring? assertion->error_expected) )
                     )
             ;; Shape input so it can be copy-pasted and run in CIW by any user
             (when (listp input)
