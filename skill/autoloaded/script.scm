@@ -76,8 +76,8 @@
     ?out    t|nil
     ?global t
     ;; This is equivalent to Python (__name__ == '__main__')
-    (equal (@realpath (get_filename (@piport)) )
-           (@realpath (argv 0)                 )
+    (equal (@realpath (get_filename (@piport))                  )
+           (@realpath (or (argv 0) (car (last (getShellArgs)))) )
            ))
 
   (@fun deduce_name

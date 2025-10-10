@@ -63,6 +63,7 @@
 
 (@fun @color_field
   ( @key
+    ( name       ?type symbol                               )
     ( tech_files ?type ( tech_file ... ) ?def (@tech_files) )
     @rest ( args )
     )
@@ -70,6 +71,7 @@
 Except for ?choices all arguments are inherited from `hiCreateCyclicField'."
   ?out field
   (apply 'hiCreateCyclicField
+    ?name name
     ?choices
     (foreach mapcar color (@get_available_colors ?tech_files tech_files ?sorted t ?unique t)
       (list color (@color_icon color)))

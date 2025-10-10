@@ -350,8 +350,77 @@
 ;; For
 ;; =======================================================
 
+(@test
+  ?fun '@for
 
+  (@assertion
+    ?doc "`@for` returns the list of last loop values."
+    (@for i 0 9 i)
+    ?out '(0 1 2 3 4 5 6 7 8 9)
+    )
+
+  (@assertion
+    ?doc "`@for mapcar` returns the list of last loop values."
+    (@for mapcar var 0 2 (println var) (list var var))
+    ?info "0\n1\n2\n"
+    ?out '((0 0) (1 1) (2 2))
+    )
+
+  (@assertion
+    ?doc "`@for mapcan` returns the concatenated list of last loop values."
+    (@for mapcan var 0 2 (println var) (list var var))
+    ?info "0\n1\n2\n"
+    ?out '(0 0 1 1 2 2)
+    )
+
+  )
 
 ;; =======================================================
 ;; Foreach D-bind
 ;; =======================================================
+
+(@test
+  ?fun '@foreach_dbind
+
+  (@assertion
+    ?doc "`@foreach_dbind` returns the list of last loop values."
+    (@foreach_dbind ( key value ) '( ( a 12) ( b 27 ) ( c 42 ) )
+      (println key)
+      (list value value)
+      )
+    ?info "a\nb\nc\n"
+    ?out '((12 12) (27 27) (42 42))
+    )
+
+  (@assertion
+    ?doc "`@foreach_dbind mapc` returns the list of inputs."
+    (@foreach_dbind mapc ( key value ) '( ( a 12) ( b 27 ) ( c 42 ) )
+      (println key)
+      (list value value)
+      )
+    ?info "a\nb\nc\n"
+    ?out '((a 12) (b 27) (c 42))
+    )
+
+  (@assertion
+    ?doc "`@foreach_dbind` returns the list of last loop values."
+    (@foreach_dbind mapcar ( key value ) '( ( a 12) ( b 27 ) ( c 42 ) )
+      (println key)
+      (list value value)
+      )
+    ?info "a\nb\nc\n"
+    ?out '((12 12) (27 27) (42 42))
+    )
+
+  (@assertion
+    ?doc "`@foreach_dbind` returns the list of last loop values."
+    (@foreach_dbind mapcan ( key value ) '( ( a 12) ( b 27 ) ( c 42 ) )
+      (println key)
+      (list value value)
+      )
+    ?info "a\nb\nc\n"
+    ?out '(12 12 27 27 42 42)
+    )
+
+  )
+

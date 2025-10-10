@@ -440,7 +440,7 @@ A valid .fnd expression should be t or a list containing three strings."
     ?global t
     (assert files "@fndcheck - no files were provided...")
     (forall file files
-      (@with ( ( port (infile file))
+      (@with ( ( port (or (infile file) (error "@fndcheck - Unable to read file %N" file)) )
                ;; This was used to match native Finder behavior which probably uses a different interpreter.
                ;; As it seems OK with meaningless escaped characters.
                ;( port  (instring (@exact_replace "\\@" (@file_contents file) "\\\\@")) )
