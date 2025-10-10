@@ -145,7 +145,7 @@
          ,@(when global `( ( when (theEnvironment) ( putd ',name ,name) ) ))
          (setf (@arglist ',name) ',args)
          (setf (@fdoc    ',name) ',doc )
-         (setf (@out     ',name) ',out )
+         (setf (@output  ',name) ',out )
          );prog1
        ));let ;fun
 
@@ -180,6 +180,7 @@ Return nil otherwise."
       ))
 
   (@type_add 'any      (lambda ( _obj ) t)                           )
+  (@type_add 'general  (lambda ( _obj ) t)                           )
   (@type_add 'callable 'isCallable                                   )
   ;(@type_add 'boolean  'booleanp                                     ) t|nil is more explicit than boolean
   (@type_add 'stdobj   (lambda ( obj ) (classp obj 'standardObject)) )
@@ -189,6 +190,19 @@ Return nil otherwise."
   (@type_add 'float    (lambda ( obj ) (classp obj 'flonum))         )
 
   (@type_add 'ptrnum   (lambda ( obj ) (eq 'ptrnum (type obj)))      )
+
+  (@type_add 'tconc
+    (lambda ( obj )
+      (and
+        (listp obj)
+        (listp (car obj))
+        (cdr obj)
+        (not (cddr obj))
+        ;; This is the right test to guarantee that a `tconc` structure is valid
+        ;; But it implies browsing the whole list... (disabled for now)
+        ;; TODO - Maybe a variable to enable this test could be nice
+        ;(eq (last (car obj)) (cdr obj))
+        )))
 
   (when (isCallable 'windowp) (@type_add 'window 'windowp))
 

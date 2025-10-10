@@ -48,7 +48,7 @@
 (let ( ( commands (makeTable t nil) )
        )
 
-  (@fun @sharp_run_command
+  (@fun _\@sharp_run_command
     ( ( name ?type string      )
       ( args ?type (string ...) )
       )
@@ -96,8 +96,29 @@
   (add_command "test"
     (lambda ( @rest args )
       (@debug "Running Test on {args}")
-      ;; Load SKILL and test files, then run tests and exit accordingly
-      (@exit (if (@test_run_all ?files (@skill_files args)) 0 1))
+      (let ( ( source_files nil )
+             ( test_files   nil )
+             ( tests_status 1   )
+             )
+        ;; Toggle required switches
+        ;; TODO - Those should be arguments provided using Shell variables
+        (sstatus keepNLInString t)
+        (sstatus saveInlineDoc  t)
+        ;; Segregate source and test files according to _test suffix
+        (foreach file (@skill_files args)
+          (if (pcreMatchp "_test\\.(ils?|scm)$" file)
+              (push file test_files)
+            (push file source_files)
+            ))
+        (cond
+          ;; No tests files, load all provided files
+          ( (not test_files) (when (@test_run_all ?test_files source_files)                          (setq tests_status 0)) )
+          ( t                (when (@test_run_all ?source_files source_files ?test_files test_files) (setq tests_status 0)) )
+          )
+        (@exit tests_status)
+        ;; Load SKILL and test files, then run tests and exit accordingly
+        ;(@exit (if (@test_run_all ?files ) 0 1))
+        )
       ))
 
   ;; -------------------------------------------------------
@@ -107,11 +128,13 @@
   (add_command "globals"
     (lambda ( @rest args )
       (@debug "Running Globals on {args}")
-      (destructuringBind ( stdout stderr _status )
-                         (@bash (@str "$SKILL_SHARP_ROOT/bin/globals {(buildString args)}"))
-        (fprintf (@errport) "%s" stderr)
-        (fprintf (@poport ) "%s" stdout)
-        )
+      ;; Make sure warnings are printed to stderr
+      (@letf ( ( (@woport) (@errport) )
+               )
+        ;; Most arguments are passed to `@globals` using shell variables
+        (foreach names (@globals ?files (@skill_files args))
+          (println (sort (@unique names) 'alphalessp) (@poport))
+          ))
       ))
 
   ;; -------------------------------------------------------
@@ -160,7 +183,7 @@
             ( args       args_table["args"   ]->value )
             )
     (@debug "Running Sharp {command} on {args}")
-    (@exit (if (errset (@sharp_run_command command args) t) 0 1))
+    (@exit (if (errset (_\@sharp_run_command command args) t) 0 1))
     ))
 
 ;*/

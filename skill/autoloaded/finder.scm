@@ -27,10 +27,13 @@
 (let ( ( table (makeTable t nil) )
        )
 
-  (defmethod initializeInstance @after ( ( obj @fnd_category ) @rest _ )
-    "Properly store OBJ."
-    (setf table[obj->name] obj)
-    )
+  ;; Waiver so Lint does not report `initializeInstance` as a global definition
+  ;; (Files in autoloaded folder are used to check that Lint and `globals` return the same output)
+  (@no_lint
+    (defmethod initializeInstance @after ( ( obj @fnd_category ) @rest _ )
+      "Properly store OBJ."
+      (setf table[obj->name] obj)
+      ))
 
   (@fun _\@fnd_category_by_name
     ( ( name ?type string )
@@ -107,7 +110,7 @@
            functions
            )
       ;; Fix backslash issues before parsing the file
-      ;( port (instring (@exact_replace "\\@" (@file_contents path) "\\\\@")) )
+      ;( port (instring (@exact_replace "\\@" (@read_file path) "\\\\@")) )
       (@with ( (port (infile path))
                )
         (muffleWarnings
@@ -342,7 +345,7 @@
                    (isReadable (setq file (@realpath source)))
                    )
               ;; Try to find definition in file
-              (let ( ( text (@file_contents file) )
+              (let ( ( text (@read_file file) )
                      ( line 1                     )
                      )
                 (@letf ( ( (rexMagic) t )
@@ -575,13 +578,24 @@ It contains predefined filters.
 (@fun _\@fnd_replace_native_finder_in_ciw ()
   ?doc "Replace 'SKILL API Finder' by 'SKILL# API Finder' in CIW->Tools menu."
   ?global t
-  (@menu_replace_item
+  ; (@menu_replace_item
+  ;   ?window            (hiGetCIWindow)
+  ;   ?menu_label        "Tools"
+  ;   ?item_label        "SKILL API Finder"
+  ;   ?new_item_icon     (hiLoadIconData (@realpath "$SKILL_SHARP_ROOT/pictures/icons/sharp.png"))
+  ;   ?new_item_callback "(if (equal \"TRUE\" (getShellEnvVar \"SKILL_SHARP_KEEP_NATIVE_FINDER\")) (startFinder) (@fnd_gui))"
+  ;   )
+  ;; Inserting a new item is always safer than replacing an existing one
+  (@menu_insert_item_before
     ?window            (hiGetCIWindow)
     ?menu_label        "Tools"
     ?item_label        "SKILL API Finder"
+    ?new_item_name     'skill_sharp_api_finder_item
+    ?new_item_label    "SKILL# API Finder"
     ?new_item_icon     (hiLoadIconData (@realpath "$SKILL_SHARP_ROOT/pictures/icons/sharp.png"))
     ?new_item_callback "(if (equal \"TRUE\" (getShellEnvVar \"SKILL_SHARP_KEEP_NATIVE_FINDER\")) (startFinder) (@fnd_gui))"
-    ))
+    )
+  )
 
 ;; Replacing SKILL API Finder by force.
 ;; This is a bit intrusive but this finder supports all the native features and adds more.

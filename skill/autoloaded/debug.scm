@@ -4,11 +4,10 @@
 ;; A. Buchet - April 2025
 ;; ===============================================================================================================
 
-(@no_lint
-  (@fun @print_args ( @rest (args) )
-    ?doc "Print all provided arguments."
-    (@show args)
-    )
+(@fun @print_args ( @rest ( args ) )
+  ?doc "Print all provided arguments."
+  (@no_lint (@show args))
+  args
   )
 
 ;; TODO - Profile macro, but this requires skillDev license
@@ -17,11 +16,11 @@
 ;             (profileSummary)
 ;      ,@sexps));wrap ;macro
 
-(defun @print_table (lists @key headers "lg")
+(defun @print_table (lists @key has_headers "lg")
   "Pretty print LISTS as a table.
 
 LISTS is a list of lists, all lists should have the same length.
-When HEADERS is non nil, print a separator line aster the first list."
+When HAS_HEADERS is non nil, print a separator line aster the first list."
   ;; Convert elements in LISTS to strings
   (setq lists
     (foreach mapcar l lists
@@ -42,10 +41,10 @@ When HEADERS is non nil, print a separator line aster the first list."
         )
       (newline)
       ;; Print headers when required
-      (when headers
+      (when has_headers
         (foreach len lengths
           (printf (lsprintf "%%-%ds" len+2) " "))
-        (setq headers nil)
+        (setq has_headers nil)
         (newline)
         )
       )
@@ -68,7 +67,7 @@ When HEADERS is non nil, print a separator line aster the first list."
              (list sexp (to_us user_cpu) (to_us system_cpu) (to_us clock) page_faults)
              ));dbind ;foreach mapcar
          )
-      ?headers t
+      ?has_headers t
       ));def
 
   );closure

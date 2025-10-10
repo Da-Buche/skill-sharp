@@ -16,6 +16,35 @@
     ))
 
 ;; =======================================================
+;; Booleans
+;; =======================================================
+
+(@test
+  ?fun '@xor
+  ?doc "@xor truth table."
+
+  (@assertion
+    (@xor nil nil)
+    ?out nil
+    )
+
+  (@assertion
+    (@xor t nil)
+    ?out t
+    )
+
+  (@assertion
+    (@xor nil t)
+    ?out t
+    )
+
+  (@assertion
+    (@xor t t)
+    ?out nil
+    )
+  )
+
+;; =======================================================
 ;; Unix utilities
 ;; =======================================================
 
@@ -100,6 +129,36 @@
 
   )
 
+(@test
+  ?fun '@mktemp
+  ?doc "Temporary files are generated using Unix `mktemp`."
+
+  (@assertion
+    (let ( ( file (@mktemp) ) ) (prog1 (and (stringp file) (isFile file)) (deleteFile file)))
+    ?out t
+    )
+
+  (@assertion
+    (let ( ( file0 (@mktemp "file.XXX") )
+           ( file1 (@mktemp "file.XXX") )
+           )
+      (prog1
+       (and (stringp file0) (isFile file0)
+            (stringp file1) (isFile file1)
+            (nequal file0 file1)
+            )
+       (progn (deleteFile file0) (deleteFile file1))
+       ))
+    ?out t
+    )
+
+  (@assertion
+    (@mktemp "test")
+    ?error "mktemp: too few X's in template"
+    )
+
+  )
+
 ;; =======================================================
 ;; Lists
 ;; =======================================================
@@ -152,6 +211,28 @@
     ?doc "By default, `@sort' compares using `@alphalessp'."
     (@sort '( 12 a b 12.27 c "a" 27 "b" 27 "c" ) ?shape 'printself)
     ?out '( "a" "b" "c" 12 12.27 27 27 a b c )
+    )
+
+  )
+
+(@test
+  ?fun '@repeat
+  ?doc "`@repeat` works with any object."
+
+  (@assertion
+    (@repeat "abc" 5)
+    ?out '("abc" "abc" "abc" "abc" "abc")
+    )
+
+  (@assertion
+    (@repeat (list 12 27) 3)
+    ?out '((12 27) (12 27) (12 27))
+    )
+
+  (@assertion
+    ?doc "All elements are identical (each reference is exactly the same pointer)."
+    (let ( ( l (@repeat (list 0 1 2 3) 10) ) ) (forall elt (cdr l) (eq elt (car l))))
+    ?out t
     )
 
   )
@@ -451,8 +532,14 @@ Kevin   layouter\n\
 
   )
 
-
-
+; (@test
+;   ?fun '@escape_chars
+;   (@assertion
+;     (@escape_chars "Escaped characters : \\@ \\\\ \"")
+;     ?out "Escaped characters : \\@ \\\\ \\\""
+;     )
+;   ;; TODO - Not sure @escape_chars is useful
+;   )
 
 ;; =======================================================
 ;; Numbers
@@ -591,19 +678,454 @@ Kevin   layouter\n\
 
   )
 
+(@test
+  ?fun '@hex_to_dec
+  ?doc "Return hexadecimal values of given numbers."
+  ?skip (not (isCallable 'numConv))
+
+  (@assertion
+    (@hex_to_dec "0")
+    ?out 0
+    )
+
+  (@assertion
+    (@hex_to_dec "1")
+    ?out 1
+    )
+
+  (@assertion
+    (@hex_to_dec "A")
+    ?out 10
+    )
+
+  (@assertion
+    (@hex_to_dec "F")
+    ?out 15
+    )
+
+  (@assertion
+    (@hex_to_dec "G")
+    ?error "Not a valid hexadecimal number: \"G\""
+    )
+
+  (@assertion
+    (@hex_to_dec "FF")
+    ?out 255
+    )
+
+  (@assertion
+    (@hex_to_dec "E12AF25")
+    ?out 236105509
+    )
+
+  (@assertion
+    ?doc "Make sure back and forth convertion is valid."
+    (forall num '( 0 1 12 27 42 4455 1234567890 )
+      (equal num (@hex_to_dec (@dec_to_hex num)))
+      )
+    ?out t
+    )
+
+  )
+
+(@test
+  ?fun '@dec_to_hex
+  ?doc "Return hexadecimal values of given numbers."
+  ?skip (not (isCallable 'numConv))
+
+  (@assertion
+    (@dec_to_hex 0)
+    ?out "0"
+    )
+
+  (@assertion
+    (@dec_to_hex 1)
+    ?out "1"
+    )
+
+  (@assertion
+    (@dec_to_hex 10)
+    ?out "a"
+    )
+
+  (@assertion
+    (@dec_to_hex 15)
+    ?out "f"
+    )
+
+  (@assertion
+    (@dec_to_hex 255)
+    ?out "ff"
+    )
+
+  (@assertion
+    (@dec_to_hex 236105509)
+    ?out "e12af25"
+    )
+
+  (@assertion
+    (@dec_to_hex 255 4)
+    ?out "00ff"
+    )
+
+  (@assertion
+    ?doc "Make sure back and forth convertion is valid."
+    (forall num '( 0 1 12 27 42 4455 1234567890 )
+      (equal num (@dec_to_hex (@hex_to_dec num)))
+      )
+    ?out t
+    )
+
+  )
+
+
+;; =======================================================
+;; Bounding Boxes
+;; =======================================================
+
+(@test
+  ?fun '@box_width
+  ?doc "Check bounding box width for different objects."
+  ?skip (not (isCallable 'topEdge))
+
+  (@assertion
+    (@box_width (list 0:0 1:1))
+    ?out 1
+    )
+
+  (@assertion
+    (@box_width (list 0.0:12.01 27.3:42.002))
+    ?out 27.3
+    )
+
+  (@assertion
+    (@box_width (list -4.3:-22.123 -0.1:-0.543))
+    ?out 4.2
+    )
+
+  )
+
+(@test
+  ?fun '@box_height
+  ?doc "Check bounding box height for different objects."
+  ?skip (not (isCallable 'topEdge))
+
+  (@assertion
+    (@box_height (list 0:0 1:1))
+    ?out 1
+    )
+
+  (@assertion
+    (@box_height (list 0.0:12.01 27.3:42.002))
+    ?out 29.992
+    )
+
+  (@assertion
+    (@box_height (list -4.3:-22.123 -0.1:-0.543))
+    ?out 21.58
+    )
+
+  )
 
 ;; =======================================================
 ;; Miscellaneous
 ;; =======================================================
 
+(@test
+  ?fun '@skill_files
+
+  (@assertion
+    ?doc "Return SKILL files from a known folder."
+    (sort (mapcar '@basename (@skill_files (list "$SKILL_SHARP_ROOT/metatest/globals"))) '@alphalessp)
+    ?out '("classes.il" "classes.ils" "definitions.scm" "functions.il" "functions.ils" "variables.il" "variables.ils")
+    )
+  )
+
+(@test
+  ?fun '@read_file
+  ?doc "Retrieve contents of known files."
+
+  (@assertion
+    (let ( ( tmp_file (@mktemp) )
+           )
+      (unwindProtect
+        (progn
+          (@bash (@str "echo 12 > {tmp_file} ; echo 27 >> {tmp_file}"))
+          (@read_file tmp_file)
+          )
+        (deleteFile tmp_file)
+        ))
+    ?out "12\n27\n"
+    )
+  )
+
+(@test
+  ?fun '@write_file
+  ?doc "Retrieve contents of known files."
+
+  (@assertion
+    (let ( ( tmp_file (@mktemp) )
+           )
+      (unwindProtect
+        (progn
+          (@write_file tmp_file "12\n27\n")
+          (@read_file tmp_file)
+          )
+        (deleteFile tmp_file)
+        ))
+    ?out "12\n27\n"
+    )
+
+  (@assertion
+    (let ( ( tmp_file (@mktemp) )
+           )
+      (unwindProtect
+        (progn
+          (@write_file tmp_file "12\n27\n")
+          (@write_file tmp_file "42\n")
+          (@read_file tmp_file)
+          )
+        (deleteFile tmp_file)
+        ))
+    ?out "42\n"
+    )
+
+  (@assertion
+    (let ( ( tmp_file (@mktemp) )
+           )
+      (unwindProtect
+        (progn
+          (@write_file tmp_file "12\n27\n")
+          (@write_file tmp_file "42\n" "a")
+          (@read_file tmp_file)
+          )
+        (deleteFile tmp_file)
+        ))
+    ?out "12\n27\n42\n"
+    )
+  )
 
 ;; =======================================================
 ;; Predicates
 ;; =======================================================
 
+(@test
+  ?fun '@nonblankstring?
+
+  (@assertion
+    ?doc "Return nil for anything that is not a string."
+    (@nonblankstring? 12)
+    ?out nil
+    )
+
+  (@assertion
+    ?doc "Return nil for an empty string."
+    (@nonblankstring? "")
+    ?out nil
+    )
+
+  (@assertion
+    ?doc "Return nil for a whitespace string."
+    (@nonblankstring? " \t")
+    ?out nil
+    )
+
+  (@assertion
+    ?doc "Return the provided string otherwise."
+    (@nonblankstring? " abc ")
+    ?out " abc "
+    )
+
+  )
 
 ;; =======================================================
 ;; Universal getter
 ;; =======================================================
 
+(@test
+  ?fun '@get
+  ?doc "`@get` can retrieve several properties in one statement."
+
+  (@assertion
+    (setq dpl '( nil prop0 12 prop1 ( nil a "a" b "b" c "c" ) prop2 42 ))
+    ?out '(nil prop0 12 prop1 (nil a "a" b "b" c "c") prop2 42)
+    )
+
+  (@assertion
+    (@get dpl 'prop1 'a)
+    ?out "a"
+    )
+
+  (@assertion
+    (setf (@get dpl 'prop1 'a) 27)
+    ?out 27
+    )
+
+  (@assertion
+    (@get dpl 'prop1 'a)
+    ?out 27
+    )
+  )
+
+(@test ?fun 'setf_\@get ?inherit '@get)
+
+;; =======================================================
+;; Dbobjects
+;; =======================================================
+
+(unless (findClass 'dbobject)
+  (defclass dbobject ()
+    ( ( libName      @initarg libName      @initform nil )
+      ( cellName     @initarg cellName     @initform nil )
+      ( viewName     @initarg viewName     @initform nil )
+      ( cellViewType @initarg cellViewType @initform nil )
+      )
+    ))
+
+(defvar test_db_cv
+  (makeInstance 'dbobject
+    ?libName      "TEST_LIB"
+    ?cellName     "TEST_CELL"
+    ?viewName     "schematic"
+    ?cellViewtype "schematic"
+    ))
+
+(@test
+  ?fun '@lcv
+  ?doc "Return the library, cell and view of input dbobject."
+
+  (@assertion
+    (@lcv test_db_cv)
+    ?out '( "TEST_LIB" "TEST_CELL" "schematic")
+    )
+  )
+
+(@test
+  ?fun '@view_type
+  ?doc "Return the view type whatever the input."
+  ?skip (not (isCallable 'ddGetObj))
+
+  (@assertion
+    (@view_type test_db_cv)
+    ?out "schematic"
+    )
+
+  ;; TODO - test with ddview, list and string as well
+  ;; TODO - Build read-only & writable test libraries to run when running tests inside Virtuoso
+  )
+
+;; =======================================================
+;; Tech Files
+;; =======================================================
+
+(@test
+  ?fun '@tech_libs
+  ?doc "Return the current tech libraries."
+  ?skip (not (isCallable 'techGetTechFile))
+
+  (@assertion
+    (and (@tech_libs) (forall lib (@tech_libs) (ddIsId lib)))
+    ?out t
+    )
+
+  (@assertion
+    (car (member "analogLib" (@tech_libs)~>name))
+    ?out "analogLib"
+    )
+
+  )
+
+(@test
+  ?fun '@tech_files
+  ?doc "Return the current tech libraries."
+  ?skip (not (isCallable 'techGetTechFile))
+
+  (@assertion
+    (and (@tech_files) (forall tf (@tech_files) (dbobjectp tf)))
+    ?out t
+    )
+
+  )
+
+;; =======================================================
+;; Windows
+;; =======================================================
+
+(@test
+  ?fun '@window_number
+  ?doc "Return the window number of any window or session window."
+  ?skip (not (isCallable 'windowp))
+
+  (@assertion
+    (@window_number (@ciw))
+    ?out 1
+    )
+
+  ;; TODO - Test for classic windows
+  ;; TODO - Test for session windows
+  )
+
+;; =======================================================
+;; Menus
+;; =======================================================
+
+(@test
+  ?fun '@menu_by_label
+  ?doc "Return menu by label"
+  ?skip (not (isCallable 'hiGetBannerMenus))
+
+  (@assertion
+    (hiIsMenu (@menu_by_label ?window (@ciw) ?label "tools"))
+    ?out t
+    )
+  )
+
+(@test
+  ?fun '@menu_item_by_label
+  ?doc "Return menu item by label"
+  ?skip (not (isCallable 'hiGetBannerMenus))
+
+  (@assertion
+    (type (@menu_item_by_label ?window (@ciw) ?menu_label "tools" ?label "SKILL API Finder"))
+    ?out 'hiMenuItem
+    )
+  )
+
+(@test
+  ?fun '@menu_replace_item
+  ?skip t
+
+  (@assertion
+    ?doc "Replace SKILL API Finder"
+    (@menu_replace_item
+      ?window            (hiGetCIWindow)
+      ?menu_label        "Tools"
+      ?item_label        "SKILL API Finder"
+      ?new_item_icon     (hiLoadIconData (@realpath "$SKILL_SHARP_ROOT/pictures/icons/sharp.png"))
+      ?new_item_callback "(if (equal \"TRUE\" (getShellEnvVar \"SKILL_SHARP_KEEP_NATIVE_FINDER\")) (startFinder) (@fnd_gui))"
+      )
+    ?out t
+    )
+
+  )
+
+(@test
+  ?fun '@menu_insert_item_before
+  ?skip t
+
+  (@assertion
+    ?doc "Add SKILL# API Finder"
+    (@menu_insert_item_before
+      ?window            (hiGetCIWindow)
+      ?menu_label        "Tools"
+      ?item_label        "SKILL API Finder"
+      ?new_item_name     'skill_sharp_api_finder_item
+      ?new_item_label    "SKILL# API Finder"
+      ?new_item_icon     (hiLoadIconData (@realpath "$SKILL_SHARP_ROOT/pictures/icons/sharp.png"))
+      ?new_item_callback "(if (equal \"TRUE\" (getShellEnvVar \"SKILL_SHARP_KEEP_NATIVE_FINDER\")) (startFinder) (@fnd_gui))"
+      )
+    ?out t
+    )
+
+  )
 

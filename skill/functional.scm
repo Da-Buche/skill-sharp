@@ -4,6 +4,12 @@
 ;; A. Buchet - April 2025
 ;; ===============================================================================================================
 
+(@fun @getd ( ( name ?type symbol ) )
+  ?doc "`getd` wrapper to guarantee output type."
+  ?out callable
+  (or (getd name) (@error "@getd - Unable to retrieve function named {name}"))
+  )
+
 (@fun @nil ( @rest _ )
   ?doc    "Always return nil."
   ?out    nil
@@ -52,7 +58,7 @@
 See reference : https://en.wikipedia.org/wiki/Fold_(higher-order_function)"
     ?global t
     ;; Make sure tail-call optimization is enabled
-    (@letf ( ( (status optimizeTailCall) t )
+    (@letf ( ( (status optimizeTailCall) (not (status debugMode)) )
              )
       (rec function (car list) (cdr list))
       ))
@@ -80,13 +86,19 @@ See reference : https://en.wikipedia.org/wiki/Fold_(higher-order_function)"
     ?doc "`@queue' helper to be called inside `hiEnqueueCmd'."
     ?out t
     ?global t
-    (while (cdar queue)
-      (@if (cddar queue) (funcall (popf (cdar queue)))
-        ;; Prevent queue from becoming empty and breaking tconc structure
-        (tconc queue nil)
-        (assert (not (popf (car queue))) "_\\@queue - A non-nil object was removed from queue...")
-        (funcall (popf (car queue)))
-        ))
+    (unless
+      (errset
+        (while (cdar queue)
+          (@if (cddar queue) (funcall (popf (cdar queue)))
+            ;; Prevent queue from becoming empty and breaking tconc structure
+            (tconc queue nil)
+            (assert (not (popf (car queue))) "_\\@queue - A non-nil object was removed from queue...")
+            (funcall (popf (car queue)))
+            ))
+        t)
+      ;; Restore queue in case an error occured
+      (setq queue (tconc nil nil))
+      )
     ;; Always return t
     t)
 

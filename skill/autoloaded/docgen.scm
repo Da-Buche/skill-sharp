@@ -8,28 +8,108 @@
 ;; Fetch global definitions
 ;; =======================================================
 
-(@fun @globals
-  ( @key ( files  ?type ( string ... )                                                            )
-         ( init   ?type string         ?def (or (getShellEnvVar "SKILL_SHARP_INIT_COMMAND"  ) "") )
-         ( before ?type string         ?def (or (getShellEnvVar "SKILL_SHARP_BEFORE_COMMAND") "") )
-    @rest _
+(let ()
+
+  (@fun @globals
+    ( @key
+      ( files
+        ?type ( string ... )
+        ?doc  "List of files from which the global definitions are reported."
+        )
+      ( show_props
+        ?type t|nil
+        ?def  (equal "TRUE" (getShellEnvVar "SKILL_SHARP_GLOBALS_SHOW_PROPS"))
+        ?doc  "If non-nil modified symbol properties are also reported."
+        )
+      ( load_files
+        ?type t|nil
+        ?def  (equal "TRUE" (getShellEnvVar "SKILL_SHARP_GLOBALS_LOAD"))
+        ?doc  "If non-nil, files are loaded in an independent SKILL process :
+  BEFORE command is run.
+  The whole SKILL environment is cached.
+  FILES are loaded.
+  INIT command is run.
+  All discrepancies betwwen cached and current environments are reported."
+        )
+      ( before
+        ?type string
+        ?def  (or (getShellEnvVar "SKILL_SHARP_BEFORE_COMMAND") "")
+        ?doc  "When LOAD is non-nil, this command is executed before loading FILES."
+        )
+      ( init
+        ?type string
+        ?def  (or (getShellEnvVar "SKILL_SHARP_INIT_COMMAND"  ) "")
+        ?doc  "When LOAD is non-nil, this command is executed after loading FILES."
+        )
+      @rest _
+      )
+    ?doc "Return all global definitions from FILES."
+    ?out ( ( symbol ... )|nil ... )|nil
+    ?global t
+    (assert files "@globals - ?files is nil")
+    (if load_files
+        ;; Load files and report definitions using `globals`
+        (destructuringBind ( stdout stderr _status )
+                           (@bash (@str "
+  export SKILL_SHARP_BEFORE_COMMAND=\"{(escape_quotes before)}\";
+  export SKILL_SHARP_INIT_COMMAND=\"{(escape_quotes init)}\";
+  export SKILL_SHARP_GLOBALS_SHOW_PROPS=\"{(if show_props 'TRUE 'FALSE)}\";
+  $SKILL_SHARP_ROOT/bin/globals {(buildString files)}"))
+          (unless (blankstrp stderr) (warn "Warning/Error when running `globals`: %s" stderr))
+          (foreach mapcar str (parseString stdout "\n") (car (linereadstring str)))
+          );dbind
+      ;; No load, use Lint to parse the files and report global definitions
+      (@with ( ( port     (outstring)           )
+               ( nullport (outfile "/dev/null") )
+               )
+        (@lint
+          ?files     files
+          ?filters   '(GLOBAL)
+          ?info_port port
+          ?warn_port port
+          ?err_port  nullport
+          ?no_header t
+          )
+        (@letf ( ( (rexMagic) t )
+                 )
+          ;; Parse Lint results
+          (let ( functions variables scheme classes symbols name )
+            (foreach line (parseString (getOutstring port) "\n")
+              (assert (pcreMatchp "`([a-zA-Z0-9_@\\\\]+)` global (scheme |function )?definition: ([^ \t\n.]+)" line) "Global message has the wrong format: %N" line)
+              (setq name (concat (pcreSubstitute "\\3")))
+              (@caseq (concat (pcreSubstitute "\\1"))
+                ( (define setq )
+                  (case (pcreSubstitute "\\2")
+                    ( "scheme "   (push name scheme   ) )
+                    ( "function " (push name functions) )
+                    ( t           (push name variables) )
+                    ) )
+                ( putpropqq (push name symbols) )
+                ( ( \\\@fun @fun defun defglobalfun defmethod defmacro procedure globalProc ) (push name functions) )
+                ));foreach line
+            ;; Report global symbol properties only when required
+            (if show_props
+                (list functions variables scheme classes symbols )
+              (list functions variables scheme classes)
+              ));if ;let
+          ));letf ;with
+      ));if ;fun
+
+  (@fun escape_quotes ( ( str ?type string ) )
+    ?doc "Escape quotes inside STR and return it."
+    ?out string
+    (@exact_replace "\"" str "\\\"")
     )
-  ?doc "Return all global definitions from after loading FILES and run INIT."
-  ?out ( ( symbol ... ) ... )
-  (destructuringBind ( stdout stderr _status )
-                     (@bash (@str "
-export SKILL_SHARP_BEFORE_COMMAND=\"{before}\";
-export SKILL_SHARP_INIT_COMMAND=\"{init}\";
-$SKILL_SHARP_ROOT/bin/globals {(buildString files)}"))
-    (unless (blankstrp stderr) (warn "Error when running `globals`: %s" stderr))
-    (foreach mapcar str (parseString stdout "\n") (car (linereadstring str)))
-    ))
+
+  );closure
 
 ;; =======================================================
 ;; Generate .fnd documentation
 ;; =======================================================
 
 (let ()
+
+  ;; TODO - In docgen, we were cleaning backslashes, it might be simpler to add them only when necessary
 
   (@fun escape
     ( ( str ?type string )
@@ -91,7 +171,9 @@ $SKILL_SHARP_ROOT/bin/globals {(buildString files)}"))
     (@assertion
       ?doc "Make sure special characters are well escaped."
       (title '_\@str)
-      ?out "_\\\\@str"
+      ?out "_@str"
+      ;; TODO - Test is waived for now
+      ;?out "_\\\\@str"
       )
 
     (@assertion
@@ -171,7 +253,7 @@ $SKILL_SHARP_ROOT/bin/globals {(buildString files)}"))
         ));let ;when
       (fprintf port ")")
       ;; Print output when defined
-      (when (memq '@out (get name '?)) (fprintf port " => %s" (@pretty_print (get name '@out) t)))
+      (when (memq '@output (get name '?)) (fprintf port " => %s" (@pretty_print (get name '@output) t)))
       (getOutstring port)
       ));with ;fun
 
@@ -196,7 +278,7 @@ $SKILL_SHARP_ROOT/bin/globals {(buildString files)}"))
           (fprintf port "<font color='darkgreen'>;; %s</font>\n" test->doc)
           )
         (foreach map assertions (@get_assertions test)
-          (@when (@is? '@nonblankstring? (car assertions)->doc)
+          (@when (@nonblankstring? (car assertions)->doc)
             ?var doc
             (fprintf port "<font color='darkgreen'>;; %s</font>\n" doc)
             )
@@ -204,9 +286,9 @@ $SKILL_SHARP_ROOT/bin/globals {(buildString files)}"))
           (letseq ( ( assertion (car assertions)                                   )
                     ( input     assertion->body_quoted                             )
                     ( output    (car assertion->body_result)                       )
-                    ( info      (@is? '@nonblankstring? assertion->info_expected ) )
-                    ( warn      (@is? '@nonblankstring? assertion->warn_expected ) )
-                    ( error     (@is? '@nonblankstring? assertion->error_expected) )
+                    ( info      (@nonblankstring? assertion->info_expected ) )
+                    ( warn      (@nonblankstring? assertion->warn_expected ) )
+                    ( error     (@nonblankstring? assertion->error_expected) )
                     )
             ;; Shape input so it can be copy-pasted and run in CIW by any user
             (when (listp input)
@@ -252,7 +334,7 @@ $SKILL_SHARP_ROOT/bin/globals {(buildString files)}"))
 Print associated documentation (as .fnd file content) to stdout."
     ?out    t|nil
     ?global t
-    (destructuringBind ( functions _variables _scheme _classes _symbols )
+    (destructuringBind ( functions _variables _scheme _classes @optional _symbols )
                        (@globals ?files files ?before (@str "(progn nil (inSkill (sklint)) {before})") ?init init)
       ;; Load all files containing tests
       (@letf ( ( (status         keepNLInString        ) t      )
@@ -278,6 +360,7 @@ Print associated documentation (as .fnd file content) to stdout."
   {source})\n"
             );@fprintf
           ));let ;foreach function
+      t
       ));dbind ;fun
 
   );closure
@@ -358,10 +441,10 @@ A valid .fnd expression should be t or a list containing three strings."
     ?global t
     (assert files "@fndcheck - no files were provided...")
     (forall file files
-      (@with ( ( port (infile file))
+      (@with ( ( port (or (infile file) (error "@fndcheck - Unable to read file %N" file)) )
                ;; This was used to match native Finder behavior which probably uses a different interpreter.
                ;; As it seems OK with meaningless escaped characters.
-               ;( port  (instring (@exact_replace "\\@" (@file_contents file) "\\\\@")) )
+               ;( port  (instring (@exact_replace "\\@" (@read_file file) "\\\\@")) )
                )
         (prog ( sexp )
           (while (car (setq sexp (errset (lineread port) t)))

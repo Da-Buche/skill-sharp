@@ -37,7 +37,7 @@ End
 It 'does not contain whitespace'
 Skip if "fd not available" missing_fd
 # shellcheck disable=SC2046 # Intended word splitting
-When run grep -En '\s+$' $(list_files --exclude='README.md')
+When run grep -En '\s+$' $(list_files --exclude='*.md' --exclude='*.pdf')
 The stdout should be blank
 The stderr should be blank
 The status should be failure
@@ -47,7 +47,7 @@ End
 It 'does not contain tabs'
 Skip if "fd not available" missing_fd
 # shellcheck disable=SC2046 # Intended word splitting
-When run grep -n $'\t' $(list_files --exclude='Makefile')
+When run grep -n $'\t' $(list_files --exclude='Makefile' --exclude='*.pdf')
 The stdout should be blank
 The stderr should be blank
 The status should be failure
@@ -57,7 +57,7 @@ End
 It 'does not contain carriage returns'
 Skip if "fd not available" missing_fd
 # shellcheck disable=SC2046 # Intended word splitting
-When run grep -n $'\r' $(list_files)
+When run grep -n $'\r' $(list_files --exclude='*.pdf')
 The stdout should be blank
 The stderr should be blank
 The status should be failure
@@ -75,7 +75,7 @@ End
 
 It 'contains 15-25% of comments'
 Skip if "scc not available" missing_scc
-comments_ratio() { scc | grep -E ^Total | awk '{ printf "%.2f\n", ($5 * 100 / ($5 + $6)) }'; }
+comments_ratio() { scc --exclude-dir test | grep -E ^Total | awk '{ printf "%.2f\n", ($5 * 100 / ($5 + $6)) }'; }
 # shellcheck disable=SC2016 # Intended quoted variable
 When run env COMMENTS_RATIO="$(comments_ratio)" bash -c 'echo "15.00 <= $COMMENTS_RATIO && $COMMENTS_RATIO <= 25.00" | bc -l'
 The stdout should equal 1

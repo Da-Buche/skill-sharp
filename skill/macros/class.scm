@@ -38,7 +38,7 @@ This is managed by default when using `@class'."
     ( slots        ?type list   )
     )
   ?doc "`@class' helper to generate builder function."
-  ?out symbol
+  ?out list
   (list
     ;; Define builder arglist, only for documentation purposes
     `(setf (@arglist ',builder_name)

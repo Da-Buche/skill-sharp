@@ -8,7 +8,7 @@
 ;; A. Buchet - April 2025
 ;; ===============================================================================================================
 
-(setf @skill.exit_status 0)
+(@no_lint (setf @skill.exit_status 0))
 
 (@fun @exit
   ( ( status ?type integer ?def @skill.exit_status )
@@ -29,10 +29,10 @@
 
 (let ( ( description          "*UNDEFINED* (please use `@script_set_description')" )
        ( version              "???         (please use `@script_set_version')"     )
-       ( arguments_by_name    (makeTable t nil)                                      )
-       ( arguments_by_key     (makeTable t nil)                                      )
-       ( positional_arguments (tconc nil nil)                                        )
-       ( argument_count       0                                                      )
+       ( arguments_by_name    (makeTable t nil)                                    )
+       ( arguments_by_key     (makeTable t nil)                                    )
+       ( positional_arguments (tconc nil nil)                                      )
+       ( argument_count       0                                                    )
        )
 
   ;; -------------------------------------------------------
@@ -76,8 +76,8 @@
     ?out    t|nil
     ?global t
     ;; This is equivalent to Python (__name__ == '__main__')
-    (equal (@realpath (get_filename (@piport)) )
-           (@realpath (argv 0)                 )
+    (equal (@realpath (get_filename (@piport))                  )
+           (@realpath (or (argv 0) (car (last (getShellArgs)))) )
            ))
 
   (@fun deduce_name
@@ -385,12 +385,12 @@ A positional required argument (i.e. without ?default) cannot be defined after a
   );closure
 
 ;; Add `setf' helpers
-(define setf_\@script_get_description (getd '@script_set_description))
-(define setf_\@script_get_version     (getd '@script_set_version    ))
+(define setf_\@script_get_description (@getd '@script_set_description))
+(define setf_\@script_get_version     (@getd '@script_set_version    ))
 
 ;; Fix lint warnings
-(define setf_\\\@script_get_description (getd '@script_set_description))
-(define setf_\\\@script_get_version     (getd '@script_set_version    ))
+(define setf_\\\@script_get_description (@getd '@script_set_description))
+(define setf_\\\@script_get_version     (@getd '@script_set_version    ))
 
 (setf (fdoc 'setf_\@script_get_description  ) "`setf' helper for `@script_get_description'")
 (setf (fdoc 'setf_\\\@script_get_description) "`setf' helper for `@script_get_description'")

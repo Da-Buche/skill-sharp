@@ -5,6 +5,22 @@
 ;; ===============================================================================================================
 
 ;; =======================================================
+;; Booleans
+;; =======================================================
+
+(@fun @xor
+  ( ( obj0 ?type general )
+    ( obj1 ?type general )
+    )
+  ?doc "Return nil if OBJ0 and OBJ1 are both non-nil or both nil.
+Otherwise, it returns a non-nil value (OBJ1 or t).
+
+Native `xor` is a macro and thus it cannot be used in functional programming.
+(i.e. with `foldl1` for instance."
+  (if obj0 (not obj1) obj1)
+  )
+
+;; =======================================================
 ;; Unix utilites
 ;; =======================================================
 
@@ -93,7 +109,7 @@ This is probably equivalent to `mktemp` \"unsafe\" --dry-run mode."
     )
   ?doc "Return a list containing OBJ N times."
   ?out list
-  (@for _i 1 n obj)
+  (@for _ 1 n obj)
   )
 
 ;; =======================================================
@@ -214,19 +230,19 @@ If NUM is negative, STR is right-padded instead."
   (pcreReplace (pcreCompile "\n*$") str "\n" 1)
   )
 
-(@fun @escape_chars
-  ( ( str ?type string )
-    )
-  ?doc "Return STR where special characters have been escaped."
-  ?out string
-  (foreach pair '( ;( "\\" "\\\\" )
-                   ( "\"" "\\\"" )
-                   )
-    (destructuringBind (match replace) pair
-      (setq str (@exact_replace match str replace))
-      ));destructuringBind ;foreach
-  str
-  )
+; (@fun @escape_chars
+;   ( ( str ?type string )
+;     )
+;   ?doc "Return STR where special characters have been escaped."
+;   ?out string
+;   (foreach pair '( ;( "\\" "\\\\" )
+;                    ( "\"" "\\\"" )
+;                    )
+;     (destructuringBind (match replace) pair
+;       (setq str (@exact_replace match str replace))
+;       ));destructuringBind ;foreach
+;   str
+;   )
 
 ;; =======================================================
 ;; Numbers
@@ -280,7 +296,9 @@ If END is not provided, END defaults to BEG minus 1 and BEG defaults to 0."
     )
   ?doc "Convert HEX into decimal."
   ?out integer
-  (evalstring (strcat "0x" hex)))
+  (or (car (errsetstring (strcat "0x" hex)))
+      (error "@hex_to_dec - Not a valid hexadecimal number: %N" hex)
+      ))
 
 (@fun @dec_to_hex
   ( ( dec    ?type integer )
@@ -291,7 +309,7 @@ If END is not provided, END defaults to BEG minus 1 and BEG defaults to 0."
   (let ( ( res (numConv (lsprintf "%d" dec) "hex" nil) )
          )
     (if (plusp digits)
-        (@padd res digits)
+        (@padd res digits "0")
       res
       );if
     ));let ;fun
@@ -301,7 +319,7 @@ If END is not provided, END defaults to BEG minus 1 and BEG defaults to 0."
 ;; =======================================================
 
 (@fun @box_width
-  ( ( box ?type box )
+  ( ( box ?type box|dbobject )
     )
   ?doc "Return BOX width"
   ?out number
@@ -309,7 +327,7 @@ If END is not provided, END defaults to BEG minus 1 and BEG defaults to 0."
   )
 
 (@fun @box_height
-  ( ( box ?type box )
+  ( ( box ?type box|dbobject )
     )
   ?doc "Return BOX height"
   ?out number
@@ -332,7 +350,7 @@ If END is not provided, END defaults to BEG minus 1 and BEG defaults to 0."
       (parseString stdout "\n")
       )))
 
-(@fun @file_contents
+(@fun @read_file
   ( ( path ?type string )
     )
   ?doc "Return the contents of file at PATH as one string."
@@ -341,54 +359,67 @@ If END is not provided, END defaults to BEG minus 1 and BEG defaults to 0."
   (@with ( ( in  (infile path) )
            ( out (outstring)   )
            )
-    (let ( line )
-      (while (gets line in) (fprintf out "%s" line))
-      )
+    (let ( line ) (while (gets line in) (fprintf out "%s" line)))
     (getOutstring out)
     ))
+
+(@fun @write_file
+  ( ( path   ?type string          )
+    ( string ?type string          )
+    ( mode   ?type string ?def "w" )
+    )
+  ?doc "Write STRING to file at PATH.
+(Arguments order is meant to match `fprintf' one)"
+  ?out t
+  (@with ( ( port (outfile path mode) )
+           )
+    (fprintf port "%s" string)
+    ));with ;def
+
 
 ;; =======================================================
 ;; Predicates
 ;; =======================================================
 
-(@fun @is?
-  ( ( predicate ?type callable )
-    ( object    ?type any      )
-    )
-  ?doc "PREDICATE wrapper.
-Return OBJECT when it passes PREDICATE and is non-nil.
-Return t when OBJECT passes PREDICATE but is nil.
-Return nil otherwise."
-  (when (funcall predicate object) (or object t))
-  )
+; (@fun @is?
+;   ( ( predicate ?type callable )
+;     ( object    ?type any      )
+;     )
+;   ?doc "PREDICATE wrapper.
+; Return OBJECT when it passes PREDICATE and is non-nil.
+; Return t when OBJECT passes PREDICATE but is nil.
+; Return nil otherwise."
+;   (when (funcall predicate object) (or object t))
+;   )
 
-(@fun @of_type?
-  ( ( type   ?type symbol )
-    ( object ?type any    )
-    )
-  ?doc "`type' predicate wrapper.
-Return OBJECT when it is of TYPE and is non-nil.
-Return t when OBJECT is of TYPE but is nil.
-Return nil otherwise."
-  (when (eq type (typep object)) (or object t))
-  )
+; (@fun @of_type?
+;   ( ( type   ?type symbol )
+;     ( object ?type any    )
+;     )
+;   ?doc "`type' predicate wrapper.
+; Return OBJECT when it is of TYPE and is non-nil.
+; Return t when OBJECT is of TYPE but is nil.
+; Return nil otherwise."
+;   (when (eq type (typep object)) (or object t))
+;   )
 
-(@fun @of_class?
-  ( ( class   ?type symbol )
-    ( object ?type any    )
-    )
-  ?doc "`classp' predicate wrapper.
-Return OBJECT when it belongs to CLASS and is non-nil.
-Return t when OBJECT belongs to CLASS but is nil.
-Return nil otherwise."
-  (when (classp object class) (or object t))
-  )
+; (@fun @of_class?
+;   ( ( class   ?type symbol )
+;     ( object ?type any    )
+;     )
+;   ?doc "`classp' predicate wrapper.
+; Return OBJECT when it belongs to CLASS and is non-nil.
+; Return t when OBJECT belongs to CLASS but is nil.
+; Return nil otherwise."
+;   (when (classp object class) (or object t))
+;   )
 
 (@fun @nonblankstring?
   ( ( obj ?type any )
     )
-  ?doc    "Return t if STR is a non-blank string, nil otherwise."
-  (and (stringp obj) (not (blankstrp (@strip obj))))
+  ?doc "Return STR if it is a non-blank string, nil otherwise."
+  ?out string|nil
+  (and (stringp obj) (not (blankstrp (@strip obj))) obj)
   )
 
 ; (@fun @when_list
@@ -516,7 +547,7 @@ Return nil otherwise."
       ( label  ?type string ?doc "Label displayed by one of the banner menus in WINDOW." )
       @rest _
       )
-    ?doc "Return the first CIW menu whose label matches LABEL."
+    ?doc "Return the first WINDOW menu whose label matches LABEL."
     ?out hiMenu
     ?global t
     ?strict t
@@ -538,7 +569,7 @@ Return nil otherwise."
       ( label      ?type string                                                            ?doc "Label displayed by one of the items in MENU." )
       @rest _
       )
-    ?doc "Return the first CIW menu whose label matches LABEL."
+    ?doc "Return the first WINDOW MENU item whose label matches LABEL."
     ?out hiMenuItem
     ?global t
     ?strict t

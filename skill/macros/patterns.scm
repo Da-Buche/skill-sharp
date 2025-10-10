@@ -4,6 +4,10 @@
 ;; A. Buchet - July 2025
 ;; ===============================================================================================================
 
+(@macro @no_lint ( @rest body )
+  "Lint waiver, equivalent to `progn'."
+  (constar 'progn "NO_LINT" body))
+
 ;; =======================================================
 ;; Debugging macro
 ;; =======================================================
@@ -112,8 +116,11 @@ temporary value becomes permanent.)
         (list
           `(let ( ( __\@letf_var__ ,(car def) )
                   )
+             ;; `setf` call is placed here, if it fails, the value should not be set
+             ;; And this is required so `status optimizeTailCall` can be used within `@letf`
+             (@setf ,(car def) ,(cadr def))
              (unwindProtect
-               (progn (setf ,(car def) ,(cadr def)) ,@(_\@letf (cdr defs) body))
+               (progn ,@(_\@letf (cdr defs) body))
                (@setf ,(car def) __\@letf_var__)
                )))
          );let
@@ -161,10 +168,10 @@ See also `@wrap' and `@with' for context management."
           `(let ( ( ,(car def) ,(cadr def) )
                   )
              (unwindProtect
-               (progn (@in ,(car def)) ,@(_\@with (cdr defs) body))
-               ;; TODO - Should we asser that `@out' output is non-nil?
+               (progn (_\@in ,(car def)) ,@(_\@with (cdr defs) body))
+               ;; TODO - Should we assert that `_\@out' output is non-nil?
                ;; This might help detect cases where a cellview cannot be closed for instance
-               (@out ,(car def))
+               (_\@out ,(car def))
                )))
          );let
     ;; No other definition, return body
@@ -174,12 +181,12 @@ See also `@wrap' and `@with' for context management."
 (@macro @with ( defs @rest body )
   "Assign DEFS variable-value pairs, like `let' would do, but wrap BODY in a context manager:
 
-1. Call `@in' method for each defined variable.
+1. Call `_\\@in' method for each defined variable.
 2. Run BODY S-expressions.
-3. Call `@out' method for each defined variable. (This step occurs whatever happended in 1. or 2.)
+3. Call `_\\@out' method for each defined variable. (This step occurs whatever happended in 1. or 2.)
 4. Return final BODY evaluation result.
 
-`@in' and `@out' methods are meant to be redefined for unsupported or custom classes.
+`_\\@in' and `_\\@out' methods are meant to be redefined for unsupported or custom classes.
 They take one positional argument, which is the object being managed.
 
 This is inspired by Python `with` context manager.
@@ -202,11 +209,11 @@ See also `@wrap' and `@with' for context management."
 ;; Ports
 ;; -------------------------------------
 
-(defmethod @in ( ( _obj port ) @rest _ )
+(defmethod _\@in ( ( _obj port ) @rest _ )
   "Context manager when opening a port, nothing to do..."
   nil)
 
-(defmethod @out ( ( obj port ) @rest _ )
+(defmethod _\@out ( ( obj port ) @rest _ )
   "Context manager when releasing a port"
   (close obj))
 
@@ -218,11 +225,11 @@ See also `@wrap' and `@with' for context management."
 ;; Avoid warnings when running with SKILL Interpreter or cdsmps
 (when (findClass 'dbobject)
 
-  (defmethod @in ( ( _obj dbobject ) @rest _ )
+  (defmethod _\@in ( ( _obj dbobject ) @rest _ )
     "Context manager when opening a dbobject, nothing to do..."
     nil)
 
-  (defmethod @out ( ( obj dbobject ) @rest _ )
+  (defmethod _\@out ( ( obj dbobject ) @rest _ )
     "Context manager when releasing a dbobject."
     (@case obj->objType
       ( "cellView" (dbClose obj))

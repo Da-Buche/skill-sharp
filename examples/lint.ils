@@ -1,0 +1,118 @@
+#!/bin/tcsh -f
+;; ## Assert Virtuoso path is set
+; test 1 -eq $?CDS_INST_DIR || echo '$CDS_INST_DIR' is not defined! >/dev/stderr &&  exit 1
+; $CDS_INST_DIR/tools.lnx86/bin/cdsmps `realpath $0` -- $*
+; exit $status ;
+
+;; Fetch provided arguments
+(setf script.args (argv))
+(assert (equal "--" (car script.args)) "First argument should be '--'")
+(popf script.args)
+
+;; =======================================================
+;; Ignore Lint messages
+;; =======================================================
+
+(let ( ignores )
+
+  (defun add_ignore ( name doc "st" )
+    "Ignore Lint messages named NAME while providing DOC as a reason."
+    (assert (not (blankstrp doc)) "add_ignore - ?doc should not be empty")
+    (push name ignores)
+    )
+
+  (defglobalfun _lint_get_ignores ( @rest _ )
+    "Return the list of ignored Lint messages"
+    ignores
+    )
+
+  (add_ignore 'REP110   "No one cares about number of total definitions, only the score matters!" )
+  (add_ignore 'PREFIXES "Remove extra message about prefixes"                                     )
+  (add_ignore 'STRICT   "Remove extra message about strict checking"                              )
+  (add_ignore 'VAR13    "Variable starting with underscore are ignored on purpose!"               )
+  (add_ignore 'DEFMET4  "Variable starting with underscore are ignored on purpose!"               )
+
+  )
+
+;; =======================================================
+;; Run Lint
+;; =======================================================
+
+;; Defining the following function in SKILL prevents "calling NLambda from Scheme code" message
+(inSkill
+  (defun _lint ( @key files "l" )
+    "`sklint` wrapper to  message"
+    (let ( ( tmp_port  poport      )
+           ( out_port  (outstring) )
+           ( magic     (rexMagic)  )
+           ( score     -1          )
+           ( errors    -1          )
+           ( warnings  -1          )
+           ( status    'UNDEFINED  )
+           )
+      (unwindProtect
+        ;; Run Lint with output redirected to string port
+        (progn
+          (set 'poport out_port)
+          (rexMagic t)
+          (sklint
+            ?file    files
+            ?ignores (_lint_get_ignores)
+            )
+          ;; Retrieve important information
+          (foreach line (parseString (getOutstring out_port) "\n")
+            (when (eq 'I (getchar line 1))
+              (cond
+                ( (pcreMatchp "^INFO \\(IQ\\): IQ score is ([0-9]+)" line)
+                  (setq score (atoi (pcreSubstitute "\\1")))
+                  )
+                ( (pcreMatchp "^INFO \\(IQ1\\): IQ score is based on ([0-9]+) error messages, \
+([0-9]+) general warning messages" line)
+                  (setq errors   (atoi (pcreSubstitute "\\1")))
+                  (setq warnings (atoi (pcreSubstitute "\\2")))
+                  )
+                ( (pcreMatchp "^INFO \\(REP009\\): Program SKILL Lint finished on .* with status ([A-Z]+)" line)
+                  (setq status (pcreSubstitute "\\1"))
+                  )
+                ));cond ;unless
+            ));foreach ;progn
+        ;; Cleanup
+        (progn
+          (set 'poport tmp_port)
+          (close out_port)
+          (rexMagic magic)
+          ));unwindProtect
+      ;; Return extracted data
+      (list status score errors warnings)
+      ));let ;def
+  );SKILL
+
+;; Run Lint once to remove all the pesky loading messages
+(_lint)
+
+(let ( ( max_len 0 )
+       )
+
+  ; (defun lpadd ( str len )
+  ;   "Left padd STR with spaces so its minimum length is LEN."
+  ;   (lsprintf (lsprintf "%%%ds" len) str)
+  ;   )
+
+  (defun rpadd ( str len )
+    "Right padd STR with spaces so its minimum length is LEN."
+    (lsprintf (lsprintf "%%-%ds" len) str)
+    )
+
+  ;; Fetch maximum path length
+  (foreach file script.args
+    (setq max_len (max max_len (length file)))
+    )
+
+  ;; Parse input files
+  (info "%s STATUS SCORE ERRORS WARNINGS\n" (rpadd "FILE" max_len))
+  (foreach file script.args
+    (destructuringBind (status score errors warnings) (_lint ?files (list file))
+      (info "%s %-6s %5d %6d %8d\n" (rpadd file max_len) status score errors warnings)
+      ))
+  )
+

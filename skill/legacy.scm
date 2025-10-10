@@ -36,7 +36,13 @@ Warnings catched during evaluation can be fetched using `getMuffleWarnings'."
                (rexCompile "*WARNING*")
                (setq str (rexReplace str "¶" 0))
                )
-             (setq warnings (foreach mapcar warning (parseString str "¶") (strcat "*WARNING*" warning)))
+             (setq warnings
+               ;; Remove added warning in case it was printed before being catched
+               (foreach mapcon _warnings (parseString str "¶")
+                 (unless (and (not (cdr _warnings)) (blankstrp (car _warnings)))
+                   (list (strcat "*WARNING*" (car _warnings)))
+                   ))
+               )
              );when
            ;; This variable name is poorly chosen but at least it's consistent with errset.errset...
            (setf muffleWarnings.muffleWarnings warnings)
@@ -49,12 +55,6 @@ Warnings catched during evaluation can be fetched using `getMuffleWarnings'."
     muffleWarnings.muffleWarnings
     )
 
-  );unless
-
-(unless (isCallable 'xor)
-  (@fun xor ( (e0) (e1) )
-    ?doc "Returns the XOR value of the boolean inputs E0 and E1."
-    (and (or e0 e1) (not (and e0 e1))))
   );unless
 
 ;; =======================================================

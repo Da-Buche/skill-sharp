@@ -5,8 +5,8 @@
 ;; ===============================================================================================================
 
 (@fun @to_string
-  ( ( obj  ?type any              ?doc "Any S-expression to be returned as a string"                   )
-    ( spec ?type string ?def "%N" ?doc "Format specification as described in `fprintf' documentation." )
+  ( ( obj  ?type any                 ?doc "Any S-expression to be returned as a string"                   )
+    ( spec ?type string|nil ?def nil ?doc "Format specification as described in `fprintf' documentation." )
     )
   ?doc "Return OBJ as a string (like `printself').
 If OBJ is already a string, it is returned as is.
@@ -17,9 +17,12 @@ Those double-quotes are easily added by hand when required while removing afterw
 This design choice is also consistent with Python's f-strings."
   ?out string
   (cond
-    ( (stringp obj)                  obj                 )
-    ( (and (listp obj) @str.pretty ) (@pretty_print obj) )
-    ( t                              (lsprintf spec obj) )
+    ( spec                           (lsprintf spec obj)           )
+    ( (stringp obj)                  obj                           )
+    ;; Fix backslashes when printing symbols
+    ( (symbolp obj)                  (strcat obj)                  )
+    ( (and (listp obj) @str.pretty ) (@pretty_print obj)           )
+    ( t                              (lsprintf (or spec "%N") obj) )
     ));cond ;fun
 
 (let ( in out args char translate error_message )
@@ -62,7 +65,7 @@ A %s is printed to output port, while read string is added to S-expressions to e
       ;; Any other character to translate,
       ;; read the whole block
       ( t
-        (let ( ( format_spec "%N" )
+        (let ( ( format_spec nil )
                sexp_str
                sexp
                )

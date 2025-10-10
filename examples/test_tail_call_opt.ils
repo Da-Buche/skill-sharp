@@ -1,0 +1,50 @@
+
+(inScheme
+(let ()
+
+  (defun rec ( function init l )
+    "Apply FUNCTION to INIT and the head of L.
+The result of this call is used as init and applied recursively to the tail of L"
+    (if l
+        (rec function (funcall function init (car l)) (cdr l))
+      init
+      ))
+
+  (defglobalfun foldl1_unwind ( function l )
+    "Left Fold: Apply combination FUNCTION to all elments of L starting from the left."
+    ;; Make sure tail-call optimization is enabled while calling recursive helper.
+    (let ( ( tail_call_opt (status optimizeTailCall) )
+           )
+      (unwindProtect
+        (progn (sstatus optimizeTailCall t) (rec function (car l) (cdr l)))
+        (sstatus optimizeTailCall tail_call_opt)
+        )
+      ))
+
+  (defglobalfun foldl1_errset ( function l )
+    "Left Fold: Apply combination FUNCTION to all elments of L starting from the left."
+    (let ( ( tail_call_opt (status optimizeTailCall) )
+           res )
+      (sstatus optimizeTailCall t)
+      (setq res (errset (rec function (car l) (cdr l))))
+      (sstatus optimizeTailCall tail_call_opt)
+      (if res (car res) (error "foldl1_errset - error occured: %N" errset.errset))
+      ))
+
+  (defglobalfun foldl1_let ( function l )
+    "Left Fold: Apply combination FUNCTION to all elments of L starting from the left."
+    (let ( ( tail_call_opt (status optimizeTailCall) )
+           res )
+      (sstatus optimizeTailCall t)
+      (setq res (rec function (car l) (cdr l)))
+      (sstatus optimizeTailCall tail_call_opt)
+      res))
+
+  ));scheme closure
+
+(tracef rec)
+
+(foldl1_unwind 'times (list 1 2 3 4))
+(foldl1_errset 'times (list 1 2 3 4))
+(foldl1_let    'times (list 1 2 3 4))
+

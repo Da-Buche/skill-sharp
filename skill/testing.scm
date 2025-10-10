@@ -110,7 +110,7 @@
 ;; TODO - Remove commented code
 ; (defmethod initializeInstance @after ( ( assertion @assertion ) @rest _ )
 ;   "Set OBJ as currently built one, so it can be accessed in class default values."
-;   (assert (xor (neq assertion->out '__undefined__) assertion->error)
+;   (assert (@xor (neq assertion->out '__undefined__) assertion->error)
 ;     "@assertion - Exactly one of ?out or ?error should be provided.")
 ;   )
 
@@ -164,7 +164,7 @@
     (setf assertion->status value)
     )
 
-  (@fun @test_print_report ( @rest _ )
+  (@fun @test_print_report ( @key ( globals ?type ( symbol ... )|nil ?def nil ) @rest _)
     ?doc    "Print Unit-Tests report."
     ?out    t|nil
     ?global t
@@ -193,9 +193,16 @@
           (drain port)
           ))
       )
-    ;; Print global report
-    (let ( ( pass (and (plusp test_new) (zerop test_fail) (zerop assertion_fail)) )
-           )
+    ;; Print untested functions
+    (letseq ( ( untested_names (sort (@unique (setof name globals (and (nequal '_ (getchar name 1)) (not (get name '@test))))) 'alphalessp)                     )
+              ( pass           (and (plusp test_new) (zerop test_fail) (zerop assertion_fail) (not untested_names)) )
+              )
+      ;; Print untested functions
+      (when untested_names
+        (@info "Untested Functions:\n  {(buildString untested_names \"\n  \")}\n")
+        (newline)
+        )
+      ;; Print global report
       (@info "\
 Total tests: {test_new}\n\
  - skipped tests: {test_skip}\n\
@@ -239,7 +246,7 @@ Total assertions: {assertion_new}\n\
           (destructuringBind ( @key (doc "") (out '__undefined__) (error '__undefined__) @rest _ ) (cdr sexp)
             ;; Assert cannot be used here as `error' is redefined locally
             (unless (stringp doc) (funcall 'error "@assertion - ?doc should be a string."))
-            (unless (xor (eq out '__undefined__) (eq error '__undefined__))
+            (unless (@xor (eq out '__undefined__) (eq error '__undefined__))
               (funcall 'error "@assertion - Exactly one of ?out or ?error should be provided."))
             ;; Define assertion and expand it in `_@assertion' macro call
             (let ( ( assertion (makeInstance '@assertion ?num num++ ?doc doc) ) )
@@ -262,10 +269,11 @@ Total assertions: {assertion_new}\n\
     ));let ;fun
 
 (@macro @test ( @key
-                ( fun   (@error "@test - ?fun is required, it should be a quoted symbol. (It can be set to 'nofun)") )
-                ( title ""                                                                                           )
-                ( doc   ""                                                                                           )
-                ( skip  nil                                                                                          )
+                ( fun     (@error "@test - ?fun is required, it should be a quoted symbol. (It can be set to 'nofun)") )
+                ( inherit nil                                                                                          )
+                ( title   ""                                                                                           )
+                ( doc     ""                                                                                           )
+                ( skip    nil                                                                                          )
                 @rest body )
   "TODO - `@test' macro is neither finished nor properly documented."
   ;; Check input arguments
@@ -275,65 +283,70 @@ Total assertions: {assertion_new}\n\
                (not (cddr fun))
                )
     "@test - ?fun is required, it should be a quoted symbol. (It can be set to 'nofun)")
+  (assert (or (nequal fun ''nofun) (@nonblankstring? title)) "@test - ?title is required and should be a non-blank string when ?fun is 'nofun.")
+  (assert (or (not inherit) (and (listp inherit) (eq 'quote (car inherit)) (symbolp (cadr inherit)) (not (cddr inherit))))
+    "@test - ?inherit should be a quoted symbol (or nil).")
   (assert (stringp doc  ) "@test - ?doc should be a string.")
   (assert (stringp title) "@test - ?title should be a string.")
-  (assert (or (nequal fun ''nofun) (@nonblankstring? title))
-    "@test - ?title is required and should be a non-blank string when ?fun is 'nofun.")
-  (@when (car (exists arg body (and (symbolp arg) (equal "?" (substring arg 1 1)))))
-    ?var key_arg
-    (error "@test - Unrecognized key argument: %N" key_arg)
-    )
-  ;; Define test
-  ;; It might be a good idea to define a SHELL variable (like $SKILL_SHARP_NO_TEST) to completely skip test definitions
-  ;; (This would be cleaner for production code or when creating a context)
-  (when (equal "TRUE" (getShellEnvVar "SKILL_SHARP_RUN_TEST"))
-    (let ( ( test (makeInstance '@test ?fun (cadr fun) ?title title ?doc doc ?body body ?skip skip) )
-           )
-      ;; Parse and update test body to find assertions
-      (_\@test_update_body test)
-      (setq body test->body)
-      ;; Return updated body
-      `(progn
-         ;; For global functions, store test behind the function name symbol
-         (when (getd (get ,test 'fun))
-           (when (@get ,test 'fun '@test)
-             (@set_status ,test 'fail)
-             (let ( ( msg (lsprintf "Function %s is already tested by %A."
-                            (get ,test 'fun) (@get ,test 'fun '@test)) )
-                    )
-               (pushf msg (get ,test 'messages))
-               (error "%s" msg)
-               ))
-           (setf (@get ,test 'fun '@test) ,test)
-           )
-         ;; Store test environment to be able to re-run it
-         (setf (get ,test 'environment) (theEnvironment))
-         (cond
-           ;; Check skip boolean, skip and mark test accordingly
-           ( ,skip
-             (@set_status ,test 'skip)
-             (foreach assertion (@get_assertions ,test)
-               (@set_status assertion 'skip)
+  (@if inherit
+       ;; Test is inherited
+       `(setf (get ',(cadr fun) '@test) (get ',(cadr inherit) '@test))
+    ;; Test is normally defined
+    (@when (car (exists arg body (and (symbolp arg) (equal "?" (substring arg 1 1)))))
+      ?var key_arg
+      (error "@test - Unrecognized key argument: %N" key_arg)
+      )
+    ;; Define test
+    ;; It might be a good idea to define a SHELL variable (like $SKILL_SHARP_NO_TEST) to completely skip test definitions
+    ;; (This would be cleaner for production code or when creating a context)
+    (when (equal "TRUE" (getShellEnvVar "SKILL_SHARP_RUN_TEST"))
+      (let ( ( test (makeInstance '@test ?fun (cadr fun) ?title title ?doc doc ?body body ?skip skip) )
+             )
+        ;; Parse and update test body to find assertions
+        (_\@test_update_body test)
+        (setq body test->body)
+        ;; Return updated body
+        `(progn
+           ;; For global functions, store test behind the function name symbol
+           (when (getd (get ,test 'fun))
+             (when (get (get ,test 'fun) '@test)
+               (@set_status ,test 'fail)
+               (let ( ( msg (lsprintf "Function %s is already tested by %A."
+                              (get ,test 'fun) (get (get ,test 'fun) '@test)) )
+                      )
+                 (pushf msg (get ,test 'messages))
+                 (error "%s" msg)
+                 ))
+             (setf (get (get ,test 'fun) '@test) ,test)
+             )
+           ;; Store test environment to be able to re-run it
+           (setf (get ,test 'environment) (theEnvironment))
+           (cond
+             ;; Check skip boolean, skip and mark test accordingly
+             ( ,skip
+               (@set_status ,test 'skip)
+               (foreach assertion (@get_assertions ,test)
+                 (@set_status assertion 'skip)
+                 )
                )
-             )
-           ;; Run test, mark it as ran
-           ;; TODO - Maybe put a switch or a variable here to detail errors in test (or not)
-           ;; For now showing all errors seems simpler for debugging
-           ( (errset (progn ,@body) t)
-             (@update_status ,test)
-             )
-           ;; Error occured, mark test as failed
-           ( t
-             (pushf
-               (lsprintf "Error occured when running test: %N\n" (nth 4 errset.errset))
-               (get ,test 'messages)
+             ;; Run test, mark it as ran
+             ;; TODO - Maybe put a switch or a variable here to detail errors in test (or not)
+             ;; For now showing all errors seems simpler for debugging
+             ( (errset (progn ,@body) t)
+               (@update_status ,test)
                )
-             (@set_status ,test 'fail)
-             )
-           );cond
-         );progn
-       ));let ;when
-    );macro
+             ;; Error occured, mark test as failed
+             ( t
+               (pushf
+                 (lsprintf "Error occured when running test: %N\n" (nth 4 errset.errset))
+                 (get ,test 'messages)
+                 )
+               (@set_status ,test 'fail)
+               )
+             );cond
+           );progn
+         ));let ;when
+    ));if ;macro
 
 (@macro _\@assertion (assertion @key doc skip info warn error (out ''__undefined__) @rest body )
   "Actual assertion builder, store values and run assertion checks."
@@ -516,7 +529,10 @@ Got     : █{assertion->warn_result}█"))
 ;; =======================================================
 
 (@fun @test_run_all
-  ( @key ( files ?type ( string ... ) )
+  ( @key
+    ( test_files        ?type ( string ... )                 ?doc "Files containing tests (and/or definitions) those files are loaded."   )
+    ( source_files      ?type ( string ... ) ?def test_files ?doc "Source files are used to make sure all global definitions are tested." )
+    ( load_source_files ?type t|nil          ?def nil        ?doc "If non-nil, source files are also loaded."                             )
     @rest _
     )
   ?doc "Load all SKILL or SKILL++ FILES.
@@ -528,9 +544,11 @@ Return nil otherwise."
            )
     ;; Reset existing tests.
     ;(_\@tests_reset)
+    ;; Load source files when required
+    (when load_source_files (mapcar '@load source_files))
     ;; Load all files containing tests
-    (mapcar '@load files)
+    (mapcar '@load test_files)
     ;; Run tests and return t or nil accordingly
-    (@test_print_report)
+    (@test_print_report ?globals (and source_files (car (@globals ?files source_files))))
     ));letf ;fun
 
