@@ -375,12 +375,12 @@ _paginate: skip
 
 
 ```lisp
-(defmethod @in ( ( obj dbobject ) @rest _ ) "Nothing to do here" nil)
+(defmethod _\@in ( ( obj dbobject ) @rest _ ) "Nothing to do here" nil)
 
-(defmethod @out ( ( obj dbobject ) @rest _ )
+(defmethod _\@out ( ( obj dbobject ) @rest _ )
   "Context manager when releasing a dbobject."
   (if (equal "cellView" obj->objType) (dbClose obj)
-    (error "@out - %N is not a supported type.")))
+    (error "_\@out - %N is not a supported type.")))
 ```
 
 ---

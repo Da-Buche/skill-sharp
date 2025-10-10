@@ -350,7 +350,7 @@ If END is not provided, END defaults to BEG minus 1 and BEG defaults to 0."
       (parseString stdout "\n")
       )))
 
-(@fun @file_contents
+(@fun @read_file
   ( ( path ?type string )
     )
   ?doc "Return the contents of file at PATH as one string."
@@ -359,11 +359,23 @@ If END is not provided, END defaults to BEG minus 1 and BEG defaults to 0."
   (@with ( ( in  (infile path) )
            ( out (outstring)   )
            )
-    (let ( line )
-      (while (gets line in) (fprintf out "%s" line))
-      )
+    (let ( line ) (while (gets line in) (fprintf out "%s" line)))
     (getOutstring out)
     ))
+
+(@fun @write_file
+  ( ( path   ?type string          )
+    ( string ?type string          )
+    ( mode   ?type string ?def "w" )
+    )
+  ?doc "Write STRING to file at PATH.
+(Arguments order is meant to match `fprintf' one)"
+  ?out t
+  (@with ( ( port (outfile path mode) )
+           )
+    (fprintf port "%s" string)
+    ));with ;def
+
 
 ;; =======================================================
 ;; Predicates
@@ -405,7 +417,8 @@ If END is not provided, END defaults to BEG minus 1 and BEG defaults to 0."
 (@fun @nonblankstring?
   ( ( obj ?type any )
     )
-  ?doc    "Return STR if it is a non-blank string, nil otherwise."
+  ?doc "Return STR if it is a non-blank string, nil otherwise."
+  ?out string|nil
   (and (stringp obj) (not (blankstrp (@strip obj))) obj)
   )
 
@@ -534,7 +547,7 @@ If END is not provided, END defaults to BEG minus 1 and BEG defaults to 0."
       ( label  ?type string ?doc "Label displayed by one of the banner menus in WINDOW." )
       @rest _
       )
-    ?doc "Return the first CIW menu whose label matches LABEL."
+    ?doc "Return the first WINDOW menu whose label matches LABEL."
     ?out hiMenu
     ?global t
     ?strict t
@@ -556,7 +569,7 @@ If END is not provided, END defaults to BEG minus 1 and BEG defaults to 0."
       ( label      ?type string                                                            ?doc "Label displayed by one of the items in MENU." )
       @rest _
       )
-    ?doc "Return the first CIW menu whose label matches LABEL."
+    ?doc "Return the first WINDOW MENU item whose label matches LABEL."
     ?out hiMenuItem
     ?global t
     ?strict t

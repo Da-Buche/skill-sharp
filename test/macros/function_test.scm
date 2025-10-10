@@ -1,5 +1,4 @@
 
-
 (@test
   ?fun '_\@fun_type_assert_rec
   ?doc "Make sure type-checking supports symbols, nested lists and '|' operator."
@@ -382,5 +381,67 @@
 
   );test
 
+(@test
+  ?fun '@proc
+  ?doc "Define functions and call them."
 
+  ;; Without argument
+
+  @proc( no_args()
+    ?doc "Always return t."
+    t
+    )
+
+  (@assertion
+    (no_args)
+    ?out t
+    )
+
+  (@assertion
+    (no_args 12)
+    ?error "no_args: too many arguments (0 expected, 1 given) - (12)"
+    )
+
+  (@assertion
+    (no_args 12 27)
+    ?error "no_args: too many arguments (0 expected, 2 given) - (12 27)"
+    )
+
+  )
+
+;; -------------------------------------------------------
+;; Type checking
+;; -------------------------------------------------------
+
+(@test
+  ?fun '@type_add
+  ?doc "Add a dummy type and test it."
+
+  (@assertion
+    (@type? 'list nil)
+    ?out t
+    )
+
+  (@assertion
+    (@type? 'list (list 'a 12.27))
+    ?out '(a 12.27)
+    )
+
+  (@assertion
+    (isCallable
+      (@type_add
+        'dummy_symbol_float_pair
+         (lambda (obj) (and (listp obj) (symbolp (car obj)) (floatp (cadr obj)) (not (cddr obj))))
+         ))
+    ?out t
+    )
+
+  (@assertion
+    (@type? 'dummy_symbol_float_pair (list 'a 12.27))
+    ?out '(a 12.27)
+    )
+
+  )
+
+(@test ?fun '@type? ?inherit '@type_add)
 

@@ -48,7 +48,7 @@
 (let ( ( commands (makeTable t nil) )
        )
 
-  (@fun @sharp_run_command
+  (@fun _\@sharp_run_command
     ( ( name ?type string      )
       ( args ?type (string ...) )
       )
@@ -183,7 +183,7 @@
             ( args       args_table["args"   ]->value )
             )
     (@debug "Running Sharp {command} on {args}")
-    (@exit (if (errset (@sharp_run_command command args) t) 0 1))
+    (@exit (if (errset (_\@sharp_run_command command args) t) 0 1))
     ))
 
 ;*/

@@ -75,7 +75,7 @@ End
 
 It 'contains 15-25% of comments'
 Skip if "scc not available" missing_scc
-comments_ratio() { scc | grep -E ^Total | awk '{ printf "%.2f\n", ($5 * 100 / ($5 + $6)) }'; }
+comments_ratio() { scc --exclude-dir test | grep -E ^Total | awk '{ printf "%.2f\n", ($5 * 100 / ($5 + $6)) }'; }
 # shellcheck disable=SC2016 # Intended quoted variable
 When run env COMMENTS_RATIO="$(comments_ratio)" bash -c 'echo "15.00 <= $COMMENTS_RATIO && $COMMENTS_RATIO <= 25.00" | bc -l'
 The stdout should equal 1

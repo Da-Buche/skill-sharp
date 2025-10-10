@@ -44,7 +44,7 @@
       @rest _
       )
     ?doc "Return all global definitions from FILES."
-    ?out ( ( symbol ... ) ... )
+    ?out ( ( symbol ... )|nil ... )|nil
     ?global t
     (assert files "@globals - ?files is nil")
     (if load_files
@@ -360,6 +360,7 @@ Print associated documentation (as .fnd file content) to stdout."
   {source})\n"
             );@fprintf
           ));let ;foreach function
+      t
       ));dbind ;fun
 
   );closure
@@ -443,7 +444,7 @@ A valid .fnd expression should be t or a list containing three strings."
       (@with ( ( port (or (infile file) (error "@fndcheck - Unable to read file %N" file)) )
                ;; This was used to match native Finder behavior which probably uses a different interpreter.
                ;; As it seems OK with meaningless escaped characters.
-               ;( port  (instring (@exact_replace "\\@" (@file_contents file) "\\\\@")) )
+               ;( port  (instring (@exact_replace "\\@" (@read_file file) "\\\\@")) )
                )
         (prog ( sexp )
           (while (car (setq sexp (errset (lineread port) t)))

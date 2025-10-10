@@ -29,3 +29,6 @@
 
 (@test ?fun '@class ?inherit '@built_obj)
 
+;; Testing this method makes no sense...
+(@test ?fun 'initializeInstance ?inherit '@built_obj)
+

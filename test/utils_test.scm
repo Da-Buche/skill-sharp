@@ -842,7 +842,7 @@ Kevin   layouter\n\
   )
 
 (@test
-  ?fun '@file_contents
+  ?fun '@read_file
   ?doc "Retrieve contents of known files."
 
   (@assertion
@@ -851,11 +851,57 @@ Kevin   layouter\n\
       (unwindProtect
         (progn
           (@bash (@str "echo 12 > {tmp_file} ; echo 27 >> {tmp_file}"))
-          (@file_contents tmp_file)
+          (@read_file tmp_file)
           )
         (deleteFile tmp_file)
         ))
     ?out "12\n27\n"
+    )
+  )
+
+(@test
+  ?fun '@write_file
+  ?doc "Retrieve contents of known files."
+
+  (@assertion
+    (let ( ( tmp_file (@mktemp) )
+           )
+      (unwindProtect
+        (progn
+          (@write_file tmp_file "12\n27\n")
+          (@read_file tmp_file)
+          )
+        (deleteFile tmp_file)
+        ))
+    ?out "12\n27\n"
+    )
+
+  (@assertion
+    (let ( ( tmp_file (@mktemp) )
+           )
+      (unwindProtect
+        (progn
+          (@write_file tmp_file "12\n27\n")
+          (@write_file tmp_file "42\n")
+          (@read_file tmp_file)
+          )
+        (deleteFile tmp_file)
+        ))
+    ?out "42\n"
+    )
+
+  (@assertion
+    (let ( ( tmp_file (@mktemp) )
+           )
+      (unwindProtect
+        (progn
+          (@write_file tmp_file "12\n27\n")
+          (@write_file tmp_file "42\n" "a")
+          (@read_file tmp_file)
+          )
+        (deleteFile tmp_file)
+        ))
+    ?out "12\n27\n42\n"
     )
   )
 
@@ -896,4 +942,190 @@ Kevin   layouter\n\
 ;; Universal getter
 ;; =======================================================
 
+(@test
+  ?fun '@get
+  ?doc "`@get` can retrieve several properties in one statement."
+
+  (@assertion
+    (setq dpl '( nil prop0 12 prop1 ( nil a "a" b "b" c "c" ) prop2 42 ))
+    ?out '(nil prop0 12 prop1 (nil a "a" b "b" c "c") prop2 42)
+    )
+
+  (@assertion
+    (@get dpl 'prop1 'a)
+    ?out "a"
+    )
+
+  (@assertion
+    (setf (@get dpl 'prop1 'a) 27)
+    ?out 27
+    )
+
+  (@assertion
+    (@get dpl 'prop1 'a)
+    ?out 27
+    )
+  )
+
+(@test ?fun 'setf_\@get ?inherit '@get)
+
+;; =======================================================
+;; Dbobjects
+;; =======================================================
+
+(unless (findClass 'dbobject)
+  (defclass dbobject ()
+    ( ( libName      @initarg libName      @initform nil )
+      ( cellName     @initarg cellName     @initform nil )
+      ( viewName     @initarg viewName     @initform nil )
+      ( cellViewType @initarg cellViewType @initform nil )
+      )
+    ))
+
+(defvar test_db_cv
+  (makeInstance 'dbobject
+    ?libName      "TEST_LIB"
+    ?cellName     "TEST_CELL"
+    ?viewName     "schematic"
+    ?cellViewtype "schematic"
+    ))
+
+(@test
+  ?fun '@lcv
+  ?doc "Return the library, cell and view of input dbobject."
+
+  (@assertion
+    (@lcv test_db_cv)
+    ?out '( "TEST_LIB" "TEST_CELL" "schematic")
+    )
+  )
+
+(@test
+  ?fun '@view_type
+  ?doc "Return the view type whatever the input."
+  ?skip (not (isCallable 'ddGetObj))
+
+  (@assertion
+    (@view_type test_db_cv)
+    ?out "schematic"
+    )
+
+  ;; TODO - test with ddview, list and string as well
+  ;; TODO - Build read-only & writable test libraries to run when running tests inside Virtuoso
+  )
+
+;; =======================================================
+;; Tech Files
+;; =======================================================
+
+(@test
+  ?fun '@tech_libs
+  ?doc "Return the current tech libraries."
+  ?skip (not (isCallable 'techGetTechFile))
+
+  (@assertion
+    (and (@tech_libs) (forall lib (@tech_libs) (ddIsId lib)))
+    ?out t
+    )
+
+  (@assertion
+    (car (member "analogLib" (@tech_libs)~>name))
+    ?out "analogLib"
+    )
+
+  )
+
+(@test
+  ?fun '@tech_files
+  ?doc "Return the current tech libraries."
+  ?skip (not (isCallable 'techGetTechFile))
+
+  (@assertion
+    (and (@tech_files) (forall tf (@tech_files) (dbobjectp tf)))
+    ?out t
+    )
+
+  )
+
+;; =======================================================
+;; Windows
+;; =======================================================
+
+(@test
+  ?fun '@window_number
+  ?doc "Return the window number of any window or session window."
+  ?skip (not (isCallable 'windowp))
+
+  (@assertion
+    (@window_number (@ciw))
+    ?out 1
+    )
+
+  ;; TODO - Test for classic windows
+  ;; TODO - Test for session windows
+  )
+
+;; =======================================================
+;; Menus
+;; =======================================================
+
+(@test
+  ?fun '@menu_by_label
+  ?doc "Return menu by label"
+  ?skip (not (isCallable 'hiGetBannerMenus))
+
+  (@assertion
+    (hiIsMenu (@menu_by_label ?window (@ciw) ?label "tools"))
+    ?out t
+    )
+  )
+
+(@test
+  ?fun '@menu_item_by_label
+  ?doc "Return menu item by label"
+  ?skip (not (isCallable 'hiGetBannerMenus))
+
+  (@assertion
+    (type (@menu_item_by_label ?window (@ciw) ?menu_label "tools" ?label "SKILL API Finder"))
+    ?out 'hiMenuItem
+    )
+  )
+
+(@test
+  ?fun '@menu_replace_item
+  ?skip t
+
+  (@assertion
+    ?doc "Replace SKILL API Finder"
+    (@menu_replace_item
+      ?window            (hiGetCIWindow)
+      ?menu_label        "Tools"
+      ?item_label        "SKILL API Finder"
+      ?new_item_icon     (hiLoadIconData (@realpath "$SKILL_SHARP_ROOT/pictures/icons/sharp.png"))
+      ?new_item_callback "(if (equal \"TRUE\" (getShellEnvVar \"SKILL_SHARP_KEEP_NATIVE_FINDER\")) (startFinder) (@fnd_gui))"
+      )
+    ?out t
+    )
+
+  )
+
+(@test
+  ?fun '@menu_insert_item_before
+  ?skip t
+
+  (@assertion
+    ?doc "Add SKILL# API Finder"
+    (@menu_insert_item_before
+      ?window            (hiGetCIWindow)
+      ?menu_label        "Tools"
+      ?item_label        "SKILL API Finder"
+      ?new_item_name     'skill_sharp_api_finder_item
+      ?new_item_label    "SKILL# API Finder"
+      ?new_item_icon     (hiLoadIconData (@realpath "$SKILL_SHARP_ROOT/pictures/icons/sharp.png"))
+      ?new_item_callback "(if (equal \"TRUE\" (getShellEnvVar \"SKILL_SHARP_KEEP_NATIVE_FINDER\")) (startFinder) (@fnd_gui))"
+      )
+    ?out t
+    )
+
+  )
 

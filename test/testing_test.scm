@@ -36,5 +36,35 @@
        )
      ))
 
-(@test ?fun '@assertion ?inherit '@test)
+;; Testing functions are already tested in metatest as they cannot test themselve properly...
+(@test ?fun '@assertion         ?inherit '@test)
+(@test ?fun '@get_assertions    ?inherit '@test)
+(@test ?fun '@set_status        ?inherit '@test)
+(@test ?fun '@update_status     ?inherit '@test)
+(@test ?fun '@test_print_report ?inherit '@test)
+(@test ?fun '@test_run_all      ?inherit '@test)
+
+
+(@test
+  ?fun 'printself
+
+  (@assertion
+    ?doc "`printself` works properly on integers"
+    (printself 12)
+    ?out "12"
+    )
+
+  (@assertion
+    ?doc "`printself` works properly on strings"
+    (printself "abc")
+    ?out "\"abc\""
+    )
+
+  (@assertion
+    ?doc "`printself` works properly on lists"
+    (printself (list 12 27 ""))
+    ?out "(12 27 \"\")"
+    )
+  )
+
 

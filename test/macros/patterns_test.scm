@@ -1,3 +1,18 @@
+(@test
+  ?fun '@no_lint
+  ?doc "`@no_lint` simply works like `progn`."
+
+  (@assertion
+    (@no_lint 12 27)
+    ?out 27
+    )
+
+  (@assertion
+    (@no_lint (println 12) 27 42)
+    ?info "12\n"
+    ?out 42
+    )
+  )
 
 ;; =======================================================
 ;; Debugging macro
@@ -116,6 +131,41 @@
 ;; =======================================================
 
 (@test
+  ?fun '@setf
+  ?doc "`@setf` is mostly meant to support nil in `(setf (getShellEnvVar ...) nil)`."
+
+  (@assertion
+    (@setf (getShellEnvVar "DUMMY_VARIABLE") "DUMMY_VALUE")
+    ?out t
+    )
+
+  (@assertion
+    (getShellEnvVar "DUMMY_VARIABLE")
+    ?out "DUMMY_VALUE"
+    )
+
+  (@assertion
+    (@setf (getShellEnvVar "DUMMY_VARIABLE") nil)
+    ?out t
+    )
+
+  (@assertion
+    (getShellEnvVar "DUMMY_VARIABLE")
+    ?out nil
+    )
+
+  (@assertion
+    ?doc "`@setf` also works with any other `setf` helper."
+    (let ( ( dpl '( nil a 12 ) )
+           )
+      (@setf dpl->b 27)
+      dpl->b
+      )
+    ?out 27
+    )
+  )
+
+(@test
   ?fun '@letf
 
   (@assertion
@@ -163,7 +213,7 @@
 
   ;; TODO - test @with with dummy cellview using ?skip
 
-  );test
+  );test)
 
 ;; =======================================================
 ;; Anaphoric macros

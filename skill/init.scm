@@ -47,8 +47,8 @@
            ))
       ;; Name / value pairs for global SKILL variables
       ( global_variables
-        '( ( tracelength       ( nil on 50   off ,(and (boundp tracelength) (symeval 'tracelength)) ) )
-           ( _stacktrace       ( nil on 50   off ,(and (boundp _stacktrace) (symeval '_stacktrace)) ) )
+        `( ( tracelength       ( nil on 50   off ,(and (boundp 'tracelength) (symeval 'tracelength)) ) )
+           ( _stacktrace       ( nil on 50   off ,(and (boundp '_stacktrace) (symeval '_stacktrace)) ) )
            ))
       ;; Debugging status
       ( debug_bool nil )
@@ -150,43 +150,27 @@
     (rexMagic magic)
     ));unwindProtect ;let
 
-(defun @realpath ( file "t" )
-  "`simplifyFilename' wrapper to make it safe from `rexMagic' value."
+(@fun @realpath
+  ( ( file ?type string )
+    ( dont_resolve_links ?type general ?def nil )
+    )
+  ?doc "Expand variables and symlinks inside FILE path.
+This is `simplifyFilename' wrapper to make it safe from `rexMagic' value."
+  ?out string
   (@letf ( ( (rexMagic) t )
              )
-    (simplifyFilename file)
+    (simplifyFilename file dont_resolve_links)
     ))
-
-
-;; =======================================================
-;; Read and write files
-;; =======================================================
-
-(defun @read_file ( path "t" )
-  "Read file at PATH and return its content as a string."
-  (@with ( ( in_port  (infile path) )
-             ( out_port (outstring  ) )
-             )
-    (let ( line ) (while (gets line in_port) (fprintf out_port "%s" line)));while ;let
-    (getOutstring out_port)
-    ));with ;def
-
-(defun @write_file ( path string @optional (mode "w") "ttt")
-  "Write STRING to file at PATH.
-
-(Arguments order is meant to match `fprintf' one)"
-  (@with ( ( port (outfile path mode) )
-             )
-    (fprintf port "%s" string)
-    ));with ;def
-
 
 ;; =======================================================
 ;; Run Shell commands
 ;; =======================================================
 
-(defun @bash ( command "t" )
-  "Run COMMAND using `bash` then return a list containing generated stdout, stderr and exit status."
+(@fun @bash
+  ( ( command ?type string )
+    )
+  ?doc "Run COMMAND using `bash` then return a list containing generated stdout, stderr and exit status."
+  ?out ( string string integer )
   ;; Writing everything to temporary files is not the most elegant way...
   ;; But it guarantees that input command is well understood
   ;; (even if it contains special characters like newline, single-quote or double-quote)
@@ -321,7 +305,7 @@ If NO_RELOAD is non-nil, FILE is not re-loaded if already marked."
                )
       (@letf ( ( (@poport) port )
                  )
-        (@load (strcat skill_root "autoloaded/lint.scm"))
+        (@load (strcat skill_root "lint_rules.il"))
         (setq text (getOutstring port))
         ))
     ;; Print remaining output while filtering 'INFO (LoadFile) lines'

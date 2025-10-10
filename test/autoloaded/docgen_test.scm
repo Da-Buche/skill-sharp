@@ -15,7 +15,7 @@
 
   (@assertion
     (@docgen ?files (list (@realpath "$SKILL_SHARP_ROOT/metatest/globals/functions.ils")))
-    ?out '(global_fun lambda_variable nonlocal)
+    ?out t
     ?info "( \"nonlocal\"\n  \"nonlocal()\"\n  \"Missing documentation for function `nonlocal'.\"\n  )"
     )
 

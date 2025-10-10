@@ -58,7 +58,7 @@
 See reference : https://en.wikipedia.org/wiki/Fold_(higher-order_function)"
     ?global t
     ;; Make sure tail-call optimization is enabled
-    (@letf ( ( (status optimizeTailCall) t )
+    (@letf ( ( (status optimizeTailCall) (not (status debugMode)) )
              )
       (rec function (car list) (cdr list))
       ))

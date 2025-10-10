@@ -68,6 +68,7 @@
              ;; Custom
              @show @print_args @print_table @runtime
              )
+    t
     (SK_WARNING DEBUG_FUNCTIONS "%N debugging function should not be used in production" (car (SK_FORM)))
     )
   }
