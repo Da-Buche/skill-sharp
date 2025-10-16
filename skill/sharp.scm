@@ -28,7 +28,7 @@
 ;; =======================================================
 
 (@script_set_description "Run SKILL Sharp comamnds." )
-(@script_set_version     "0.0.0"                     )
+(@script_set_version     (@skill_sharp)              )
 
 (@script_add_argument
   ?name "command"
@@ -145,7 +145,17 @@
     (lambda ( @rest args )
       (@debug "Running Docgen on {args}")
       (@setf (@woport) (@stderr))
-      (@exit (if (@docgen ?files (@skill_files args)) 0 1))
+      (let ( ( source_files nil )
+             ( test_files   nil )
+             )
+        ;; Segregate source and test files according to _test suffix
+        (foreach file (@skill_files args)
+          (if (pcreMatchp "_test\\.(ils?|scm)$" file)
+              (push file test_files)
+            (push file source_files)
+            ))
+        (@exit (if (@docgen ?source_files source_files ?test_files test_files) 0 1))
+        )
       ))
 
   ;; -------------------------------------------------------

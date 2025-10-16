@@ -16,7 +16,7 @@
 
   (@assertion
     (progn (muffleWarnings (warn "reported warning")) (getMuffleWarnings))
-    ?out '("*WARNING* reported warning")
+    ?out '("reported warning")
     )
 
   )

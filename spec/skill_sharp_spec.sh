@@ -108,6 +108,7 @@ End
 
 It 'generates documentation'
 When run env SKILL_SHARP_TRACK_SOURCE=TRUE \
+             SKILL_SHARP_GLOBALS_LOAD=TRUE \
            bash -c 'mkdir -p ./doc/finder/SKILL/SKILL#/ && ./bin/sharp docgen ./skill/loader.scm ./test > "./doc/finder/SKILL/SKILL#/sharp.fnd"'
 The file './doc/finder/SKILL/SKILL#/sharp.fnd' should be exist
 The stdout should be blank

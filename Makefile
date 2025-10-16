@@ -126,7 +126,7 @@ bash: container
 .PHONY: shell
 shell: container ## Run SKILL interpreter in Shell mode.
 ifeq ($(OS_NAME),Linux)
-	@/skill#/bin/shell
+	@$$SKILL_SHARP_ROOT/bin/shell
   #@rlwrap docker exec -it rocky8-skill /skill#/bin/shell
 else
 	@make container
