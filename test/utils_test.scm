@@ -532,6 +532,27 @@ Kevin   layouter\n\
 
   )
 
+(@test
+  ?fun '@pascal_case
+  ?doc "`@pascal_case' works with different strings."
+
+  (@assertion
+    (@pascal_case "Example message.")
+    ?out "Example message."
+    )
+
+  (@assertion
+    (@pascal_case "name")
+    ?out "Name"
+    )
+
+  (@assertion
+    (@pascal_case "several Words")
+    ?out "Several words"
+    )
+
+  )
+
 ; (@test
 ;   ?fun '@escape_chars
 ;   (@assertion
@@ -1128,4 +1149,29 @@ Kevin   layouter\n\
     )
 
   )
+
+;; =======================================================
+;; SKILL# Version
+;; =======================================================
+
+(@test
+  ?fun '@skill_sharp
+  ?doc "Make sure `@skill_sharp` returns current version."
+
+  (@assertion
+    (pcreMatchp "[0-9]+\\.[0-9]+\\.[0-9]+" (@skill_sharp))
+    ?out t
+    )
+
+  (@assertion
+    (@skill_sharp ?min_version "0.0.0")
+    ?out nil
+    )
+
+  (@assertion
+    (@skill_sharp ?min_version "666.0.0")
+    ?error "@skill_sharp - Minimum required version [666.0.0] is higher than current one"
+    )
+  )
+
 

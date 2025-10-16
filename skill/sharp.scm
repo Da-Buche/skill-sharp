@@ -28,7 +28,7 @@
 ;; =======================================================
 
 (@script_set_description "Run SKILL Sharp comamnds." )
-(@script_set_version     "0.0.0"                     )
+(@script_set_version     (@skill_sharp)              )
 
 (@script_add_argument
   ?name "command"
