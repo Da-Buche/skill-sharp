@@ -33,14 +33,14 @@ Warnings catched during evaluation can be fetched using `getMuffleWarnings'."
              ;; Split warnings
              (@letf ( ( (rexMagic) nil )
                      )
-               (rexCompile "*WARNING*")
+               (rexCompile "*WARNING* ")
                (setq str (rexReplace str "¶" 0))
                )
              (setq warnings
                ;; Remove added warning in case it was printed before being catched
                (foreach mapcon _warnings (parseString str "¶")
                  (unless (and (not (cdr _warnings)) (blankstrp (car _warnings)))
-                   (list (strcat "*WARNING*" (car _warnings)))
+                   (list (car _warnings))
                    ))
                )
              );when

@@ -36,7 +36,7 @@ proc random_string {} {
   #exec openssl rand -base64 12 | tr , -
   set charset "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#%^-_=:."
   set charset [string map {"," ""} $charset]
-  set password ""
+  set password "P"
   for {set i 0} {$i < 16} {incr i} {
     append password [string index $charset [expr {int(rand() * [string length $charset])}]]
   }
