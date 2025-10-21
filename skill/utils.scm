@@ -248,6 +248,13 @@ If NUM is negative, STR is right-padded instead."
 ;   str
 ;   )
 
+(@fun @pascal_case
+  ( ( str ?type string )
+    )
+  ?doc "Return STR in Pascal-Case. (i.e. first letter is upper-case, rest is lower-case."
+  (strcat (upperCase (substring str 1 1)) (lowerCase (substring str 2)))
+  )
+
 ;; =======================================================
 ;; Numbers
 ;; =======================================================
@@ -738,6 +745,30 @@ If END is not provided, END defaults to BEG minus 1 and BEG defaults to 0."
       ));let ;fun
 
   );closure
+
+;; =======================================================
+;; Return SKILL# Version
+;; =======================================================
+
+(@fun @skill_sharp
+  ( @key
+    ( min_version ?type string|nil ?def nil )
+    )
+  ?doc "Return current SKILL# version.
+If MIN_VERSION is provided, then assert that current version is equal or higher.
+
+This is intended to be used as following in SKILL# dependent files:
+`(assert (and (isCallable '@skill_sharp) (@skill_sharp ?min_version \"0.0.0\"))
+   \"SKILL# version 0.0.0 or higher is required\")`"
+  (letseq ( ( file    (@realpath "$SKILL_SHARP_ROOT/VERSION")      )
+            ( version (if (isFile file) (@read_file file) "0.0.0") )
+            )
+    (if (stringp min_version)
+        (@assert (not (@alphalessp version min_version))
+          "@skill_sharp - Minimum required version [{min_version}] is higher than current one [{version}].")
+      version
+      )
+    ));let ;fun
 
 ;*/
 

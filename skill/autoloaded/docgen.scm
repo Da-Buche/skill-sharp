@@ -253,7 +253,10 @@
         ));let ;when
       (fprintf port ")")
       ;; Print output when defined
-      (when (memq '@output (get name '?)) (fprintf port " => %s" (@pretty_print (get name '@output) t)))
+      (when (and (memq '@output (get name '?))
+                 (neq (get name '@output) '__undefined__)
+                 )
+        (fprintf port " => %s" (@pretty_print (get name '@output) t)))
       (getOutstring port)
       ));with ;fun
 
@@ -285,7 +288,11 @@
           ;; Print info, warn and error messages when expected
           (letseq ( ( assertion (car assertions)                                   )
                     ( input     assertion->body_quoted                             )
-                    ( output    (car assertion->body_result)                       )
+                    ;; Support skipped assertions
+                    ( output    (if (neq '\*slotUnbound\* assertion->body_result)
+                                    (car assertion->body_result)
+                                  assertion->body_expected
+                                  ) )
                     ( info      (@nonblankstring? assertion->info_expected ) )
                     ( warn      (@nonblankstring? assertion->warn_expected ) )
                     ( error     (@nonblankstring? assertion->error_expected) )
@@ -305,7 +312,9 @@
                   (fprintf port "<font color='%s'>;%s>%s</font>\n" color prefix (escape (clean_at_sign line)))
                   ));when ;foreach
               );foreach
-            (fprintf port ";> %s\n" (escape (clean_at_sign (@pretty_print output ))))
+            (unless error
+              (fprintf port ";> %s\n" (escape (clean_at_sign (@pretty_print output ))))
+              )
             (when (cdr assertions) (newline port))
             ));let ;foreach
         (fprintf port "</pre>")
@@ -315,9 +324,10 @@
 
   (@fun @docgen
     ( @key
-      ( files        ?type ( string ... )                                                                 )
-      ( init         ?type string         ?def (or (getShellEnvVar "SKILL_SHARP_INIT_COMMAND"  ) "")      )
-      ( before       ?type string         ?def (or (getShellEnvVar "SKILL_SHARP_BEFORE_COMMAND") "")      )
+      ( source_files ?type ( string ... )                                                                     )
+      ( test_files   ?type ( string ... )|nil ?def nil                                                        )
+      ( init         ?type string             ?def (or (getShellEnvVar "SKILL_SHARP_INIT_COMMAND"  ) "")      )
+      ( before       ?type string             ?def (or (getShellEnvVar "SKILL_SHARP_BEFORE_COMMAND") "")      )
       ( track_source
         ?type t|nil
         ?def  (equal "TRUE" (getShellEnvVar "SKILL_SHARP_TRACK_SOURCE"))
@@ -335,13 +345,16 @@ Print associated documentation (as .fnd file content) to stdout."
     ?out    t|nil
     ?global t
     (destructuringBind ( functions _variables _scheme _classes @optional _symbols )
-                       (@globals ?files files ?before (@str "(progn nil (inSkill (sklint)) {before})") ?init init)
+                       (@globals ?files source_files ?before (@str "(progn nil (inSkill (sklint)) {before})") ?init init)
       ;; Load all files containing tests
       (@letf ( ( (status         keepNLInString        ) t      )
                ( (status         saveInlineDoc         ) t      )
                ( (getShellEnvVar "SKILL_SHARP_RUN_TEST") "TRUE" )
                )
-        (foreach file files (@load file ?no_reload t))
+        (foreach files (list source_files test_files)
+          (foreach file files
+            (@load file ?no_reload t ?fun 'loadi)
+            ))
         )
       ;; Filter and sort functions
       (setq functions (setof function functions (and (getd function) (nequal "_" (substring function 1 1)))))

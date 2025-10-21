@@ -14,9 +14,9 @@
   ?doc "Run `@docgen` on known files."
 
   (@assertion
-    (@docgen ?files (list (@realpath "$SKILL_SHARP_ROOT/metatest/globals/functions.ils")))
+    (@docgen ?source_files (list (@realpath "$SKILL_SHARP_ROOT/metatest/docgen/defun_without_argument.il")))
     ?out t
-    ?info "( \"nonlocal\"\n  \"nonlocal()\"\n  \"Missing documentation for function `nonlocal'.\"\n  )"
+    ?info "( \"no_args\"\n  \"no_args()\"\n  \"This is a simple function without argument.\nIt always return 12.\"\n  )"
     )
 
   )
