@@ -321,7 +321,7 @@ If END is not provided, END defaults to BEG minus 1 and BEG defaults to 0."
 (@fun @box_width
   ( ( box ?type box|dbobject )
     )
-  ?doc "Return BOX width"
+  ?doc "Return BOX width."
   ?out number
   (difference (rightEdge box) (leftEdge box))
   )
@@ -329,10 +329,18 @@ If END is not provided, END defaults to BEG minus 1 and BEG defaults to 0."
 (@fun @box_height
   ( ( box ?type box|dbobject )
     )
-  ?doc "Return BOX height"
+  ?doc "Return BOX height."
   ?out number
   (difference (topEdge box) (bottomEdge box))
   )
+
+(@fun @box_to_points
+  ( ( box ?type box )
+    )
+  ?doc "Return BOX points."
+  (destructuringBind ( ( x0 y0 ) ( x1 y1 ) ) box
+    (list x0:y0 x1:y0 x1:y1 x0:y1)
+    ))
 
 ;; =======================================================
 ;; Files
