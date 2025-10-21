@@ -4,6 +4,8 @@
 ;; A. Buchet - August 2025
 ;; ===============================================================================================================
 
+;; TODO - Try `schProduceUniqueCVHier` to browse the cellviews
+
 (let ( opened_views_table
        sch_view_names
        )
