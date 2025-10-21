@@ -525,6 +525,84 @@ If END is not provided, END defaults to BEG minus 1 and BEG defaults to 0."
       )))
 
 ;; =======================================================
+;; Highlight Sets
+;; =======================================================
+
+(let ( ( hl_sets_by_cv (makeTable t nil) )
+       )
+
+  (@fun @hilight_set
+    ( @key
+      ( cellview ?type cellview )
+      ( color    ?type string|nil   )
+      ( lpp
+        ?type ( string string )
+        ?def
+        (if color
+            (or (@get_color_lpp ?tech_files (list (techGetTechFile cellview)) ?color color)
+                (error "@hilight_set - Unable to find layer displaying color: %N" color)
+                )
+          (error "@hilight_set - ?color or ?lpp is required")
+          ))
+      ;; Halo parameters
+      ( position     ?type string  ?def "over"    )
+      ( type         ?type string  ?def "fadeout" )
+      ( thickness    ?type string  ?def "thin"    )
+      ( transparency ?type integer ?def 50        )
+      @rest _
+      )
+    ?doc "Return an highlight set showing LPP in cellview."
+    ?out hilight_set
+    ?global t
+    (unless hl_sets_by_cv[cellview] (setf hl_sets_by_cv[cellview] (makeTable t nil)))
+    (letseq ( ( args   (list cellview lpp position type thickness transparency) )
+              ( hl_set hl_sets_by_cv[cellview][args]                            )
+              )
+      (if (geIsValidHilightSet hl_set)
+          hl_set
+        (setf hl_sets_by_cv[cellview][args]
+          (let ( ( hl_set (geCreateHilightSet cellview lpp) )
+                 )
+            (geSetHilightSetHaloParameters
+              hl_set
+              (@caseq position  (( "over" "under"                             )))
+              (@caseq type      (( "none" "plain" "smooth" "fadeout" "random" )))
+              (@caseq thickness (( "normal" "thin" "thick"                    )))
+              transparency)
+            (setf hl_set->enable t)
+            hl_set
+            )
+          ))
+      ));let ;fun
+
+  (@fun @hilight_set_delete_all ()
+    ?doc "Delete all highlight sets created with `@hilight_set`."
+    ?out t
+    ?global t
+    (mapcar '@hilight_set_delete_all_in_cellview hl_sets_by_cv[?])
+    (setq hl_sets_by_cv (makeTable t nil) )
+    t)
+
+  (@fun @hilight_set_delete_all_in_cellview
+    ( ( cellview ?type cellview )
+      )
+    ?doc "Delete all highlight sets created with `@hilight_set` in CELLVIEW."
+    ?out t
+    ?global t
+    (let ( ( table (remove cellview hl_sets_by_cv) )
+           )
+      (when (tablep table)
+        (foreach args table[?]
+          (let ( ( hl_set (remove args table) )
+                 )
+            (geDeleteHilightSet hl_set)
+            ))
+        ))
+    t)
+
+  );closure
+
+;; =======================================================
 ;; Menus
 ;; =======================================================
 

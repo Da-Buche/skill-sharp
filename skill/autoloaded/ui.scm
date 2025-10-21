@@ -45,6 +45,43 @@
       colors)
     ))
 
+(let ()
+
+  (defun comp_lpp ( lp0 lp1 )
+    "Compare LP0 & LP1 by name, this function is intended to sort LPPs while keeping hilite, annotate, designFlow and y0-y9 layers first."
+    (cond
+      ( (equal "hilite"       lp0->name) t   )
+      ( (equal "hilite"       lp1->name) nil )
+      ( (equal "annotate"     lp0->name) t   )
+      ( (equal "annotate"     lp1->name) nil )
+      ( (equal "designFlow"   lp0->name) t   )
+      ( (equal "designFlow"   lp1->name) nil )
+      ( (pcreMatchp "^y[0-9]" lp0->name) t   )
+      ( (pcreMatchp "^y[0-9]" lp1->name) nil )
+      ))
+
+    (@fun @get_color_lpp
+      ( @key
+        ( tech_files ?type ( tech_file ... ) ?def (@tech_files) )
+        ( color      ?type string                               )
+        )
+      ?doc "Return first LPP fron TECH_FILES matching display COLOR."
+      ?out ( string string )|nil
+      ?global t
+      ?memoize t
+      (prog ()
+        (foreach tech_file tech_files
+          (foreach lp (sort tech_file->lps comp_lpp)
+            (@when (drFindPacket "display" (techGetLPPacketName lp))
+              ?var packet
+              (destructuringBind ( _display _packet _fill_style _line_style fill_color _line_color ) packet
+                (when (equal color fill_color) (return (list lp->name lp->purpose)))
+                ));dbind ;when
+            ));foreach lp ;foreach tf
+        ));prog ;fun
+
+    );closure
+
 (@fun @color_icon
   ( ( color ?type string|( integer integer integer ) )
     ( size  ?type integer ?def 16                    )
