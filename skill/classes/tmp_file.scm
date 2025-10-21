@@ -77,9 +77,8 @@
     ;; Remove pesky deletion comments in cds.lib
     (let ( ( file (ddGetStartup "cds.lib") )
            )
-      (and file (isWritable file) (@bash "sed -e '/#Removed by ddDeleteObj: DEFINE tmp_lib_/d' -i {file}"))
+      (and file (isWritable file) (@bash (@str "sed -e '/#Removed by ddDeleteObj: DEFINE tmp_lib_/d' -i {file}")))
       )))
-
 
 ;*/
 
