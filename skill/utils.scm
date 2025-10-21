@@ -55,16 +55,20 @@ This is Unix `dirname` equivalent."
         "."));if ;let
     ));if ;def
 
-(defun @mktemp ( @optional (template "") @rest _ "tg" )
-  "Unix `mktemp` wrapper.
+(@fun @mktemp
+  ( ( template  ?type string ?def ""  )
+    ( directory ?type t|nil  ?def nil )
+    @rest _ )
+  ?doc "Unix `mktemp` wrapper.
 
 `makeTempFileName' is limited because it does not support 'XXX...' pattern at the end of TEMPLATE.
 It also only generates a file name instead of an actual file. (At least the name is explicit)
 This might cause issues if another identical temporary name is generated at the same time.
 
 This is probably equivalent to `mktemp` \"unsafe\" --dry-run mode."
+  ?out string
   (destructuringBind (stdout stderr status)
-                     (@bash (lsprintf "mktemp %s | xargs printf" template))
+                     (@bash (@str "mktemp {(if directory \"-d\" \"\")} {template} | xargs printf"))
     (if (zerop status) stdout (error "@mktemp - %s" stderr))
     ));dbind ;def
 
