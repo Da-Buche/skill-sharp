@@ -163,8 +163,53 @@
 ;; GUI
 ;; =======================================================
 
-(let ( (i 0)
+(let ( ( i         0                                  )
+       ( doc_root  (@realpath (cdsGetInstPath "doc")) )
+       tgf_files_job
+       tgf_files
        )
+
+  ;; -------------------------------------------------------
+  ;; Parse .tgf files
+  ;; -------------------------------------------------------
+
+  (@fun list_tgf_files ()
+    ?doc "Start job to list .tgf files."
+    (let ( ( port (outstring) )
+           )
+      (setq tgf_files_job
+        (ipcBeginProcess (@str "find '{doc_root}' -name '*.tgf'") ""
+          (lambda ( _pid data    ) (fprintf port "%s" data))
+          (lambda ( pid  data    ) (info "SKILL# Finder - %N - error when looking for .tgf files:\n %s" pid data))
+          (lambda ( _pid _status ) (setq tgf_files (getOutstring port)) (close port))
+          ))
+      ));let ;fun
+
+  (@fun find_fnd_file_from_tgf_files
+    ( ( name ?type string|symbol )
+      )
+    ?doc "Return .fnd doc file containing NAME if referenced in .tgf files."
+    ;; Wait for .tgf files to be listed
+    (and (not tgf_files) tgf_files_job (ipcWait tgf_files_job))
+    (let ( ( res_file (car (@bash (@str "printf '{tgf_files}' | xargs grep -Em1 '\\b{name}\\b' | awk '{{print $2}}'"))) )
+           fnd_file
+           )
+      (setq res_file (car (parseString res_file "\n")))
+      (cond
+        ( (isReadable res_file) (setq fnd_file res_file) )
+        ;; Here we follow the instructions to deduce the path from
+        ;; "$CDS_INST_DIR/doc/cdnshelp/cdnshelp.pdf#__WKANCHOR_3e" 'Working With Tag Files' [IC6.1.8]
+        ( (equal "$" (substring res_file 1 1))
+          (exists path (list doc_root (strcat doc_root "/../local/doc") "$HOME/doc")
+            (isReadable (setq fnd_file (@realpath (strcat path "/" (substring res_file 2)))))
+            ) )
+        );cond
+      (and (isReadable fnd_file) fnd_file)
+      ));let ;fun
+
+  ;; -------------------------------------------------------
+  ;; Split input string into several search patterns
+  ;; -------------------------------------------------------
 
   (@fun split_search
     ( ( str ?type string )
@@ -361,24 +406,11 @@
                 (ilgScrollToLocation (list 1 line))
                 ))
             ;; Associated help found in .tgf files
-            ( (letseq ( ( doc_root (@realpath (cdsGetInstPath "doc"))                                                                           )
-                        ( doc_file (car (@bash (@str "find '{doc_root}' -name '*.tgf' | xargs grep -Em1 '\\b{name}\\b' | awk '{{print $2}}'"))) )
-                        )
-                (setq doc_file (car (parseString doc_file "\n")))
-                (cond
-                  ( (isReadable doc_file)
-                    (setq file doc_file)
-                    )
-                  ;; From "$CDS_INST_DIR/doc/cdnshelp/cdnshelp.pdf#__WKANCHOR_3e" 'Working With Tag Files' [IC6.1.8]
-                  ( (equal "$" (substring doc_file 1 1))
-                    (exists path (list doc_root (strcat doc_root "/../local/doc") "$HOME/doc")
-                      (isReadable (setq file (@realpath (strcat path "/" (substring doc_file 2)))))
-                      ))
-                  )
-                (isReadable file)
-                );letseq
-              (hiLaunchBrowser (@str "file://{file}#{name}"))
-              )
+            ( (setq file (find_fnd_file_from_tgf_files name))
+              (if (@nonblankstring? (getShellEnvVar "SKILL_SHARP_BROWSER"))
+                  (@bash (@str "$SKILL_SHARP_BROWSER file://{file}#{name} &"))
+                (hiLaunchBrowser (@str "file://{file}#{name}"))
+                ))
             ;; Fallback to SKILL IDE Finder Double-Click callback
             (t (and (ilgRunSKILLIDE) (_ilgShowMoreInfo (strcat name))) )
             );cond
@@ -551,6 +583,7 @@ It contains predefined filters.
     ?global t
     ;; Parse fnd files to build associated objects
     (unless (_\@fnd_categories) (_\@fnd_browse_files))
+    (unless (or tgf_files tgf_files_job) (list_tgf_files))
     (let ( ( form (create_form) )
            )
       (hiInstantiateForm form)
