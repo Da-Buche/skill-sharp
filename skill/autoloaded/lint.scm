@@ -552,7 +552,7 @@ NAME is the message reference."
 ;; -------------------------------------------------------
 
 (_\@lint_rule
-  ?functions '( getq getqq )
+  ?functions '( getq getqq getSGq)
   ?control t
   ?rule_fun
   (lambda ( sexp messages levels parents envs scheme )
@@ -561,9 +561,10 @@ NAME is the message reference."
            ( key (caddr sexp) )
            )
       (@caseq fun
-        ( getq  (_\@lint_sexp obj messages (cons 1 levels) (cons sexp parents) envs scheme) )
-        ( getqq (unless (symbolp obj)
-                  (_\@lint_msg sexp messages levels 'ERROR 'SYNTAX_GETQQ (@str "`{fun}` argument should be an unquoted symbol: {obj}"))))
+        ( ( getq getSGq )  (_\@lint_sexp obj messages (cons 1 levels) (cons sexp parents) envs scheme) )
+        ( getqq
+          (unless (symbolp obj)
+            (_\@lint_msg sexp messages levels 'ERROR 'SYNTAX_GETQQ (@str "`{fun}` argument should be an unquoted symbol: {obj}"))))
         )
       (unless (symbolp key)
         (_\@lint_msg sexp messages levels 'ERROR 'SYNTAX_ (concat (upperCase fun))
