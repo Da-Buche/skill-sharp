@@ -188,6 +188,7 @@ Return nil otherwise."
   (@type_add 'function (lambda ( obj ) (classp obj 'funobj))         )
   (@type_add 'integer  (lambda ( obj ) (classp obj 'fixnum))         )
   (@type_add 'float    (lambda ( obj ) (classp obj 'flonum))         )
+  (@type_add 'dpl      'dplp                                         )
 
   (@type_add 'ptrnum   (lambda ( obj ) (eq 'ptrnum (type obj)))      )
 
