@@ -8,6 +8,23 @@
 ;; Field to select a color
 ;; =======================================================
 
+(@fun @get_lpp_color
+  ( @key
+    ( lpp       ?type ( string string )          )
+    ( cellview  ?type db_cv|nil         ?def nil )
+    ( tech_file
+      ?type tech_file
+      ?def  (or (and cellview (techGetTechFile cellview))
+                (@error "@get_lpp_color - ?tech_file is required."))
+      )
+    @rest _ )
+  ?doc "Return LPP fill color."
+  (@when (drFindPacket "display" (techGetLPPacketName (techGetLP tech_file lpp)))
+    ?var packet
+    (destructuringBind ( _display _packet _fill_style _line_style fill_color _line_color ) packet
+      fill_color
+      )))
+
 (@fun @get_available_colors
   ( @key
     ( tech_files ?type ( tech_file ... ) ?def (@tech_files) )
