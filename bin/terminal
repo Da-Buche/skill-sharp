@@ -59,7 +59,7 @@ for TERM in "${TERMINALS[@]}"; do
   esac
   if command -v "$TERM_CMD" &>/dev/null; then
     # shellcheck disable=SC2154 # status is a valid command
-    launch_command "$TERM" "bash -c '$CMD'" && exit "$status"
+    launch_command "$TERM" "bash -c '$CMD'" && exit "$?"
   fi
 done
 
