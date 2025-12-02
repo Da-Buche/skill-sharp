@@ -550,6 +550,7 @@ If END is not provided, END defaults to BEG minus 1 and BEG defaults to 0."
 (let ( ( hl_sets_by_cv (makeTable t nil) )
        )
 
+  ;; TODO - `@hilight_set` should take fill argument and `@get_color_lpp` should be adapted accordingly
   (@fun @hilight_set
     ( @key
       ( cellview ?type cellview )
@@ -763,10 +764,11 @@ This is intended to be used as following in SKILL# dependent files:
   (letseq ( ( file    (@realpath "$SKILL_SHARP_ROOT/VERSION")      )
             ( version (if (isFile file) (@read_file file) "0.0.0") )
             )
-    (if (stringp min_version)
-        (@assert (not (@alphalessp version min_version))
-          "@skill_sharp - Minimum required version [{min_version}] is higher than current one [{version}].")
-      version
+    (@nif (stringp min_version)
+          version
+      (@assert (not (@alphalessp version min_version))
+        "@skill_sharp - Minimum required version [{min_version}] is higher than current one [{version}].")
+      t
       )
     ));let ;fun
 
